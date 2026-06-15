@@ -1,0 +1,1509 @@
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #f7f4ee;
+  color: #111827;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+.dashboard-fade {
+  animation: dashboardFade 0.7s ease both;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-150 {
+  animation-delay: 0.15s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-250 {
+  animation-delay: 0.25s;
+}
+
+.delay-300 {
+  animation-delay: 0.3s;
+}
+
+.delay-350 {
+  animation-delay: 0.35s;
+}
+
+.dashboard-progress {
+  width: 83%;
+  animation: progressGrow 1.2s ease-out both;
+}
+
+.dashboard-bar {
+  animation: barGrow 1s ease-out both;
+  transform-origin: bottom;
+}
+
+.dashboard-pulse {
+  animation: alertPulse 1.4s ease-in-out infinite;
+}
+
+.dashboard-donut {
+  background: conic-gradient(
+    #806300 0deg 252deg,
+    #d8b328 252deg 324deg,
+    #59657a 324deg 360deg
+  );
+  animation: donutSpin 1.1s ease-out both;
+}
+
+.dashboard-nav-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-nav-item::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  transform: translateX(-100%);
+  transition: transform 0.5s ease;
+}
+
+.dashboard-nav-item:hover::before {
+  transform: translateX(100%);
+}
+
+@keyframes dashboardFade {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes progressGrow {
+  from {
+    width: 0;
+  }
+
+  to {
+    width: 83%;
+  }
+}
+
+@keyframes barGrow {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes alertPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.8);
+    opacity: 0.35;
+  }
+}
+
+@keyframes donutSpin {
+  from {
+    opacity: 0;
+    transform: rotate(-40deg) scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #f8f5ef;
+  color: #181818;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input {
+  font-family: inherit;
+}
+
+.room-fade {
+  animation: roomFade 0.7s ease both;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-150 {
+  animation-delay: 0.15s;
+}
+
+.room-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.room-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.75),
+    transparent
+  );
+  transform: translateX(-120%);
+  transition: transform 0.7s ease;
+}
+
+.room-card:hover::before {
+  transform: translateX(120%);
+}
+
+.room-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.room-nav-link {
+  position: relative;
+  overflow: hidden;
+}
+
+.room-nav-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  transform: translateX(-120%);
+  transition: transform 0.5s ease;
+}
+
+.room-nav-link:hover::after {
+  transform: translateX(120%);
+}
+
+@keyframes roomFade {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #f8f5ef;
+  color: #181818;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+.reservation-fade {
+  animation: reservationFade 0.7s ease both;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-150 {
+  animation-delay: 0.15s;
+}
+
+.reservation-page-blur {
+  filter: blur(5px);
+  transform: scale(0.995);
+  transition: filter 0.3s ease, transform 0.3s ease;
+}
+
+.reservation-overlay {
+  animation: overlayFade 0.25s ease both;
+}
+
+.reservation-modal {
+  animation: reservationModal 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.reservation-nav-link {
+  position: relative;
+  overflow: hidden;
+}
+
+.reservation-nav-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  transform: translateX(-120%);
+  transition: transform 0.5s ease;
+}
+
+.reservation-nav-link:hover::after {
+  transform: translateX(120%);
+}
+
+@keyframes reservationFade {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes overlayFade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes reservationModal {
+  from {
+    opacity: 0;
+    transform: translateY(35px) scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #f8f5ef;
+  color: #181818;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+.guest-fade {
+  animation: guestFade 0.7s ease both;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-150 {
+  animation-delay: 0.15s;
+}
+
+.guest-row {
+  position: relative;
+  overflow: hidden;
+}
+
+.guest-row::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(216, 179, 40, 0.12),
+    transparent
+  );
+  transform: translateX(-120%);
+  transition: transform 0.6s ease;
+}
+
+.guest-row:hover::after {
+  transform: translateX(120%);
+}
+
+.guest-nav-link {
+  position: relative;
+  overflow: hidden;
+}
+
+.guest-nav-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  transform: translateX(-120%);
+  transition: transform 0.5s ease;
+}
+
+.guest-nav-link:hover::after {
+  transform: translateX(120%);
+}
+
+.guest-pulse {
+  animation: guestPulse 1.6s ease-in-out infinite;
+}
+
+@keyframes guestFade {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes guestPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.8);
+    opacity: 0.25;
+  }
+}
+
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #f8f5ef;
+  color: #181818;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+.folio-fade {
+  animation: folioFade 0.7s ease both;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-150 {
+  animation-delay: 0.15s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-250 {
+  animation-delay: 0.25s;
+}
+
+.folio-row {
+  position: relative;
+}
+
+.folio-row:hover {
+  transform: translateX(4px);
+}
+
+.folio-nav-link {
+  position: relative;
+  overflow: hidden;
+}
+
+.folio-nav-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  transform: translateX(-120%);
+  transition: transform 0.5s ease;
+}
+
+.folio-nav-link:hover::after {
+  transform: translateX(120%);
+}
+
+.folio-toast {
+  animation: folioToast 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes folioFade {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes folioToast {
+  from {
+    opacity: 0;
+    transform: translateX(30px) translateY(10px) scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) translateY(0) scale(1);
+  }
+}
+
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #f8f5ef;
+  color: #181818;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+.room-service-fade {
+  animation: roomServiceFade 0.7s ease both;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-150 {
+  animation-delay: 0.15s;
+}
+
+.room-service-nav {
+  position: relative;
+  overflow: hidden;
+}
+
+.room-service-nav::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  transform: translateX(-120%);
+  transition: transform 0.5s ease;
+}
+
+.room-service-nav:hover::after {
+  transform: translateX(120%);
+}
+
+.room-order-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.room-order-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(216, 179, 40, 0.12),
+    transparent
+  );
+  transform: translateX(-120%);
+  transition: transform 0.65s ease;
+}
+
+.room-order-card:hover::before {
+  transform: translateX(120%);
+}
+
+.room-order-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.room-service-progress {
+  animation: serviceProgress 1.1s ease-out both;
+}
+
+@keyframes roomServiceFade {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes serviceProgress {
+  from {
+    width: 0;
+  }
+}
+
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #f8f5ef;
+  color: #181818;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+.kitchen-fade {
+  animation: kitchenFade 0.7s ease both;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-150 {
+  animation-delay: 0.15s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-250 {
+  animation-delay: 0.25s;
+}
+
+.kitchen-nav-link {
+  position: relative;
+  overflow: hidden;
+}
+
+.kitchen-nav-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  transform: translateX(-120%);
+  transition: transform 0.5s ease;
+}
+
+.kitchen-nav-link:hover::after {
+  transform: translateX(120%);
+}
+
+.kitchen-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.kitchen-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(216, 179, 40, 0.16),
+    transparent
+  );
+  transform: translateX(-120%);
+  transition: transform 0.65s ease;
+}
+
+.kitchen-card:hover::before {
+  transform: translateX(120%);
+}
+
+.kitchen-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.kitchen-progress {
+  animation: kitchenProgress 1.1s ease-out both;
+}
+
+.kitchen-event-progress {
+  width: 38%;
+  animation: kitchenEventProgress 1.2s ease-out both;
+}
+
+.ready-glow {
+  animation: readyGlow 1.8s ease-in-out infinite;
+}
+
+@keyframes kitchenFade {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes kitchenProgress {
+  from {
+    width: 0;
+  }
+}
+
+@keyframes kitchenEventProgress {
+  from {
+    width: 0;
+  }
+
+  to {
+    width: 38%;
+  }
+}
+
+@keyframes readyGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 rgba(216, 179, 40, 0);
+  }
+
+  50% {
+    box-shadow: 0 0 28px rgba(216, 179, 40, 0.35);
+  }
+}
+
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #f8f5ef;
+  color: #181818;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+.inventory-fade {
+  animation: inventoryFade 0.7s ease both;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-150 {
+  animation-delay: 0.15s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-250 {
+  animation-delay: 0.25s;
+}
+
+.delay-300 {
+  animation-delay: 0.3s;
+}
+
+.delay-350 {
+  animation-delay: 0.35s;
+}
+
+.inventory-nav-link {
+  position: relative;
+  overflow: hidden;
+}
+
+.inventory-nav-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  transform: translateX(-120%);
+  transition: transform 0.5s ease;
+}
+
+.inventory-nav-link:hover::after {
+  transform: translateX(120%);
+}
+
+.inventory-stat-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.inventory-stat-card::before {
+  content: "";
+  position: absolute;
+  right: -40px;
+  top: -40px;
+  height: 110px;
+  width: 110px;
+  border-radius: 999px;
+  background: rgba(216, 179, 40, 0.08);
+  transition: transform 0.4s ease;
+}
+
+.inventory-stat-card:hover::before {
+  transform: scale(1.4);
+}
+
+.inventory-row {
+  animation: inventoryRow 0.55s ease both;
+}
+
+.inventory-row:hover {
+  transform: translateX(4px);
+}
+
+.inventory-bar {
+  animation: inventoryBar 0.9s ease-out both;
+  transform-origin: bottom;
+}
+
+.supplier-card {
+  position: relative;
+  isolation: isolate;
+}
+
+.supplier-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to top, rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.1)),
+    radial-gradient(circle at 50% 0%, rgba(216, 179, 40, 0.4), transparent 40%);
+  z-index: -1;
+}
+
+.supplier-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.08) 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.3;
+  z-index: -1;
+}
+
+@keyframes inventoryFade {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes inventoryRow {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes inventoryBar {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #f8f5ef;
+  color: #181818;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+.parking-fade {
+  animation: parkingFade 0.7s ease both;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-150 {
+  animation-delay: 0.15s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.delay-250 {
+  animation-delay: 0.25s;
+}
+
+.parking-nav-link {
+  position: relative;
+  overflow: hidden;
+}
+
+.parking-nav-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(216, 179, 40, 0.12),
+    transparent
+  );
+  transform: translateX(-120%);
+  transition: transform 0.5s ease;
+}
+
+.parking-nav-link:hover::after {
+  transform: translateX(120%);
+}
+
+.parking-stat-card {
+  animation: parkingFade 0.7s ease both;
+  position: relative;
+  overflow: hidden;
+}
+
+.parking-stat-card::before {
+  content: "";
+  position: absolute;
+  right: -45px;
+  top: -45px;
+  height: 120px;
+  width: 120px;
+  border-radius: 999px;
+  background: rgba(216, 179, 40, 0.08);
+  transition: transform 0.4s ease;
+}
+
+.parking-stat-card:hover::before {
+  transform: scale(1.45);
+}
+
+.parking-slot {
+  animation: slotPop 0.45s ease both;
+}
+
+.parking-slot:hover {
+  transform: translateY(-4px) scale(1.02);
+}
+
+.parking-visualizer {
+  isolation: isolate;
+}
+
+.parking-visualizer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(120deg, rgba(255,255,255,0.7), rgba(255,255,255,0.15)),
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,0.1) 0 2px,
+      transparent 2px 55px
+    );
+  opacity: 0.6;
+}
+
+.parking-visualizer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(216,179,40,0.35), transparent 35%);
+  opacity: 0.6;
+}
+
+.parking-billing-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.parking-billing-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(216, 179, 40, 0.12),
+    transparent
+  );
+  transform: translateX(-120%);
+  transition: transform 0.6s ease;
+}
+
+.parking-billing-card:hover::after {
+  transform: translateX(120%);
+}
+
+@keyframes parkingFade {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slotPop {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@import "tailwindcss";
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: #f8f5ef;
+  color: #181818;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
+}
+
+.event-fade {
+  animation: eventFade 0.7s ease both;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-150 {
+  animation-delay: 0.15s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.event-nav-link {
+  position: relative;
+  overflow: hidden;
+}
+
+.event-nav-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(216, 179, 40, 0.12),
+    transparent
+  );
+  transform: translateX(-120%);
+  transition: transform 0.5s ease;
+}
+
+.event-nav-link:hover::after {
+  transform: translateX(120%);
+}
+
+.event-calendar-cell {
+  position: relative;
+  overflow: hidden;
+}
+
+.event-calendar-cell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right, rgba(216, 179, 40, 0.12), transparent 35%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.event-calendar-cell:hover::after {
+  opacity: 1;
+}
+
+.event-chip {
+  animation: chipPop 0.45s ease both;
+}
+
+.event-progress {
+  width: 82%;
+  animation: eventProgress 1.2s ease-out both;
+}
+
+.event-upcoming-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.event-upcoming-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgba(255, 255, 255, 0.45),
+    transparent
+  );
+  transform: translateX(-120%);
+  transition: transform 0.65s ease;
+}
+
+.event-upcoming-card:hover::after {
+  transform: translateX(120%);
+}
+
+.event-upcoming-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes eventFade {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes chipPop {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes eventProgress {
+  from {
+    width: 0;
+  }
+
+  to {
+    width: 82%;
+  }
+}
+
+.lux-sidebar-link {
+  position: relative;
+  overflow: hidden;
+}
+
+.lux-sidebar-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(216, 179, 40, 0.14),
+    transparent
+  );
+  transform: translateX(-120%);
+  transition: transform 0.55s ease;
+}
+
+.lux-sidebar-link:hover::after {
+  transform: translateX(120%);
+}
+
+.lux-sidebar-link span {
+  position: relative;
+  z-index: 1;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(216, 179, 40, 0.35);
+  border-radius: 999px;
+}
+
+.lux-sidebar-link {
+  position: relative;
+  overflow: hidden;
+}
+
+.lux-sidebar-link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(216, 179, 40, 0.14),
+    transparent
+  );
+  transform: translateX(-120%);
+  transition: transform 0.55s ease;
+}
+
+.lux-sidebar-link:hover::after {
+  transform: translateX(120%);
+}
+
+.lux-sidebar-link span {
+  position: relative;
+  z-index: 1;
+}
+
+.sidebar-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-scroll::-webkit-scrollbar-thumb {
+  background: rgba(216, 179, 40, 0.35);
+  border-radius: 999px;
+}
+
+.event-fade {
+  animation: eventFade 0.7s ease both;
+}
+
+.delay-100 {
+  animation-delay: 0.1s;
+}
+
+.delay-150 {
+  animation-delay: 0.15s;
+}
+
+.delay-200 {
+  animation-delay: 0.2s;
+}
+
+.event-calendar-cell {
+  position: relative;
+  overflow: hidden;
+}
+
+.event-calendar-cell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at top right,
+    rgba(216, 179, 40, 0.12),
+    transparent 35%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.event-calendar-cell:hover::after {
+  opacity: 1;
+}
+
+.event-chip {
+  animation: chipPop 0.45s ease both;
+}
+
+.event-progress {
+  width: 82%;
+  animation: eventProgress 1.2s ease-out both;
+}
+
+.event-upcoming-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.event-upcoming-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgba(255, 255, 255, 0.45),
+    transparent
+  );
+  transform: translateX(-120%);
+  transition: transform 0.65s ease;
+}
+
+.event-upcoming-card:hover::after {
+  transform: translateX(120%);
+}
+
+.event-upcoming-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes eventFade {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes chipPop {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes eventProgress {
+  from {
+    width: 0;
+  }
+
+  to {
+    width: 82%;
+  }
+}
