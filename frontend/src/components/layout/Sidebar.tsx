@@ -55,6 +55,14 @@ const menuItems = [
 { name: "New User", href: "/users/new", icon: "+" },
 
 { name: "Settings", href: "/settings", icon: "⚙" },
+
+{ name: "Reports", href: "/reports", icon: "▨" },
+{ name: "Daily Revenue", href: "/reports/daily-revenue", icon: "▤" },
+{ name: "Net Profit", href: "/reports/net-profit", icon: "$" },
+{ name: "Occupancy", href: "/reports/occupancy", icon: "▦" },
+{ name: "Inventory Usage", href: "/reports/inventory-usage", icon: "▧" },
+{ name: "Low Stock", href: "/reports/low-stock", icon: "!" },
+{ name: "Payment Summary", href: "/reports/payment-summary", icon: "▣" },
 ];
 
 export default function AppSidebar() {
