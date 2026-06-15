@@ -49,6 +49,10 @@ const menuItems = [
 { name: "Event List", href: "/events/list", icon: "▤" },
 { name: "New Event", href: "/events/new", icon: "+" },
 { name: "Master Event Ledger", href: "/events/ledger", icon: "▥" },
+
+{ name: "Users", href: "/users", icon: "♙" },
+{ name: "Users List", href: "/users/list", icon: "▤" },
+{ name: "New User", href: "/users/new", icon: "+" },
 ];
 
 export default function AppSidebar() {
