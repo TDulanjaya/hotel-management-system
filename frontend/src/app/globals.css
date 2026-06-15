@@ -1704,3 +1704,44 @@ select {
     transform: translateY(0);
   }
 }
+
+.games-fade {
+  animation: gamesFade 0.65s ease both;
+}
+
+.games-card {
+  background: #ffffff;
+  border: 1px solid #d0c5af;
+  border-radius: 0.75rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+.pulse-warning {
+  animation: pulseRed 2s infinite;
+}
+
+@keyframes pulseRed {
+  0% {
+    box-shadow: 0 0 0 0 rgba(186, 26, 26, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 10px rgba(186, 26, 26, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(186, 26, 26, 0);
+  }
+}
+
+@keyframes gamesFade {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
