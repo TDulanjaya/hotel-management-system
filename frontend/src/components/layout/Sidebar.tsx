@@ -44,6 +44,11 @@ const menuItems = [
 { name: "Games List", href: "/games/list", icon: "▤" },
 { name: "New Game Session", href: "/games/new-session", icon: "+" },
 { name: "Game Sessions", href: "/games/sessions", icon: "▣" },
+
+{ name: "Events", href: "/events", icon: "▣" },
+{ name: "Event List", href: "/events/list", icon: "▤" },
+{ name: "New Event", href: "/events/new", icon: "+" },
+{ name: "Master Event Ledger", href: "/events/ledger", icon: "▥" },
 ];
 
 export default function AppSidebar() {
