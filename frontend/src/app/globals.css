@@ -1670,3 +1670,37 @@ select {
     transform: translateY(0);
   }
 }
+
+.restaurant-fade {
+  animation: restaurantFade 0.65s ease both;
+}
+
+.floor-plan-grid {
+  background-image: radial-gradient(#d0c5af 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.restaurant-card {
+  background: #ffffff;
+  border: 1px solid #e4e2de;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+
+.table-interaction:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(115, 92, 0, 0.1);
+}
+
+@keyframes restaurantFade {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
