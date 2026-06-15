@@ -1654,3 +1654,19 @@ select {
     opacity: 0.7;
   }
 }
+
+.owner-fade {
+  animation: ownerFade 0.65s ease both;
+}
+
+@keyframes ownerFade {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
