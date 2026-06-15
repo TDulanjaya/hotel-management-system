@@ -1614,3 +1614,43 @@ select {
     transform: translateY(0);
   }
 }
+
+.manager-fade {
+  animation: managerFade 0.65s ease both;
+}
+
+.manager-progress {
+  position: relative;
+  overflow: hidden;
+}
+
+.manager-progress::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.25);
+  animation: managerPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes managerFade {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes managerPulse {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+
+  50% {
+    opacity: 0.7;
+  }
+}
