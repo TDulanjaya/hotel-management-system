@@ -53,6 +53,8 @@ const menuItems = [
 { name: "Users", href: "/users", icon: "♙" },
 { name: "Users List", href: "/users/list", icon: "▤" },
 { name: "New User", href: "/users/new", icon: "+" },
+
+{ name: "Settings", href: "/settings", icon: "⚙" },
 ];
 
 export default function AppSidebar() {
