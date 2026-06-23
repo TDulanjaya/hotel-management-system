@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 export default function CheckoutDetailsPage() {
@@ -63,17 +63,17 @@ export default function CheckoutDetailsPage() {
               <h2 className="text-2xl font-bold">Payment Summary</h2>
 
               <div className="mt-6 space-y-4">
-                <InfoRow label="Room Charges" value="$1,200.00" />
-                <InfoRow label="Room Service" value="$86.00" />
-                <InfoRow label="Restaurant" value="$142.00" />
-                <InfoRow label="Parking" value="$25.00" />
-                <InfoRow label="Tax & Service" value="$185.00" />
+                <InfoRow label="Room Charges" value="Rs 1,200.00" />
+                <InfoRow label="Room Service" value="Rs 86.00" />
+                <InfoRow label="Restaurant" value="Rs 142.00" />
+                <InfoRow label="Parking" value="Rs 25.00" />
+                <InfoRow label="Tax & Service" value="Rs 185.00" />
               </div>
 
               <div className="mt-6 rounded-xl bg-[#735c00] p-5 text-white">
                 <div className="flex items-center justify-between">
                   <p className="text-lg font-bold">Final Total</p>
-                  <p className="text-2xl font-extrabold">$1,638.00</p>
+                  <p className="text-2xl font-extrabold">Rs 1,638.00</p>
                 </div>
               </div>
             </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { AuthUser, getUser, logout } from "@/utils/auth";
 

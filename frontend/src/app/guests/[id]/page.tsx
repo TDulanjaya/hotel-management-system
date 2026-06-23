@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const stayHistory = [
@@ -11,7 +11,7 @@ const stayHistory = [
     type: "Executive Suite",
     checkIn: "Oct 21, 2024",
     checkOut: "Oct 24, 2024",
-    amount: "$1,638.00",
+    amount: "Rs 1,638.00",
     status: "Active",
   },
   {
@@ -20,7 +20,7 @@ const stayHistory = [
     type: "Deluxe Room",
     checkIn: "Aug 12, 2024",
     checkOut: "Aug 15, 2024",
-    amount: "$920.00",
+    amount: "Rs 920.00",
     status: "Completed",
   },
 ];
@@ -29,19 +29,19 @@ const guestServices = [
   {
     service: "Room Service",
     date: "Oct 23, 2024",
-    amount: "$32.00",
+    amount: "Rs 32.00",
     status: "Added to Folio",
   },
   {
     service: "Restaurant Dinner",
     date: "Oct 23, 2024",
-    amount: "$142.00",
+    amount: "Rs 142.00",
     status: "Added to Folio",
   },
   {
     service: "Parking",
     date: "Oct 24, 2024",
-    amount: "$25.00",
+    amount: "Rs 25.00",
     status: "Paid",
   },
 ];
@@ -130,7 +130,7 @@ export default function GuestDetailsPage() {
                 <InfoRow label="Room Type" value="Executive Suite" />
                 <InfoRow label="Check In" value="Oct 21, 2024" />
                 <InfoRow label="Check Out" value="Oct 24, 2024" />
-                <InfoRow label="Balance Due" value="$784.00" />
+                <InfoRow label="Balance Due" value="Rs 784.00" />
               </div>
 
               <button

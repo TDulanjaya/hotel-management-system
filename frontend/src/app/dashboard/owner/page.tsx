@@ -1,6 +1,6 @@
 "use client";
 
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import {
   Search,
@@ -20,7 +20,7 @@ import {
 const topMetrics = [
   {
     title: "Total Revenue",
-    value: "$185,000",
+    value: "Rs 185,000",
     note: "12.4% vs last month",
     icon: TrendingUp,
     ribbon: "bg-[#d4af37]",
@@ -28,7 +28,7 @@ const topMetrics = [
   },
   {
     title: "Net Profit",
-    value: "$45,200",
+    value: "Rs 45,200",
     note: "8.1% margin increase",
     icon: Wallet,
     ribbon: "bg-[#565e74]",
@@ -36,7 +36,7 @@ const topMetrics = [
   },
   {
     title: "Bank Deposits",
-    value: "$120,000",
+    value: "Rs 120,000",
     note: "Next settlement: Tomorrow",
     icon: Landmark,
     ribbon: "bg-[#545f73]",
@@ -47,28 +47,28 @@ const topMetrics = [
 const revenueCards = [
   {
     title: "Room Revenue",
-    value: "$110,000",
+    value: "Rs 110,000",
     icon: BedDouble,
     bg: "bg-[#d4af37]/10",
     color: "text-[#735c00]",
   },
   {
     title: "Event Revenue",
-    value: "$32,000",
+    value: "Rs 32,000",
     icon: PartyPopper,
     bg: "bg-[#565e74]/10",
     color: "text-[#565e74]",
   },
   {
     title: "Food & Beverage",
-    value: "$28,000",
+    value: "Rs 28,000",
     icon: Utensils,
     bg: "bg-[#545f73]/10",
     color: "text-[#545f73]",
   },
   {
     title: "Parking",
-    value: "$15,000",
+    value: "Rs 15,000",
     icon: ParkingCircle,
     bg: "bg-[#4d4635]/10",
     color: "text-[#4d4635]",
@@ -79,7 +79,7 @@ const auditAlerts = [
   {
     tag: "High Discrepancy",
     time: "2h ago",
-    text: "Folio #8829: Manual override of breakfast charges by $450.",
+    text: "Folio #8829: Manual override of breakfast charges by Rs 450.",
     color: "text-[#ba1a1a]",
   },
   {

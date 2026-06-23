@@ -1,4 +1,4 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 export default function NewReservationPage() {
@@ -183,10 +183,10 @@ export default function NewReservationPage() {
                 <h2 className="text-2xl font-bold">Billing Summary</h2>
 
                 <div className="mt-6 space-y-4">
-                  <SummaryRow label="Room Rate" value="$450 / night" />
+                  <SummaryRow label="Room Rate" value="Rs 450 / night" />
                   <SummaryRow label="Nights" value="2" />
-                  <SummaryRow label="Tax & Service" value="$90" />
-                  <SummaryRow label="Estimated Total" value="$990" highlight />
+                  <SummaryRow label="Tax & Service" value="Rs 90" />
+                  <SummaryRow label="Estimated Total" value="Rs 990" highlight />
                 </div>
               </section>
 

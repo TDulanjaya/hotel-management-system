@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 export default function EditEventPage() {
@@ -100,11 +100,11 @@ export default function EditEventPage() {
 
                 <InputField label="Guest Count" type="number" defaultValue="240" />
 
-                <InputField label="Venue Rental" defaultValue="$4,500.00" />
+                <InputField label="Venue Rental" defaultValue="Rs 4,500.00" />
 
-                <InputField label="Food & Beverage" defaultValue="$5,200.00" />
+                <InputField label="Food & Beverage" defaultValue="Rs 5,200.00" />
 
-                <InputField label="Decoration Package" defaultValue="$1,400.00" />
+                <InputField label="Decoration Package" defaultValue="Rs 1,400.00" />
 
                 <div>
                   <label className="text-sm font-bold text-[#4d4635]">

@@ -1,4 +1,4 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const billingItems = [
@@ -6,35 +6,35 @@ const billingItems = [
     description: "Grand Ballroom Rental (Full Day)",
     date: "Oct 12, 2024",
     category: "Venue Rental",
-    amount: "$12,000.00",
+    amount: "Rs 12,000.00",
     style: "bg-blue-100 text-blue-800",
   },
   {
     description: "Gala Dinner - 450 Covers",
     date: "Oct 12, 2024",
     category: "Catering",
-    amount: "$67,500.00",
+    amount: "Rs 67,500.00",
     style: "bg-orange-100 text-orange-800",
   },
   {
     description: "Group Room Block (120 Rooms x 3 Nights)",
     date: "Oct 10-13, 2024",
     category: "Room Blocks",
-    amount: "$48,600.00",
+    amount: "Rs 48,600.00",
     style: "bg-purple-100 text-purple-800",
   },
   {
     description: "Valet Parking Vouchers (200 Units)",
     date: "Oct 12, 2024",
     category: "Parking",
-    amount: "$8,000.00",
+    amount: "Rs 8,000.00",
     style: "bg-green-100 text-green-800",
   },
   {
     description: "Standard Service Charge (12.5%)",
     date: "Oct 13, 2024",
     category: "Service Fees",
-    amount: "$6,480.00",
+    amount: "Rs 6,480.00",
     style: "bg-gray-100 text-gray-800",
   },
 ];
@@ -44,21 +44,21 @@ const linkedFolios = [
     initials: "JD",
     name: "Julianne Davies",
     room: "Room 402 • Deluxe King",
-    amount: "$1,420.50",
+    amount: "Rs 1,420.50",
     active: true,
   },
   {
     initials: "MK",
     name: "Marcus Kane",
     room: "Room 512 • Presidential Suite",
-    amount: "$4,105.00",
+    amount: "Rs 4,105.00",
     active: false,
   },
   {
     initials: "SR",
     name: "Sarah Redford",
     room: "Room 305 • Executive Room",
-    amount: "$980.20",
+    amount: "Rs 980.20",
     active: false,
   },
 ];
@@ -124,15 +124,15 @@ export default function EventLedgerPage() {
             </section>
 
             <section className="col-span-12 grid rounded-xl border border-[#d0c5af] bg-white p-8 shadow-sm md:grid-cols-3 lg:col-span-8">
-              <SummaryCard label="Total Charges" value="$142,580.00" />
+              <SummaryCard label="Total Charges" value="Rs 142,580.00" />
               <SummaryCard
                 label="Deposits Paid"
-                value="$45,000.00"
+                value="Rs 45,000.00"
                 color="text-[#735c00]"
               />
               <SummaryCard
                 label="Balance Due"
-                value="$97,580.00"
+                value="Rs 97,580.00"
                 color="text-[#ba1a1a]"
                 last
               />
@@ -191,7 +191,7 @@ export default function EventLedgerPage() {
                       </td>
 
                       <td className="px-8 py-6 text-right text-xl text-[#735c00]">
-                        $142,580.00
+                        Rs 142,580.00
                       </td>
                     </tr>
                   </tfoot>

@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import {
   Search,

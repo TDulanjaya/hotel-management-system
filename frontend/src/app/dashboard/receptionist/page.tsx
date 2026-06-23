@@ -1,7 +1,7 @@
 "use client";
 
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import {
   Search,
   Bell,
@@ -97,7 +97,7 @@ const departures = [
     guest: "Robert Langdon",
     member: "Platinum Member",
     room: "502",
-    balance: "$0.00",
+    balance: "Rs 0.00",
     status: "Ready",
     badge: "bg-green-50 text-green-700",
     action: "CHECK OUT",
@@ -106,7 +106,7 @@ const departures = [
     guest: "Emily Blunt",
     member: "VIP",
     room: "Penthouse 1",
-    balance: "$2,840.12",
+    balance: "Rs 2,840.12",
     status: "Unpaid Folio",
     badge: "bg-red-50 text-red-700",
     action: "VIEW FOLIO",
@@ -117,7 +117,7 @@ const folioActivities = [
   {
     guest: "Elena Sorova (Rm 402)",
     service: "Spa & Wellness Service",
-    amount: "+$450.00",
+    amount: "+Rs 450.00",
     time: "2 mins ago",
     color: "text-[#735c00]",
   },
@@ -138,7 +138,7 @@ const folioActivities = [
   {
     guest: "Sophie Chen (Rm 304)",
     service: "Extended Stay Upgrade",
-    amount: "+$1,200.00",
+    amount: "+Rs 1,200.00",
     time: "3 hours ago",
     color: "text-[#735c00]",
   },

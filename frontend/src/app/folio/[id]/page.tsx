@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const folioItems = [
@@ -10,42 +10,42 @@ const folioItems = [
     description: "Room Charge - Executive Suite",
     category: "Room",
     date: "Oct 21, 2024",
-    amount: "$400.00",
+    amount: "Rs 400.00",
   },
   {
     id: "FOL-ITEM-002",
     description: "Room Charge - Executive Suite",
     category: "Room",
     date: "Oct 22, 2024",
-    amount: "$400.00",
+    amount: "Rs 400.00",
   },
   {
     id: "FOL-ITEM-003",
     description: "Room Charge - Executive Suite",
     category: "Room",
     date: "Oct 23, 2024",
-    amount: "$400.00",
+    amount: "Rs 400.00",
   },
   {
     id: "FOL-ITEM-004",
     description: "Club Sandwich, Orange Juice",
     category: "Room Service",
     date: "Oct 23, 2024",
-    amount: "$32.00",
+    amount: "Rs 32.00",
   },
   {
     id: "FOL-ITEM-005",
     description: "Restaurant Dinner",
     category: "Restaurant",
     date: "Oct 23, 2024",
-    amount: "$142.00",
+    amount: "Rs 142.00",
   },
   {
     id: "FOL-ITEM-006",
     description: "Parking Fee",
     category: "Parking",
     date: "Oct 24, 2024",
-    amount: "$25.00",
+    amount: "Rs 25.00",
   },
 ];
 
@@ -54,14 +54,14 @@ const paymentRows = [
     id: "PAY-1001",
     method: "Card",
     date: "Oct 24, 2024",
-    amount: "$800.00",
+    amount: "Rs 800.00",
     status: "Paid",
   },
   {
     id: "PAY-1002",
     method: "Cash",
     date: "Oct 24, 2024",
-    amount: "$0.00",
+    amount: "Rs 0.00",
     status: "Pending",
   },
 ];
@@ -142,16 +142,16 @@ export default function FolioDetailsPage() {
               <h2 className="text-2xl font-bold">Folio Summary</h2>
 
               <div className="mt-6 space-y-4">
-                <InfoRow label="Room Charges" value="$1,200.00" />
-                <InfoRow label="Service Charges" value="$199.00" />
-                <InfoRow label="Tax" value="$185.00" />
-                <InfoRow label="Paid Amount" value="$800.00" />
+                <InfoRow label="Room Charges" value="Rs 1,200.00" />
+                <InfoRow label="Service Charges" value="Rs 199.00" />
+                <InfoRow label="Tax" value="Rs 185.00" />
+                <InfoRow label="Paid Amount" value="Rs 800.00" />
               </div>
 
               <div className="mt-6 rounded-xl bg-[#735c00] p-5 text-white">
                 <div className="flex items-center justify-between">
                   <p className="text-lg font-bold">Balance Due</p>
-                  <p className="text-2xl font-extrabold">$784.00</p>
+                  <p className="text-2xl font-extrabold">Rs 784.00</p>
                 </div>
               </div>
             </div>

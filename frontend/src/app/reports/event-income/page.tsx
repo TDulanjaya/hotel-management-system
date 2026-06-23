@@ -1,10 +1,10 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const eventSummary = [
   {
     label: "Total Event Income",
-    value: "$12,400",
+    value: "Rs 12,400",
     note: "All event payments today",
   },
   {
@@ -14,12 +14,12 @@ const eventSummary = [
   },
   {
     label: "Pending Payments",
-    value: "$3,200",
+    value: "Rs 3,200",
     note: "Waiting settlement",
   },
   {
     label: "Net Event Profit",
-    value: "$5,200",
+    value: "Rs 5,200",
     note: "Income after event costs",
   },
 ];
@@ -31,9 +31,9 @@ const eventIncomeRows = [
     venue: "Grand Ballroom",
     client: "TechVibe Pvt Ltd",
     eventDate: "Oct 24, 2024",
-    income: "$12,400.00",
-    expenses: "$7,200.00",
-    profit: "$5,200.00",
+    income: "Rs 12,400.00",
+    expenses: "Rs 7,200.00",
+    profit: "Rs 5,200.00",
     status: "Paid",
   },
   {
@@ -42,9 +42,9 @@ const eventIncomeRows = [
     venue: "Terrace Gardens",
     client: "Anderson Family",
     eventDate: "Oct 26, 2024",
-    income: "$6,500.00",
-    expenses: "$3,100.00",
-    profit: "$3,400.00",
+    income: "Rs 6,500.00",
+    expenses: "Rs 3,100.00",
+    profit: "Rs 3,400.00",
     status: "Pending",
   },
   {
@@ -53,9 +53,9 @@ const eventIncomeRows = [
     venue: "Conference Hall A",
     client: "BioMed Group",
     eventDate: "Oct 28, 2024",
-    income: "$3,200.00",
-    expenses: "$1,450.00",
-    profit: "$1,750.00",
+    income: "Rs 3,200.00",
+    expenses: "Rs 1,450.00",
+    profit: "Rs 1,750.00",
     status: "Paid",
   },
   {
@@ -64,9 +64,9 @@ const eventIncomeRows = [
     venue: "Rooftop Lounge",
     client: "Velora Brands",
     eventDate: "Oct 30, 2024",
-    income: "$4,800.00",
-    expenses: "$2,200.00",
-    profit: "$2,600.00",
+    income: "Rs 4,800.00",
+    expenses: "Rs 2,200.00",
+    profit: "Rs 2,600.00",
     status: "Advance Paid",
   },
 ];
@@ -74,33 +74,33 @@ const eventIncomeRows = [
 const incomeBreakdown = [
   {
     label: "Venue Rental",
-    value: "$8,900",
+    value: "Rs 8,900",
     percent: "45%",
   },
   {
     label: "Food & Beverage",
-    value: "$6,200",
+    value: "Rs 6,200",
     percent: "31%",
   },
   {
     label: "Decorations",
-    value: "$2,400",
+    value: "Rs 2,400",
     percent: "12%",
   },
   {
     label: "Service Charges",
-    value: "$2,300",
+    value: "Rs 2,300",
     percent: "12%",
   },
 ];
 
 const monthlyEventIncome = [
-  { month: "Jan", value: "$8k", height: "42%" },
-  { month: "Feb", value: "$10k", height: "50%" },
-  { month: "Mar", value: "$14k", height: "70%" },
-  { month: "Apr", value: "$11k", height: "55%" },
-  { month: "May", value: "$18k", height: "90%" },
-  { month: "Jun", value: "$20k", height: "100%" },
+  { month: "Jan", value: "Rs 8k", height: "42%" },
+  { month: "Feb", value: "Rs 10k", height: "50%" },
+  { month: "Mar", value: "Rs 14k", height: "70%" },
+  { month: "Apr", value: "Rs 11k", height: "55%" },
+  { month: "May", value: "Rs 18k", height: "90%" },
+  { month: "Jun", value: "Rs 20k", height: "100%" },
 ];
 
 const upcomingPayments = [
@@ -108,7 +108,7 @@ const upcomingPayments = [
     id: "DUE-001",
     event: "Anderson Wedding",
     client: "Anderson Family",
-    dueAmount: "$3,200",
+    dueAmount: "Rs 3,200",
     dueDate: "Oct 25, 2024",
     status: "Due Soon",
   },
@@ -116,7 +116,7 @@ const upcomingPayments = [
     id: "DUE-002",
     event: "Luxury Product Launch",
     client: "Velora Brands",
-    dueAmount: "$2,400",
+    dueAmount: "Rs 2,400",
     dueDate: "Oct 29, 2024",
     status: "Advance Paid",
   },
@@ -124,7 +124,7 @@ const upcomingPayments = [
     id: "DUE-003",
     event: "Annual Staff Dinner",
     client: "Ceylon Foods",
-    dueAmount: "$1,800",
+    dueAmount: "Rs 1,800",
     dueDate: "Nov 02, 2024",
     status: "Pending",
   },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import {
   Search,
@@ -20,14 +20,14 @@ import {
 const summaryCards = [
   {
     title: "Total Daily Collection",
-    value: "$42,850.00",
-    note: "Yesterday: $38,200",
+    value: "Rs 42,850.00",
+    note: "Yesterday: Rs 38,200",
     icon: TrendingUp,
     type: "completed",
   },
   {
     title: "Pending Payments",
-    value: "$18,420.50",
+    value: "Rs 18,420.50",
     note: "14 outstanding folios",
     icon: Receipt,
     type: "pending",
@@ -41,7 +41,7 @@ const summaryCards = [
   },
   {
     title: "Refund Requests",
-    value: "$2,100.00",
+    value: "Rs 2,100.00",
     note: "3 require approval",
     icon: Undo2,
     type: "failed",
@@ -49,13 +49,13 @@ const summaryCards = [
 ];
 
 const chartBars = [
-  { day: "Mon", height: "60%", value: "$5.2k" },
-  { day: "Tue", height: "45%", value: "$4.1k" },
-  { day: "Wed", height: "85%", value: "$7.6k" },
-  { day: "Thu", height: "70%", value: "$6.8k" },
-  { day: "Fri", height: "100%", value: "$8.4k", active: true },
-  { day: "Sat", height: "55%", value: "$4.9k" },
-  { day: "Sun", height: "30%", value: "$2.7k" },
+  { day: "Mon", height: "60%", value: "Rs 5.2k" },
+  { day: "Tue", height: "45%", value: "Rs 4.1k" },
+  { day: "Wed", height: "85%", value: "Rs 7.6k" },
+  { day: "Thu", height: "70%", value: "Rs 6.8k" },
+  { day: "Fri", height: "100%", value: "Rs 8.4k", active: true },
+  { day: "Sat", height: "55%", value: "Rs 4.9k" },
+  { day: "Sun", height: "30%", value: "Rs 2.7k" },
 ];
 
 const payments = [
@@ -66,7 +66,7 @@ const payments = [
     methodType: "card",
     date: "Oct 24, 2024",
     time: "14:20 PM",
-    amount: "$1,250.00",
+    amount: "Rs 1,250.00",
     status: "Completed",
   },
   {
@@ -76,7 +76,7 @@ const payments = [
     methodType: "bank",
     date: "Oct 24, 2024",
     time: "11:05 AM",
-    amount: "$12,400.00",
+    amount: "Rs 12,400.00",
     status: "Pending",
   },
   {
@@ -86,7 +86,7 @@ const payments = [
     methodType: "card",
     date: "Oct 24, 2024",
     time: "09:12 AM",
-    amount: "$3,800.00",
+    amount: "Rs 3,800.00",
     status: "Failed",
   },
   {
@@ -96,7 +96,7 @@ const payments = [
     methodType: "cash",
     date: "Oct 24, 2024",
     time: "08:45 AM",
-    amount: "$450.00",
+    amount: "Rs 450.00",
     status: "Completed",
   },
 ];
@@ -291,9 +291,9 @@ export default function PaymentsPage() {
                 <h2 className="text-2xl font-bold">Payment Methods</h2>
 
                 <div className="mt-6 space-y-4">
-                  <MethodRow label="Card Payments" value="$23,200" percent="54%" />
-                  <MethodRow label="Bank Transfers" value="$14,600" percent="34%" />
-                  <MethodRow label="Cash Payments" value="$5,050" percent="12%" />
+                  <MethodRow label="Card Payments" value="Rs 23,200" percent="54%" />
+                  <MethodRow label="Bank Transfers" value="Rs 14,600" percent="34%" />
+                  <MethodRow label="Cash Payments" value="Rs 5,050" percent="12%" />
                 </div>
               </div>
             </section>
@@ -440,7 +440,7 @@ function PaymentModal({ onClose }: { onClose: () => void }) {
         <div className="grid gap-5">
           <InputBox label="Guest / Event Name" placeholder="Enter guest or event name" />
           <InputBox label="Reference" placeholder="Reservation ID, Folio ID, or Event ID" />
-          <InputBox label="Amount" placeholder="$0.00" />
+          <InputBox label="Amount" placeholder="Rs 0.00" />
 
           <div>
             <label className="text-sm font-bold text-[#4d4635]">
@@ -488,7 +488,7 @@ function RefundModal({ onClose }: { onClose: () => void }) {
 
         <div className="grid gap-5">
           <InputBox label="Transaction ID" placeholder="Enter transaction ID" />
-          <InputBox label="Refund Amount" placeholder="$0.00" />
+          <InputBox label="Refund Amount" placeholder="Rs 0.00" />
           <InputBox label="Reason" placeholder="Enter refund reason" />
         </div>
 

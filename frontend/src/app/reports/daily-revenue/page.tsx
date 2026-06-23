@@ -1,25 +1,25 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const revenueSummary = [
   {
     label: "Total Revenue",
-    value: "$42,850",
+    value: "Rs 42,850",
     note: "All departments today",
   },
   {
     label: "Room Revenue",
-    value: "$23,400",
+    value: "Rs 23,400",
     note: "Bookings and stay charges",
   },
   {
     label: "Food Sales",
-    value: "$6,240",
+    value: "Rs 6,240",
     note: "Restaurant and room service",
   },
   {
     label: "Event Income",
-    value: "$12,400",
+    value: "Rs 12,400",
     note: "Venue and event payments",
   },
 ];
@@ -30,7 +30,7 @@ const revenueRows = [
     department: "Rooms",
     source: "Room Booking",
     reference: "Res #LX-9902",
-    income: "$1,250.00",
+    income: "Rs 1,250.00",
     paymentMethod: "Card",
     time: "09:20 AM",
     status: "Completed",
@@ -40,7 +40,7 @@ const revenueRows = [
     department: "Restaurant",
     source: "Food Sales",
     reference: "Table #12",
-    income: "$320.00",
+    income: "Rs 320.00",
     paymentMethod: "Cash",
     time: "11:45 AM",
     status: "Completed",
@@ -50,7 +50,7 @@ const revenueRows = [
     department: "Events",
     source: "Grand Ballroom",
     reference: "Event #EV-0044",
-    income: "$12,400.00",
+    income: "Rs 12,400.00",
     paymentMethod: "Bank Transfer",
     time: "01:10 PM",
     status: "Pending",
@@ -60,7 +60,7 @@ const revenueRows = [
     department: "Room Service",
     source: "Room Order",
     reference: "Room 402",
-    income: "$88.00",
+    income: "Rs 88.00",
     paymentMethod: "Added to Folio",
     time: "02:35 PM",
     status: "Completed",
@@ -70,7 +70,7 @@ const revenueRows = [
     department: "Parking",
     source: "Parking Slot",
     reference: "Slot A-12",
-    income: "$25.00",
+    income: "Rs 25.00",
     paymentMethod: "Cash",
     time: "03:05 PM",
     status: "Completed",
@@ -78,12 +78,12 @@ const revenueRows = [
 ];
 
 const hourlyRevenue = [
-  { time: "08 AM", value: "$2.1k", height: "35%" },
-  { time: "10 AM", value: "$5.4k", height: "65%" },
-  { time: "12 PM", value: "$7.8k", height: "90%" },
-  { time: "02 PM", value: "$4.6k", height: "55%" },
-  { time: "04 PM", value: "$9.2k", height: "100%" },
-  { time: "06 PM", value: "$6.3k", height: "72%" },
+  { time: "08 AM", value: "Rs 2.1k", height: "35%" },
+  { time: "10 AM", value: "Rs 5.4k", height: "65%" },
+  { time: "12 PM", value: "Rs 7.8k", height: "90%" },
+  { time: "02 PM", value: "Rs 4.6k", height: "55%" },
+  { time: "04 PM", value: "Rs 9.2k", height: "100%" },
+  { time: "06 PM", value: "Rs 6.3k", height: "72%" },
 ];
 
 function getStatusClass(status: string) {
@@ -185,10 +185,10 @@ export default function DailyRevenueReportPage() {
               <h2 className="text-2xl font-bold">Revenue Breakdown</h2>
 
               <div className="mt-6 space-y-4">
-                <BreakdownRow label="Rooms" amount="$23,400" percent="55%" />
-                <BreakdownRow label="Events" amount="$12,400" percent="29%" />
-                <BreakdownRow label="Food Sales" amount="$6,240" percent="15%" />
-                <BreakdownRow label="Parking" amount="$810" percent="1%" />
+                <BreakdownRow label="Rooms" amount="Rs 23,400" percent="55%" />
+                <BreakdownRow label="Events" amount="Rs 12,400" percent="29%" />
+                <BreakdownRow label="Food Sales" amount="Rs 6,240" percent="15%" />
+                <BreakdownRow label="Parking" amount="Rs 810" percent="1%" />
               </div>
             </div>
           </section>

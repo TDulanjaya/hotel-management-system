@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const checkoutRows = [
@@ -12,7 +12,7 @@ const checkoutRows = [
     roomType: "Executive Suite",
     checkIn: "Oct 21, 2024",
     checkOut: "Oct 24, 2024",
-    total: "$1,638.00",
+    total: "Rs 1,638.00",
     status: "Ready",
   },
   {
@@ -22,7 +22,7 @@ const checkoutRows = [
     roomType: "Deluxe Room",
     checkIn: "Oct 22, 2024",
     checkOut: "Oct 24, 2024",
-    total: "$920.00",
+    total: "Rs 920.00",
     status: "Pending Payment",
   },
   {
@@ -32,7 +32,7 @@ const checkoutRows = [
     roomType: "Standard Room",
     checkIn: "Oct 23, 2024",
     checkOut: "Oct 24, 2024",
-    total: "$450.00",
+    total: "Rs 450.00",
     status: "Completed",
   },
 ];

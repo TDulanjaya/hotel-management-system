@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 export default function NewParkingBookingPage() {
@@ -113,7 +113,7 @@ export default function NewParkingBookingPage() {
 
                 <InputField label="Room Number" placeholder="Optional: Room 402" />
 
-                <InputField label="Amount" placeholder="Example: $25.00" />
+                <InputField label="Amount" placeholder="Example: Rs 25.00" />
 
                 <div>
                   <label className="text-sm font-bold text-[#4d4635]">

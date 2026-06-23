@@ -1,4 +1,4 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const sessions = [
@@ -10,7 +10,7 @@ const sessions = [
     startTime: "10:30 AM",
     duration: "02:15:20",
     status: "Active",
-    amount: "$42.00",
+    amount: "Rs 42.00",
   },
   {
     id: "SES-3002",
@@ -20,7 +20,7 @@ const sessions = [
     startTime: "09:10 AM",
     duration: "03:05:42",
     status: "Overdue",
-    amount: "$75.00",
+    amount: "Rs 75.00",
   },
   {
     id: "SES-3003",
@@ -30,7 +30,7 @@ const sessions = [
     startTime: "Yesterday",
     duration: "02:00:00",
     status: "Completed",
-    amount: "$80.00",
+    amount: "Rs 80.00",
   },
 ];
 

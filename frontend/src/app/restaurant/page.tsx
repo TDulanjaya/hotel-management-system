@@ -1,5 +1,5 @@
 import Link from "next/link";
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { ClipboardList, CalendarDays, Table2, Utensils } from "lucide-react";
 

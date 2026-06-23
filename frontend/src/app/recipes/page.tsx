@@ -1,4 +1,4 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const recipes = [
@@ -8,7 +8,7 @@ const recipes = [
     category: "Main Course",
     serving: "4 Plates",
     time: "35 mins",
-    cost: "$18.50",
+    cost: "Rs 18.50",
     status: "Active",
   },
   {
@@ -17,7 +17,7 @@ const recipes = [
     category: "Main Course",
     serving: "2 Plates",
     time: "25 mins",
-    cost: "$24.00",
+    cost: "Rs 24.00",
     status: "Active",
   },
   {
@@ -26,7 +26,7 @@ const recipes = [
     category: "Dessert",
     serving: "6 Plates",
     time: "45 mins",
-    cost: "$12.75",
+    cost: "Rs 12.75",
     status: "Active",
   },
   {
@@ -35,7 +35,7 @@ const recipes = [
     category: "Starter",
     serving: "3 Plates",
     time: "15 mins",
-    cost: "$8.20",
+    cost: "Rs 8.20",
     status: "Seasonal",
   },
 ];

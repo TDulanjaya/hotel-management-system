@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 export default function EditRecipePage() {
@@ -71,7 +71,7 @@ export default function EditRecipePage() {
 
                 <InputField label="Preparation Time" defaultValue="35 minutes" />
 
-                <InputField label="Estimated Cost" defaultValue="$18.50" />
+                <InputField label="Estimated Cost" defaultValue="Rs 18.50" />
               </div>
             </div>
 

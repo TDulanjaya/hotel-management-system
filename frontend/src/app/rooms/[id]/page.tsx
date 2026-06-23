@@ -36,7 +36,7 @@ export default function RoomDetailsPage() {
         </p>
 
         <p>
-          <strong>Price:</strong> $250 per night
+          <strong>Price:</strong> Rs 250 per night
         </p>
 
         <button

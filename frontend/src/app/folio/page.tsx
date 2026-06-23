@@ -1,4 +1,4 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const folios = [
@@ -6,30 +6,30 @@ const folios = [
     id: "FOL-1001",
     guest: "Mr. Alexander Thorne",
     room: "Room 215",
-    roomCharge: "$840.00",
-    foodCharge: "$120.00",
-    serviceCharge: "$45.00",
-    total: "$1,005.00",
+    roomCharge: "Rs 840.00",
+    foodCharge: "Rs 120.00",
+    serviceCharge: "Rs 45.00",
+    total: "Rs 1,005.00",
     status: "Open",
   },
   {
     id: "FOL-1002",
     guest: "Ms. Helena Thorne",
     room: "Room 308",
-    roomCharge: "$900.00",
-    foodCharge: "$85.00",
-    serviceCharge: "$35.00",
-    total: "$1,020.00",
+    roomCharge: "Rs 900.00",
+    foodCharge: "Rs 85.00",
+    serviceCharge: "Rs 35.00",
+    total: "Rs 1,020.00",
     status: "Pending",
   },
   {
     id: "FOL-1003",
     guest: "Mr. Marcus Kane",
     room: "Suite 402",
-    roomCharge: "$3,750.00",
-    foodCharge: "$420.00",
-    serviceCharge: "$180.00",
-    total: "$4,350.00",
+    roomCharge: "Rs 3,750.00",
+    foodCharge: "Rs 420.00",
+    serviceCharge: "Rs 180.00",
+    total: "Rs 4,350.00",
     status: "Paid",
   },
 ];
@@ -78,7 +78,7 @@ export default function FolioPage() {
             <StatCard label="Open Folios" value="1" />
             <StatCard label="Pending Bills" value="1" />
             <StatCard label="Paid Folios" value="1" />
-            <StatCard label="Total Revenue" value="$6,375" />
+            <StatCard label="Total Revenue" value="Rs 6,375" />
           </section>
 
           <section className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">
@@ -160,19 +160,19 @@ export default function FolioPage() {
           <section className="mt-8 grid gap-6 xl:grid-cols-3">
             <BillingCard
               title="Room Charges"
-              amount="$5,490.00"
+              amount="Rs 5,490.00"
               text="Room stay charges from active and completed bookings."
             />
 
             <BillingCard
               title="Food & Beverage"
-              amount="$625.00"
+              amount="Rs 625.00"
               text="Restaurant, room service, minibar, and kitchen orders."
             />
 
             <BillingCard
               title="Service Charges"
-              amount="$260.00"
+              amount="Rs 260.00"
               text="Cleaning, laundry, extra services, and hotel fees."
             />
           </section>

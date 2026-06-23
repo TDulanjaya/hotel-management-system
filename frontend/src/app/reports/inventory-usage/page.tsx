@@ -1,4 +1,4 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const usageSummary = [
@@ -9,7 +9,7 @@ const usageSummary = [
   },
   {
     label: "Usage Cost",
-    value: "$2,840",
+    value: "Rs 2,840",
     note: "Estimated inventory cost",
   },
   {
@@ -31,8 +31,8 @@ const usageRows = [
     category: "Kitchen",
     department: "Kitchen",
     usedQty: "18 kg",
-    unitCost: "$4.20",
-    totalCost: "$75.60",
+    unitCost: "Rs 4.20",
+    totalCost: "Rs 75.60",
     date: "Oct 24, 2024",
     status: "Issued",
   },
@@ -42,8 +42,8 @@ const usageRows = [
     category: "Housekeeping",
     department: "Housekeeping",
     usedQty: "24 pcs",
-    unitCost: "$8.50",
-    totalCost: "$204.00",
+    unitCost: "Rs 8.50",
+    totalCost: "Rs 204.00",
     date: "Oct 24, 2024",
     status: "Issued",
   },
@@ -53,8 +53,8 @@ const usageRows = [
     category: "Restaurant",
     department: "Restaurant",
     usedQty: "96 bottles",
-    unitCost: "$0.60",
-    totalCost: "$57.60",
+    unitCost: "Rs 0.60",
+    totalCost: "Rs 57.60",
     date: "Oct 24, 2024",
     status: "Issued",
   },
@@ -64,8 +64,8 @@ const usageRows = [
     category: "Amenities",
     department: "Rooms",
     usedQty: "34 sets",
-    unitCost: "$2.10",
-    totalCost: "$71.40",
+    unitCost: "Rs 2.10",
+    totalCost: "Rs 71.40",
     date: "Oct 24, 2024",
     status: "Low Balance",
   },
@@ -75,8 +75,8 @@ const usageRows = [
     category: "Housekeeping",
     department: "Housekeeping",
     usedQty: "12 liters",
-    unitCost: "$3.80",
-    totalCost: "$45.60",
+    unitCost: "Rs 3.80",
+    totalCost: "Rs 45.60",
     date: "Oct 24, 2024",
     status: "Issued",
   },
@@ -85,34 +85,34 @@ const usageRows = [
 const departmentUsage = [
   {
     label: "Kitchen",
-    value: "$1,180",
+    value: "Rs 1,180",
     percent: "42%",
   },
   {
     label: "Housekeeping",
-    value: "$820",
+    value: "Rs 820",
     percent: "29%",
   },
   {
     label: "Restaurant",
-    value: "$540",
+    value: "Rs 540",
     percent: "19%",
   },
   {
     label: "Rooms",
-    value: "$300",
+    value: "Rs 300",
     percent: "10%",
   },
 ];
 
 const dailyUsage = [
-  { day: "Mon", value: "$1.2k", height: "45%" },
-  { day: "Tue", value: "$1.6k", height: "58%" },
-  { day: "Wed", value: "$2.4k", height: "88%" },
-  { day: "Thu", value: "$2.1k", height: "76%" },
-  { day: "Fri", value: "$2.8k", height: "100%" },
-  { day: "Sat", value: "$1.9k", height: "68%" },
-  { day: "Sun", value: "$1.3k", height: "48%" },
+  { day: "Mon", value: "Rs 1.2k", height: "45%" },
+  { day: "Tue", value: "Rs 1.6k", height: "58%" },
+  { day: "Wed", value: "Rs 2.4k", height: "88%" },
+  { day: "Thu", value: "Rs 2.1k", height: "76%" },
+  { day: "Fri", value: "Rs 2.8k", height: "100%" },
+  { day: "Sat", value: "Rs 1.9k", height: "68%" },
+  { day: "Sun", value: "Rs 1.3k", height: "48%" },
 ];
 
 const reorderAlerts = [

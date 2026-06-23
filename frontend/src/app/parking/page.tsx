@@ -1,4 +1,4 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const parkingSlots = [
@@ -10,7 +10,7 @@ const parkingSlots = [
     room: "Room 204",
     slot: "A-12",
     status: "Occupied",
-    fee: "$8.00",
+    fee: "Rs 8.00",
   },
   {
     id: "P-002",
@@ -20,7 +20,7 @@ const parkingSlots = [
     room: "Room 310",
     slot: "A-18",
     status: "Occupied",
-    fee: "$8.00",
+    fee: "Rs 8.00",
   },
   {
     id: "P-003",
@@ -30,7 +30,7 @@ const parkingSlots = [
     room: "-",
     slot: "B-04",
     status: "Available",
-    fee: "$0.00",
+    fee: "Rs 0.00",
   },
   {
     id: "P-004",
@@ -40,7 +40,7 @@ const parkingSlots = [
     room: "-",
     slot: "B-09",
     status: "Reserved",
-    fee: "$5.00",
+    fee: "Rs 5.00",
   },
 ];
 
@@ -88,7 +88,7 @@ export default function ParkingPage() {
             <StatCard label="Total Slots" value="40" />
             <StatCard label="Occupied" value="18" />
             <StatCard label="Available" value="22" />
-            <StatCard label="Today Income" value="$144" />
+            <StatCard label="Today Income" value="Rs 144" />
           </section>
 
           <section className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">

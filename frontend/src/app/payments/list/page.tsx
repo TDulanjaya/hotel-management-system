@@ -1,4 +1,4 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const payments = [
@@ -10,7 +10,7 @@ const payments = [
     method: "Visa **** 4421",
     date: "Oct 24, 2024",
     time: "14:20 PM",
-    amount: "$1,250.00",
+    amount: "Rs 1,250.00",
     status: "Completed",
   },
   {
@@ -21,7 +21,7 @@ const payments = [
     method: "Bank Transfer",
     date: "Oct 24, 2024",
     time: "11:05 AM",
-    amount: "$12,400.00",
+    amount: "Rs 12,400.00",
     status: "Pending",
   },
   {
@@ -32,7 +32,7 @@ const payments = [
     method: "Amex **** 1002",
     date: "Oct 24, 2024",
     time: "09:12 AM",
-    amount: "$3,800.00",
+    amount: "Rs 3,800.00",
     status: "Failed",
   },
   {
@@ -43,7 +43,7 @@ const payments = [
     method: "Cash",
     date: "Oct 24, 2024",
     time: "08:45 AM",
-    amount: "$450.00",
+    amount: "Rs 450.00",
     status: "Completed",
   },
   {
@@ -54,7 +54,7 @@ const payments = [
     method: "Added to Folio",
     date: "Oct 24, 2024",
     time: "07:40 AM",
-    amount: "$32.00",
+    amount: "Rs 32.00",
     status: "Completed",
   },
 ];

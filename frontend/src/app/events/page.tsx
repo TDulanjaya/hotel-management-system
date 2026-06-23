@@ -1,6 +1,6 @@
 "use client";
 
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Link from "next/link";
 

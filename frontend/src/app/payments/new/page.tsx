@@ -1,4 +1,4 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 export default function NewPaymentPage() {
@@ -84,7 +84,7 @@ export default function NewPaymentPage() {
                   </label>
                   <input
                     type="text"
-                    placeholder="$0.00"
+                    placeholder="Rs 0.00"
                     className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
                   />
                 </div>
@@ -141,10 +141,10 @@ export default function NewPaymentPage() {
                 <h2 className="text-2xl font-bold">Payment Summary</h2>
 
                 <div className="mt-6 space-y-4">
-                  <SummaryRow label="Subtotal" value="$0.00" />
-                  <SummaryRow label="Tax" value="$0.00" />
-                  <SummaryRow label="Service Charge" value="$0.00" />
-                  <SummaryRow label="Total Payment" value="$0.00" highlight />
+                  <SummaryRow label="Subtotal" value="Rs 0.00" />
+                  <SummaryRow label="Tax" value="Rs 0.00" />
+                  <SummaryRow label="Service Charge" value="Rs 0.00" />
+                  <SummaryRow label="Total Payment" value="Rs 0.00" highlight />
                 </div>
               </section>
 

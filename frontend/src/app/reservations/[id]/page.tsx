@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 export default function ReservationDetailsPage() {
@@ -43,7 +43,7 @@ export default function ReservationDetailsPage() {
             <StatCard label="Reservation ID" value={reservationId || "N/A"} />
             <StatCard label="Status" value="Confirmed" />
             <StatCard label="Room" value="Deluxe 402" />
-            <StatCard label="Total" value="$860.00" />
+            <StatCard label="Total" value="Rs 860.00" />
           </section>
 
           <section className="grid gap-8 xl:grid-cols-[1fr_1fr]">
@@ -75,10 +75,10 @@ export default function ReservationDetailsPage() {
               <h2 className="text-2xl font-bold">Payment Details</h2>
 
               <div className="mt-6 space-y-4">
-                <DetailRow label="Room Charge" value="$750.00" />
-                <DetailRow label="Service Charge" value="$75.00" />
-                <DetailRow label="Tax" value="$35.00" />
-                <DetailRow label="Total Amount" value="$860.00" />
+                <DetailRow label="Room Charge" value="Rs 750.00" />
+                <DetailRow label="Service Charge" value="Rs 75.00" />
+                <DetailRow label="Tax" value="Rs 35.00" />
+                <DetailRow label="Total Amount" value="Rs 860.00" />
                 <DetailRow label="Payment Status" value="Paid" />
               </div>
             </div>

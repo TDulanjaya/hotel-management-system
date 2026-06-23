@@ -1,4 +1,4 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const lowStockSummary = [
@@ -19,7 +19,7 @@ const lowStockSummary = [
   },
   {
     label: "Estimated Cost",
-    value: "$3,850",
+    value: "Rs 3,850",
     note: "Reorder budget needed",
   },
 ];
@@ -99,7 +99,7 @@ const purchaseRequests = [
     item: "Room Shampoo Set",
     requestedBy: "Housekeeping",
     quantity: "250 sets",
-    estimatedCost: "$1,250",
+    estimatedCost: "Rs 1,250",
     status: "Urgent",
   },
   {
@@ -107,7 +107,7 @@ const purchaseRequests = [
     item: "Basmati Rice",
     requestedBy: "Kitchen",
     quantity: "100 kg",
-    estimatedCost: "$420",
+    estimatedCost: "Rs 420",
     status: "Pending Approval",
   },
   {
@@ -115,7 +115,7 @@ const purchaseRequests = [
     item: "Premium Coffee Beans",
     requestedBy: "Restaurant",
     quantity: "40 kg",
-    estimatedCost: "$680",
+    estimatedCost: "Rs 680",
     status: "Approved",
   },
 ];

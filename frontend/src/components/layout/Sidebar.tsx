@@ -22,12 +22,14 @@ const menuItems = [
   { name: "Event List", href: "/events/list", icon: "▤" },
   { name: "New Event", href: "/events/new", icon: "+" },
   { name: "Event Ledger", href: "/events/ledger", icon: "▥" },
-  { name: "Split Billing", href: "/events/split-billing", icon: "$" },
+  { name: "Split Billing", href: "/events/split-billing", icon: "Rs" },
 
   { name: "Games & Amenities", href: "/games", icon: "◇" },
   { name: "Venues", href: "/venues", icon: "▥" },
 
-  { name: "Payments", href: "/payments", icon: "$" },
+  { name: "Service Pricing", href: "/pricing", icon: "₨" },
+
+  { name: "Payments", href: "/payments", icon: "Rs" },
   { name: "Reports", href: "/reports", icon: "▨" },
   { name: "Audit Logs", href: "/audit-logs", icon: "☷" },
 
@@ -89,10 +91,10 @@ export default function AppSidebar() {
         </button>
 
         <Link
-          href="/events/new"
+          href="/pricing/new"
           className="block w-full rounded-xl bg-[#d8b328] px-5 py-4 text-center text-lg font-bold text-[#4c3a00] transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl"
         >
-          New Event
+          Add Price Item
         </Link>
 
         <button

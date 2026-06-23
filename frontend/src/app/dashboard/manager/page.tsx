@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import {
   Search,
   HelpCircle,
@@ -43,13 +43,13 @@ const snapshotCards = [
   },
   {
     title: "Projected RevPAR",
-    value: "$288",
+    value: "Rs 288",
     note: "High Demand",
     icon: TrendingUp,
   },
   {
     title: "Daily Revenue",
-    value: "$14.2k",
+    value: "Rs 14.2k",
     note: "78%",
     icon: DollarSign,
   },
@@ -59,19 +59,19 @@ const approvalRequests = [
   {
     title: "Alex Thompson",
     requestedBy: "Requested by Agent Sarah M.",
-    detail: "Room 402 • 15% VIP Loyalty Discount • Total: $1,240.00",
+    detail: "Room 402 • 15% VIP Loyalty Discount • Total: Rs 1,240.00",
     icon: UserSearch,
   },
   {
     title: "Jameson Wedding Block",
     requestedBy: "Requested by Sales Director",
-    detail: "12 Rooms • $500/night flat rate authorization",
+    detail: "12 Rooms • Rs 500/night flat rate authorization",
     icon: Siren,
   },
   {
     title: "Refund: Clara Oswald",
     requestedBy: "Requested by Front Desk",
-    detail: "Maintenance Credit • -$45.00 for AC issues",
+    detail: "Maintenance Credit • -Rs 45.00 for AC issues",
     icon: History,
   },
 ];
@@ -94,9 +94,9 @@ const complaints = [
 ];
 
 const revenueItems = [
-  { label: "Rooms Revenue", value: "$294,200" },
-  { label: "Food & Beverage", value: "$98,400" },
-  { label: "Ancillary Services", value: "$27,400" },
+  { label: "Rooms Revenue", value: "Rs 294,200" },
+  { label: "Food & Beverage", value: "Rs 98,400" },
+  { label: "Ancillary Services", value: "Rs 27,400" },
 ];
 
 const staffActivities = [
@@ -386,7 +386,7 @@ export default function ManagerDashboardPage() {
                       <span className="text-sm font-semibold text-[#4d4635]">
                         Monthly Target
                       </span>
-                      <span className="font-bold">$420k / $500k</span>
+                      <span className="font-bold">Rs 420k / Rs 500k</span>
                     </div>
 
                     <div className="h-4 w-full overflow-hidden rounded-full bg-[#e4e2de]">

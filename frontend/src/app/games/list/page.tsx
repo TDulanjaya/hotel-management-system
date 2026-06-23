@@ -1,4 +1,4 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const games = [
@@ -8,7 +8,7 @@ const games = [
     type: "Billiards",
     location: "Recreation Floor",
     status: "Occupied",
-    hourlyRate: "$18.00",
+    hourlyRate: "Rs 18.00",
   },
   {
     id: "GM-002",
@@ -16,7 +16,7 @@ const games = [
     type: "Console Gaming",
     location: "Level 03",
     status: "Overdue",
-    hourlyRate: "$25.00",
+    hourlyRate: "Rs 25.00",
   },
   {
     id: "GM-003",
@@ -24,7 +24,7 @@ const games = [
     type: "Private Cinema",
     location: "Rooftop Zone",
     status: "Available",
-    hourlyRate: "$40.00",
+    hourlyRate: "Rs 40.00",
   },
   {
     id: "GM-004",
@@ -32,7 +32,7 @@ const games = [
     type: "Indoor Sport",
     location: "Recreation Floor",
     status: "Available",
-    hourlyRate: "$12.00",
+    hourlyRate: "Rs 12.00",
   },
 ];
 

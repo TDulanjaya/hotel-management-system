@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 export default function EditInventoryItemPage() {
@@ -85,7 +85,7 @@ export default function EditInventoryItemPage() {
 
                 <InputField label="Reorder Quantity" type="number" defaultValue="100" />
 
-                <InputField label="Unit Cost" defaultValue="$4.20" />
+                <InputField label="Unit Cost" defaultValue="Rs 4.20" />
 
                 <div>
                   <label className="text-sm font-bold text-[#4d4635]">

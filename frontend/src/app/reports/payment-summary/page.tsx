@@ -1,25 +1,25 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const paymentSummary = [
   {
     label: "Total Payments",
-    value: "$42,850",
+    value: "Rs 42,850",
     note: "All payment collections",
   },
   {
     label: "Completed",
-    value: "$31,420",
+    value: "Rs 31,420",
     note: "Successfully settled",
   },
   {
     label: "Pending",
-    value: "$9,330",
+    value: "Rs 9,330",
     note: "Waiting confirmation",
   },
   {
     label: "Refunds",
-    value: "$2,100",
+    value: "Rs 2,100",
     note: "Refund requests today",
   },
 ];
@@ -27,19 +27,19 @@ const paymentSummary = [
 const paymentMethods = [
   {
     method: "Card Payments",
-    amount: "$23,200",
+    amount: "Rs 23,200",
     count: 32,
     percent: "54%",
   },
   {
     method: "Bank Transfers",
-    amount: "$14,600",
+    amount: "Rs 14,600",
     count: 8,
     percent: "34%",
   },
   {
     method: "Cash Payments",
-    amount: "$5,050",
+    amount: "Rs 5,050",
     count: 18,
     percent: "12%",
   },
@@ -52,7 +52,7 @@ const paymentRows = [
     reference: "Res #LX-9902",
     module: "Room Booking",
     method: "Card",
-    amount: "$1,250.00",
+    amount: "Rs 1,250.00",
     date: "Oct 24, 2024",
     status: "Completed",
   },
@@ -62,7 +62,7 @@ const paymentRows = [
     reference: "Event #EV-0044",
     module: "Events",
     method: "Bank Transfer",
-    amount: "$12,400.00",
+    amount: "Rs 12,400.00",
     date: "Oct 24, 2024",
     status: "Pending",
   },
@@ -72,7 +72,7 @@ const paymentRows = [
     reference: "Res #LX-9871",
     module: "Room Booking",
     method: "Card",
-    amount: "$3,800.00",
+    amount: "Rs 3,800.00",
     date: "Oct 24, 2024",
     status: "Failed",
   },
@@ -82,7 +82,7 @@ const paymentRows = [
     reference: "Folio #FOL-1004",
     module: "Folio",
     method: "Cash",
-    amount: "$450.00",
+    amount: "Rs 450.00",
     date: "Oct 24, 2024",
     status: "Completed",
   },
@@ -92,7 +92,7 @@ const paymentRows = [
     reference: "RS #1001",
     module: "Room Service",
     method: "Added to Folio",
-    amount: "$32.00",
+    amount: "Rs 32.00",
     date: "Oct 24, 2024",
     status: "Completed",
   },
@@ -103,7 +103,7 @@ const refundRows = [
     id: "REF-001",
     guest: "Daniel Smith",
     reference: "PAY-0988",
-    amount: "$750.00",
+    amount: "Rs 750.00",
     reason: "Booking cancellation",
     status: "Pending Approval",
   },
@@ -111,7 +111,7 @@ const refundRows = [
     id: "REF-002",
     guest: "Sarah Redford",
     reference: "PAY-0991",
-    amount: "$1,100.00",
+    amount: "Rs 1,100.00",
     reason: "Duplicate payment",
     status: "Approved",
   },
@@ -119,7 +119,7 @@ const refundRows = [
     id: "REF-003",
     guest: "Walk-in Guest",
     reference: "PAY-0994",
-    amount: "$250.00",
+    amount: "Rs 250.00",
     reason: "Service adjustment",
     status: "Processing",
   },
@@ -210,11 +210,11 @@ export default function PaymentSummaryReportPage() {
               <h2 className="text-2xl font-bold">Settlement Overview</h2>
 
               <div className="mt-6 space-y-4">
-                <SummaryRow label="Completed Payments" value="$31,420" />
-                <SummaryRow label="Pending Payments" value="$9,330" />
-                <SummaryRow label="Failed Payments" value="$3,800" />
-                <SummaryRow label="Refund Requests" value="$2,100" />
-                <SummaryRow label="Net Collection" value="$40,750" highlight />
+                <SummaryRow label="Completed Payments" value="Rs 31,420" />
+                <SummaryRow label="Pending Payments" value="Rs 9,330" />
+                <SummaryRow label="Failed Payments" value="Rs 3,800" />
+                <SummaryRow label="Refund Requests" value="Rs 2,100" />
+                <SummaryRow label="Net Collection" value="Rs 40,750" highlight />
               </div>
             </div>
           </section>

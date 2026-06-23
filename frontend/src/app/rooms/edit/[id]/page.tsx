@@ -27,7 +27,7 @@ export default function EditRoomPage() {
 
         <input defaultValue="Deluxe Room" placeholder="Room type" style={{ padding: "12px" }} />
 
-        <input defaultValue="$250" placeholder="Price per night" style={{ padding: "12px" }} />
+        <input defaultValue="Rs 250" placeholder="Price per night" style={{ padding: "12px" }} />
 
         <select defaultValue="Available" style={{ padding: "12px" }}>
           <option>Available</option>

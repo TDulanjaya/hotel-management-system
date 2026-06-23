@@ -1,5 +1,5 @@
 import Link from "next/link";
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: "▦" },
@@ -39,7 +39,7 @@ const activities = [
   },
   {
     title: "Folio Settlement: Event ID #4920",
-    description: "Global Tech Symposium final balance of $4,500 settled via Wire Transfer.",
+    description: "Global Tech Symposium final balance of Rs 4,500 settled via Wire Transfer.",
     time: "09:15 AM",
     icon: "↔",
   },
@@ -132,7 +132,7 @@ export default function DashboardPage() {
                 Daily Revenue
               </p>
               <h3 className="mt-2 text-3xl font-extrabold text-[#8a6b00]">
-                $12,450
+                Rs 12,450
               </h3>
               <p className="mt-1 text-sm font-semibold text-green-600">
                 ↗ +8.4%
@@ -280,7 +280,7 @@ export default function DashboardPage() {
                     <p className="text-[10px] font-bold uppercase tracking-wider text-[#57534e]">
                       Total
                     </p>
-                    <strong className="mt-2 text-2xl">$12.4k</strong>
+                    <strong className="mt-2 text-2xl">Rs 12.4k</strong>
                   </div>
                 </div>
 

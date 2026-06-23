@@ -1,4 +1,4 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const reservations = [
@@ -10,7 +10,7 @@ const reservations = [
     checkOut: "Oct 15, 2024",
     guests: 2,
     status: "Confirmed",
-    amount: "$3,750",
+    amount: "Rs 3,750",
   },
   {
     id: "RSV-1002",
@@ -20,7 +20,7 @@ const reservations = [
     checkOut: "Oct 16, 2024",
     guests: 1,
     status: "Pending",
-    amount: "$900",
+    amount: "Rs 900",
   },
   {
     id: "RSV-1003",
@@ -30,7 +30,7 @@ const reservations = [
     checkOut: "Oct 13, 2024",
     guests: 3,
     status: "Checked In",
-    amount: "$840",
+    amount: "Rs 840",
   },
   {
     id: "RSV-1004",
@@ -40,7 +40,7 @@ const reservations = [
     checkOut: "Oct 21, 2024",
     guests: 2,
     status: "Cancelled",
-    amount: "$0",
+    amount: "Rs 0",
   },
 ];
 

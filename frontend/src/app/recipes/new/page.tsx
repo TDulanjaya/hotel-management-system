@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 export default function NewRecipePage() {
@@ -66,7 +66,7 @@ export default function NewRecipePage() {
                   placeholder="Example: 35 minutes"
                 />
 
-                <InputField label="Estimated Cost" placeholder="Example: $18.50" />
+                <InputField label="Estimated Cost" placeholder="Example: Rs 18.50" />
 
                 <div>
                   <label className="text-sm font-bold text-[#4d4635]">

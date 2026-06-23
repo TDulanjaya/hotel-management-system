@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 export default function EditReservationPage() {
@@ -43,7 +43,7 @@ export default function EditReservationPage() {
             <StatCard label="Reservation ID" value={reservationId || "N/A"} />
             <StatCard label="Current Status" value="Confirmed" />
             <StatCard label="Room" value="402" />
-            <StatCard label="Total" value="$860.00" />
+            <StatCard label="Total" value="Rs 860.00" />
           </section>
 
           <section className="grid gap-8 xl:grid-cols-[1fr_1fr]">
@@ -128,10 +128,10 @@ export default function EditReservationPage() {
               <h2 className="text-2xl font-bold">Payment Details</h2>
 
               <div className="mt-6 space-y-5">
-                <InputField label="Room Charge" defaultValue="$750.00" />
-                <InputField label="Service Charge" defaultValue="$75.00" />
-                <InputField label="Tax" defaultValue="$35.00" />
-                <InputField label="Total Amount" defaultValue="$860.00" />
+                <InputField label="Room Charge" defaultValue="Rs 750.00" />
+                <InputField label="Service Charge" defaultValue="Rs 75.00" />
+                <InputField label="Tax" defaultValue="Rs 35.00" />
+                <InputField label="Total Amount" defaultValue="Rs 860.00" />
 
                 <div>
                   <label className="text-sm font-bold text-[#4d4635]">

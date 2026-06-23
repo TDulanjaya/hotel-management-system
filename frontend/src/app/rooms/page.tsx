@@ -1,4 +1,4 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const roomTypes = ["All Rooms", "Suite", "Deluxe", "Standard"];
@@ -19,7 +19,7 @@ const rooms = [
     status: "AVAILABLE",
     statusColor: "green",
     note: "Inspected",
-    price: "$1,250",
+    price: "Rs 1,250",
     buttons: ["View Details", "Quick Book"],
   },
   {
@@ -30,7 +30,7 @@ const rooms = [
     status: "CLEANING",
     statusColor: "yellow",
     note: "In Progress - 15m left",
-    price: "$450",
+    price: "Rs 450",
     buttons: ["View Details", "Locked"],
   },
   {
@@ -41,7 +41,7 @@ const rooms = [
     status: "OCCUPIED",
     statusColor: "red",
     note: "Guest: Mr. Alexander Thorne",
-    price: "$280",
+    price: "Rs 280",
     buttons: ["Guest Folio", "Service Req."],
   },
   {
@@ -52,7 +52,7 @@ const rooms = [
     status: "MAINTENANCE",
     statusColor: "gray",
     note: "AC Repair Required",
-    price: "$950",
+    price: "Rs 950",
     buttons: ["Work Order", "Blocked"],
   },
   {
@@ -63,7 +63,7 @@ const rooms = [
     status: "AVAILABLE",
     statusColor: "green",
     note: "Ready for Check-in",
-    price: "$680",
+    price: "Rs 680",
     buttons: ["View Details", "Quick Book"],
   },
 ];

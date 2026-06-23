@@ -1,4 +1,4 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Link from "next/link";
 
@@ -7,7 +7,7 @@ const reports = [
     title: "Daily Revenue",
     href: "/reports/daily-revenue",
     category: "Finance",
-    value: "$42,850",
+    value: "Rs 42,850",
     note: "Today collection and revenue breakdown.",
     icon: "$",
   },
@@ -15,7 +15,7 @@ const reports = [
     title: "Net Profit",
     href: "/reports/net-profit",
     category: "Finance",
-    value: "$18,920",
+    value: "Rs 18,920",
     note: "Revenue minus expenses and operating cost.",
     icon: "↗",
   },
@@ -39,7 +39,7 @@ const reports = [
     title: "Payment Summary",
     href: "/reports/payment-summary",
     category: "Payments",
-    value: "$42,850",
+    value: "Rs 42,850",
     note: "Card, cash, bank, and online payments.",
     icon: "▤",
   },
@@ -47,7 +47,7 @@ const reports = [
     title: "Event Income",
     href: "/reports/event-income",
     category: "Events",
-    value: "$12,400",
+    value: "Rs 12,400",
     note: "Event bookings and venue income.",
     icon: "▣",
   },
@@ -55,7 +55,7 @@ const reports = [
     title: "Food Sales",
     href: "/reports/food-sales",
     category: "Restaurant",
-    value: "$6,240",
+    value: "Rs 6,240",
     note: "Restaurant and room service sales.",
     icon: "🍽",
   },
@@ -63,7 +63,7 @@ const reports = [
     title: "Parking Income",
     href: "/reports/parking-income",
     category: "Parking",
-    value: "$780",
+    value: "Rs 780",
     note: "Parking slot usage and income.",
     icon: "P",
   },
@@ -88,7 +88,7 @@ const reports = [
 const quickStats = [
   {
     label: "Today Revenue",
-    value: "$42,850",
+    value: "Rs 42,850",
   },
   {
     label: "Occupancy Rate",
@@ -96,7 +96,7 @@ const quickStats = [
   },
   {
     label: "Pending Payments",
-    value: "$18,420",
+    value: "Rs 18,420",
   },
   {
     label: "Low Stock Items",

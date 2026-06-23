@@ -1,10 +1,10 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const parkingSummary = [
   {
     label: "Total Parking Income",
-    value: "$780",
+    value: "Rs 780",
     note: "Today parking collection",
   },
   {
@@ -19,7 +19,7 @@ const parkingSummary = [
   },
   {
     label: "Vehicle Services",
-    value: "$240",
+    value: "Rs 240",
     note: "Wash and valet income",
   },
 ];
@@ -34,7 +34,7 @@ const parkingRows = [
     service: "Parking Only",
     checkIn: "08:20 AM",
     checkOut: "02:15 PM",
-    amount: "$25.00",
+    amount: "Rs 25.00",
     status: "Paid",
   },
   {
@@ -46,7 +46,7 @@ const parkingRows = [
     service: "Parking + Wash",
     checkIn: "09:10 AM",
     checkOut: "03:30 PM",
-    amount: "$45.00",
+    amount: "Rs 45.00",
     status: "Paid",
   },
   {
@@ -58,7 +58,7 @@ const parkingRows = [
     service: "Parking Only",
     checkIn: "10:45 AM",
     checkOut: "-",
-    amount: "$15.00",
+    amount: "Rs 15.00",
     status: "Pending",
   },
   {
@@ -70,7 +70,7 @@ const parkingRows = [
     service: "Valet Service",
     checkIn: "11:30 AM",
     checkOut: "04:20 PM",
-    amount: "$60.00",
+    amount: "Rs 60.00",
     status: "Paid",
   },
   {
@@ -82,7 +82,7 @@ const parkingRows = [
     service: "Event Parking",
     checkIn: "01:00 PM",
     checkOut: "-",
-    amount: "$20.00",
+    amount: "Rs 20.00",
     status: "Pending",
   },
 ];
@@ -90,33 +90,33 @@ const parkingRows = [
 const serviceBreakdown = [
   {
     label: "Parking Only",
-    value: "$420",
+    value: "Rs 420",
     percent: "54%",
   },
   {
     label: "Valet Service",
-    value: "$180",
+    value: "Rs 180",
     percent: "23%",
   },
   {
     label: "Vehicle Wash",
-    value: "$120",
+    value: "Rs 120",
     percent: "15%",
   },
   {
     label: "Event Parking",
-    value: "$60",
+    value: "Rs 60",
     percent: "8%",
   },
 ];
 
 const hourlyIncome = [
-  { time: "08 AM", value: "$90", height: "45%" },
-  { time: "10 AM", value: "$140", height: "70%" },
-  { time: "12 PM", value: "$160", height: "80%" },
-  { time: "02 PM", value: "$200", height: "100%" },
-  { time: "04 PM", value: "$120", height: "60%" },
-  { time: "06 PM", value: "$70", height: "35%" },
+  { time: "08 AM", value: "Rs 90", height: "45%" },
+  { time: "10 AM", value: "Rs 140", height: "70%" },
+  { time: "12 PM", value: "Rs 160", height: "80%" },
+  { time: "02 PM", value: "Rs 200", height: "100%" },
+  { time: "04 PM", value: "Rs 120", height: "60%" },
+  { time: "06 PM", value: "Rs 70", height: "35%" },
 ];
 
 const slotUsage = [
@@ -125,7 +125,7 @@ const slotUsage = [
     total: 15,
     occupied: 10,
     available: 5,
-    income: "$340",
+    income: "Rs 340",
     rate: "67%",
   },
   {
@@ -133,7 +133,7 @@ const slotUsage = [
     total: 15,
     occupied: 6,
     available: 9,
-    income: "$260",
+    income: "Rs 260",
     rate: "40%",
   },
   {
@@ -141,7 +141,7 @@ const slotUsage = [
     total: 10,
     occupied: 2,
     available: 8,
-    income: "$180",
+    income: "Rs 180",
     rate: "20%",
   },
 ];

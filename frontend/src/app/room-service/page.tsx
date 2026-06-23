@@ -1,4 +1,4 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const roomServiceOrders = [
@@ -9,7 +9,7 @@ const roomServiceOrders = [
     items: "Club Sandwich, Orange Juice",
     time: "10:25 AM",
     status: "Preparing",
-    amount: "$32.00",
+    amount: "Rs 32.00",
   },
   {
     id: "RS-1002",
@@ -18,7 +18,7 @@ const roomServiceOrders = [
     items: "Caesar Salad, Coffee",
     time: "11:10 AM",
     status: "Delivered",
-    amount: "$24.00",
+    amount: "Rs 24.00",
   },
   {
     id: "RS-1003",
@@ -27,7 +27,7 @@ const roomServiceOrders = [
     items: "Steak Dinner, Red Wine",
     time: "12:05 PM",
     status: "Pending",
-    amount: "$88.00",
+    amount: "Rs 88.00",
   },
   {
     id: "RS-1004",
@@ -36,7 +36,7 @@ const roomServiceOrders = [
     items: "Pasta, Mineral Water",
     time: "12:30 PM",
     status: "Cancelled",
-    amount: "$0.00",
+    amount: "Rs 0.00",
   },
 ];
 
@@ -88,7 +88,7 @@ export default function RoomServicePage() {
             <StatCard label="Total Orders" value="4" />
             <StatCard label="Preparing" value="1" />
             <StatCard label="Delivered" value="1" />
-            <StatCard label="Today Sales" value="$144" />
+            <StatCard label="Today Sales" value="Rs 144" />
           </section>
 
           <section className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">

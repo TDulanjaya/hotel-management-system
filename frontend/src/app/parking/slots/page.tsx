@@ -1,4 +1,4 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const parkingRecords = [
@@ -11,7 +11,7 @@ const parkingRecords = [
     service: "Parking Only",
     checkIn: "08:20 AM",
     checkOut: "02:15 PM",
-    amount: "$25.00",
+    amount: "Rs 25.00",
     status: "Completed",
   },
   {
@@ -23,7 +23,7 @@ const parkingRecords = [
     service: "Parking + Wash",
     checkIn: "09:10 AM",
     checkOut: "03:30 PM",
-    amount: "$45.00",
+    amount: "Rs 45.00",
     status: "Completed",
   },
   {
@@ -35,7 +35,7 @@ const parkingRecords = [
     service: "Parking Only",
     checkIn: "10:45 AM",
     checkOut: "-",
-    amount: "$15.00",
+    amount: "Rs 15.00",
     status: "Active",
   },
   {
@@ -47,7 +47,7 @@ const parkingRecords = [
     service: "Valet Service",
     checkIn: "11:30 AM",
     checkOut: "04:20 PM",
-    amount: "$60.00",
+    amount: "Rs 60.00",
     status: "Completed",
   },
   {
@@ -59,7 +59,7 @@ const parkingRecords = [
     service: "Event Parking",
     checkIn: "01:00 PM",
     checkOut: "-",
-    amount: "$20.00",
+    amount: "Rs 20.00",
     status: "Active",
   },
 ];
@@ -79,7 +79,7 @@ const recordStats = [
   },
   {
     label: "Today Income",
-    value: "$780",
+    value: "Rs 780",
   },
 ];
 

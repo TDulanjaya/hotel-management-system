@@ -1,4 +1,4 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const orders = [
@@ -8,7 +8,7 @@ const orders = [
     guest: "Walk-in Guest",
     items: "2x Chicken Pasta, 1x Orange Juice",
     status: "Preparing",
-    amount: "$42.00",
+    amount: "Rs 42.00",
   },
   {
     id: "ORD-1002",
@@ -16,7 +16,7 @@ const orders = [
     guest: "Mr. James",
     items: "1x Beef Burger, 2x Fries",
     status: "Ready",
-    amount: "$36.00",
+    amount: "Rs 36.00",
   },
   {
     id: "ORD-1003",
@@ -24,7 +24,7 @@ const orders = [
     guest: "Ms. Elena",
     items: "1x Caesar Salad, 1x Coffee",
     status: "Pending",
-    amount: "$24.00",
+    amount: "Rs 24.00",
   },
 ];
 

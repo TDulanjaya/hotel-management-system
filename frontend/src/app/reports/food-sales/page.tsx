@@ -1,20 +1,20 @@
-import AppSidebar from "@/components/layout/AppSidebar";
+import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const foodSalesSummary = [
   {
     label: "Total Food Sales",
-    value: "$6,240",
+    value: "Rs 6,240",
     note: "Restaurant and room service",
   },
   {
     label: "Restaurant Sales",
-    value: "$4,180",
+    value: "Rs 4,180",
     note: "Dining table orders",
   },
   {
     label: "Room Service",
-    value: "$1,460",
+    value: "Rs 1,460",
     note: "Guest room orders",
   },
   {
@@ -31,7 +31,7 @@ const salesRows = [
     source: "Restaurant",
     location: "Table 12",
     items: "Wagyu Beef Burger, Truffle Fries",
-    amount: "$86.00",
+    amount: "Rs 86.00",
     payment: "Card",
     status: "Completed",
   },
@@ -41,7 +41,7 @@ const salesRows = [
     source: "Room Service",
     location: "Room 402",
     items: "Club Sandwich, Orange Juice",
-    amount: "$32.00",
+    amount: "Rs 32.00",
     payment: "Added to Folio",
     status: "Completed",
   },
@@ -51,7 +51,7 @@ const salesRows = [
     source: "Restaurant",
     location: "Table 07",
     items: "Chicken Alfredo, Garden Salad",
-    amount: "$58.00",
+    amount: "Rs 58.00",
     payment: "Cash",
     status: "Completed",
   },
@@ -61,7 +61,7 @@ const salesRows = [
     source: "Event Catering",
     location: "Grand Ballroom",
     items: "Hors d'oeuvres Tray, Sparkling Water",
-    amount: "$1,250.00",
+    amount: "Rs 1,250.00",
     payment: "Bank Transfer",
     status: "Pending",
   },
@@ -71,7 +71,7 @@ const salesRows = [
     source: "Room Service",
     location: "Room 308",
     items: "Caesar Salad, Coffee",
-    amount: "$24.00",
+    amount: "Rs 24.00",
     payment: "Added to Folio",
     status: "Completed",
   },
@@ -80,22 +80,22 @@ const salesRows = [
 const categoryBreakdown = [
   {
     label: "Main Course",
-    value: "$2,850",
+    value: "Rs 2,850",
     percent: "46%",
   },
   {
     label: "Beverages",
-    value: "$1,420",
+    value: "Rs 1,420",
     percent: "23%",
   },
   {
     label: "Desserts",
-    value: "$760",
+    value: "Rs 760",
     percent: "12%",
   },
   {
     label: "Event Catering",
-    value: "$1,210",
+    value: "Rs 1,210",
     percent: "19%",
   },
 ];
@@ -104,36 +104,36 @@ const topItems = [
   {
     item: "Wagyu Beef Burger",
     sold: 34,
-    revenue: "$1,360",
+    revenue: "Rs 1,360",
     category: "Main Course",
   },
   {
     item: "Chicken Alfredo",
     sold: 28,
-    revenue: "$980",
+    revenue: "Rs 980",
     category: "Main Course",
   },
   {
     item: "Club Sandwich",
     sold: 26,
-    revenue: "$780",
+    revenue: "Rs 780",
     category: "Room Service",
   },
   {
     item: "Cappuccino",
     sold: 46,
-    revenue: "$460",
+    revenue: "Rs 460",
     category: "Beverages",
   },
 ];
 
 const hourlySales = [
-  { time: "08 AM", value: "$420", height: "30%" },
-  { time: "10 AM", value: "$680", height: "45%" },
-  { time: "12 PM", value: "$1.4k", height: "90%" },
-  { time: "02 PM", value: "$950", height: "60%" },
-  { time: "06 PM", value: "$1.6k", height: "100%" },
-  { time: "08 PM", value: "$1.1k", height: "75%" },
+  { time: "08 AM", value: "Rs 420", height: "30%" },
+  { time: "10 AM", value: "Rs 680", height: "45%" },
+  { time: "12 PM", value: "Rs 1.4k", height: "90%" },
+  { time: "02 PM", value: "Rs 950", height: "60%" },
+  { time: "06 PM", value: "Rs 1.6k", height: "100%" },
+  { time: "08 PM", value: "Rs 1.1k", height: "75%" },
 ];
 
 function getStatusClass(status: string) {
