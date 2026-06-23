@@ -2,6 +2,7 @@
 
 import AppSidebar from "@/components/layout/AppSidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import Link from "next/link";
 
 const days = Array.from({ length: 31 }, (_, index) => index + 1);
 
@@ -97,7 +98,8 @@ export default function EventsPage() {
                   Event Operations
                 </h1>
                 <p className="mt-3 text-xl text-[#3f3b35]">
-                  Manage high-profile gatherings and corporate retreats.
+                  Manage weddings, batch parties, hall bookings, catering and
+                  event ledgers.
                 </p>
               </div>
 
@@ -106,9 +108,19 @@ export default function EventsPage() {
                   ⇩ Export Ledger
                 </button>
 
-                <button className="rounded-xl bg-[#d8b328] px-9 py-4 text-lg font-bold text-[#4c3a00] transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl">
+                <Link
+                  href="/events/list"
+                  className="rounded-xl border border-[#806300] bg-white px-8 py-4 text-lg font-bold text-[#806300] transition hover:-translate-y-1 hover:bg-[#faf8f3] hover:shadow-lg"
+                >
+                  ☷ Event List
+                </Link>
+
+                <Link
+                  href="/events/new"
+                  className="rounded-xl bg-[#d8b328] px-9 py-4 text-lg font-bold text-[#4c3a00] transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl"
+                >
                   ⊕ Create Event
-                </button>
+                </Link>
               </div>
             </div>
 
@@ -219,9 +231,13 @@ export default function EventsPage() {
                 <section className="event-fade delay-200 rounded-2xl border border-[#d9cfbd] bg-white p-7 shadow-sm">
                   <div className="mb-7 flex items-center justify-between">
                     <h2 className="text-2xl font-bold">Upcoming Events</h2>
-                    <button className="font-bold text-[#806300]">
+
+                    <Link
+                      href="/events/list"
+                      className="font-bold text-[#806300]"
+                    >
                       View All
-                    </button>
+                    </Link>
                   </div>
 
                   <div className="space-y-6">
@@ -259,62 +275,6 @@ export default function EventsPage() {
                   </div>
                 </section>
               </aside>
-            </div>
-
-            <div className="mt-8 grid gap-8 border-t border-[#d9cfbd] bg-[#f1eee7] px-8 py-6 xl:grid-cols-[1.6fr_0.85fr]">
-              <section className="kitchen-fade delay-200 rounded-2xl border border-[#d9cfbd] bg-white p-5 shadow-sm">
-                <div className="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
-                  <div>
-                    <h3 className="text-lg font-extrabold text-red-600">
-                      ⚠ SHORTAGE WARNINGS
-                    </h3>
-                    <p className="text-sm text-[#57534e]">
-                      Supply levels critical for following items:
-                    </p>
-                  </div>
-
-                  <div className="grid flex-1 gap-4 md:grid-cols-2">
-                    <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xl font-extrabold text-red-700">
-                          Fresh <br /> Mint
-                        </p>
-                        <span className="rounded bg-red-600 px-2 py-1 text-xs font-bold text-white">
-                          2/100g
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-                      <div className="flex items-center justify-between">
-                        <p className="text-xl font-extrabold text-red-700">
-                          A5 Wagyu <br /> Patty
-                        </p>
-                        <span className="rounded bg-red-600 px-2 py-1 text-xs font-bold text-white">
-                          4/50
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <section className="kitchen-fade delay-250 rounded-2xl border border-[#d9cfbd] bg-white p-5 shadow-sm">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-extrabold uppercase text-[#806300]">
-                      ▣ Event Prep
-                    </h3>
-                    <p className="mt-3 text-sm">Wedding Dinner (80pax)</p>
-                  </div>
-
-                  <strong>T-Minus 2h</strong>
-                </div>
-
-                <div className="mt-6 h-2 overflow-hidden rounded-full bg-[#ebe8e2]">
-                  <div className="kitchen-event-progress h-full rounded-full bg-[#d8b328]" />
-                </div>
-              </section>
             </div>
           </section>
         </main>
