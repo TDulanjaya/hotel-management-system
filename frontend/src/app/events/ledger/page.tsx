@@ -1,14 +1,5 @@
 import AppSidebar from "@/components/layout/AppSidebar";
-import {
-  Search,
-  Bell,
-  Printer,
-  CreditCard,
-  PlusCircle,
-  GitBranch,
-  Link2,
-  ChevronRight,
-} from "lucide-react";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const billingItems = [
   {
@@ -54,110 +45,74 @@ const linkedFolios = [
     name: "Julianne Davies",
     room: "Room 402 • Deluxe King",
     amount: "$1,420.50",
-    bg: "bg-[#d4af37]",
-    text: "text-white",
+    active: true,
   },
   {
     initials: "MK",
     name: "Marcus Kane",
     room: "Room 512 • Presidential Suite",
     amount: "$4,105.00",
-    bg: "bg-[#dae2fd]",
-    text: "text-[#565e74]",
+    active: false,
   },
   {
     initials: "SR",
     name: "Sarah Redford",
     room: "Room 305 • Executive Room",
     amount: "$980.20",
-    bg: "bg-[#a8b3ca]",
-    text: "text-white",
+    active: false,
   },
 ];
 
 export default function EventLedgerPage() {
   return (
-    <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
-      <AppSidebar />
+    <ProtectedRoute allowedRoles={["owner", "manager", "events"]}>
+      <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
+        <AppSidebar />
 
-      <main className="min-h-screen lg:ml-[280px]">
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[#d0c5af] bg-[#fbf9f5] px-8 shadow-sm">
-          <div className="flex w-96 items-center gap-4 rounded-full border border-[#d0c5af] bg-[#efeeea] px-4 py-2">
-            <Search size={20} className="text-[#4d4635]" />
-            <input
-              type="text"
-              placeholder="Search ledgers, groups, or folios..."
-              className="w-full border-none bg-transparent text-sm outline-none"
-            />
-          </div>
-
-          <div className="flex items-center gap-6">
-            <button className="relative rounded-full p-2 text-[#4d4635] transition hover:bg-[#eae8e4]">
-              <Bell size={22} />
-              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-[#ba1a1a]" />
-            </button>
-
-            <div className="flex items-center gap-3 border-l border-[#d0c5af] pl-4">
-              <div className="hidden text-right md:block">
-                <p className="text-sm font-bold">Alex Rivera</p>
-                <p className="text-[10px] font-bold uppercase tracking-tight text-[#4d4635]">
-                  Event Manager
-                </p>
-              </div>
-
-              <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#d4af37] bg-[#131b2e] font-bold text-[#ffe088]">
-                AR
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <section className="mx-auto max-w-[1600px] p-8">
-          <div className="mb-10 flex flex-col justify-between gap-6 md:flex-row md:items-start">
+        <main className="min-h-screen px-8 py-10 lg:ml-[280px]">
+          <header className="mb-10 flex flex-col justify-between gap-6 xl:flex-row xl:items-end">
             <div>
-              <nav className="mb-2 flex items-center gap-2 text-sm text-[#4d4635]">
+              <div className="mb-2 flex items-center gap-2 text-sm text-[#4d4635]">
                 <span>Events Control</span>
-                <ChevronRight size={14} />
+                <span>›</span>
                 <span className="font-bold text-[#735c00]">Master Ledger</span>
-              </nav>
+              </div>
 
-              <h1 className="mb-2 text-4xl font-bold">
+              <h1 className="text-4xl font-extrabold">
                 Annual Global Tech Summit 2024
               </h1>
 
-              <div className="flex flex-wrap items-center gap-4">
-                <span className="rounded-full border border-[#d4af37]/40 bg-[#d4af37]/20 px-3 py-1 text-sm font-bold text-[#735c00]">
+              <div className="mt-4 flex flex-wrap gap-3">
+                <span className="rounded-full border border-[#d4af37]/40 bg-[#d4af37]/20 px-4 py-2 text-sm font-bold text-[#735c00]">
                   GROUP: GTS-2024-X
                 </span>
 
-                <span className="rounded-full border border-[#dae2fd]/40 bg-[#dae2fd]/30 px-3 py-1 text-sm font-bold text-[#565e74]">
+                <span className="rounded-full border border-[#dae2fd] bg-[#dae2fd]/50 px-4 py-2 text-sm font-bold text-[#565e74]">
                   STATUS: OPEN
                 </span>
               </div>
             </div>
 
             <div className="flex flex-wrap gap-4">
-              <button className="flex items-center gap-2 rounded-lg border-2 border-[#565e74] px-6 py-3 text-sm font-bold text-[#565e74] transition hover:bg-[#565e74]/5">
-                <Printer size={20} />
+              <button className="rounded-xl border-2 border-[#565e74] px-6 py-3 font-bold text-[#565e74] transition hover:bg-[#565e74]/5">
                 Print Event Invoice
               </button>
 
-              <button className="flex items-center gap-2 rounded-lg bg-[#735c00] px-6 py-3 text-sm font-bold text-white transition hover:shadow-xl">
-                <CreditCard size={20} />
+              <button className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]">
                 Settle Event Bill
               </button>
             </div>
-          </div>
+          </header>
 
-          <div className="grid grid-cols-12 gap-6">
+          <section className="grid grid-cols-12 gap-6">
             <section className="relative col-span-12 overflow-hidden rounded-xl border border-[#d0c5af] bg-white shadow-sm lg:col-span-4">
-              <div className="absolute bottom-0 left-0 top-0 w-1 bg-[#d4af37]" />
+              <div className="absolute left-0 top-0 h-full w-1 bg-[#d4af37]" />
 
-              <div className="border-b border-[#d0c5af]/40 p-6">
-                <h2 className="text-xl font-semibold">Organizer Information</h2>
+              <div className="border-b border-[#d0c5af]/50 p-6">
+                <h2 className="text-xl font-bold">Organizer Information</h2>
               </div>
 
-              <div className="space-y-4 p-6 text-sm">
+              <div className="space-y-4 p-6">
                 <InfoRow label="Primary Contact" value="Ms. Helena Thorne" />
                 <InfoRow label="Company" value="Nova Dynamics Corp" />
                 <InfoRow
@@ -168,7 +123,7 @@ export default function EventLedgerPage() {
               </div>
             </section>
 
-            <section className="col-span-12 flex flex-col items-center justify-between gap-6 rounded-xl border border-[#d0c5af] bg-white p-8 shadow-sm md:flex-row lg:col-span-8">
+            <section className="col-span-12 grid rounded-xl border border-[#d0c5af] bg-white p-8 shadow-sm md:grid-cols-3 lg:col-span-8">
               <SummaryCard label="Total Charges" value="$142,580.00" />
               <SummaryCard
                 label="Deposits Paid"
@@ -184,40 +139,36 @@ export default function EventLedgerPage() {
             </section>
 
             <section className="col-span-12 overflow-hidden rounded-xl border border-[#d0c5af] bg-white shadow-sm">
-              <div className="flex items-center justify-between border-b border-[#d0c5af] bg-[#f5f3ef] p-6">
-                <h2 className="text-xl font-semibold">
-                  Itemized Billing Ledger
-                </h2>
+              <div className="flex flex-col justify-between gap-4 border-b border-[#d0c5af] bg-[#f5f3ef] p-6 md:flex-row md:items-center">
+                <h2 className="text-xl font-bold">Itemized Billing Ledger</h2>
 
-                <button className="flex items-center gap-1 text-sm font-bold text-[#735c00] hover:underline">
-                  <PlusCircle size={20} />
-                  Add Manual Charge
+                <button className="font-bold text-[#735c00] hover:underline">
+                  + Add Manual Charge
                 </button>
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full text-left">
+                <table className="w-full min-w-[850px] text-left">
                   <thead>
-                    <tr className="border-b border-[#d0c5af] bg-[#eae8e4] text-sm text-[#4d4635]">
-                      <th className="px-8 py-4 font-bold">Description</th>
-                      <th className="px-8 py-4 font-bold">Date</th>
-                      <th className="px-8 py-4 font-bold">Category</th>
-                      <th className="px-8 py-4 text-right font-bold">Amount</th>
+                    <tr className="border-b border-[#d0c5af] bg-[#eae8e4] text-sm uppercase tracking-wider text-[#4d4635]">
+                      <th className="px-8 py-4">Description</th>
+                      <th className="px-8 py-4">Date</th>
+                      <th className="px-8 py-4">Category</th>
+                      <th className="px-8 py-4 text-right">Amount</th>
                     </tr>
                   </thead>
 
                   <tbody className="divide-y divide-[#d0c5af]/50">
                     {billingItems.map((item) => (
-                      <tr
-                        key={item.description}
-                        className="transition hover:bg-[#f5f3ef]"
-                      >
-                        <td className="px-8 py-5 font-medium">
+                      <tr key={item.description} className="hover:bg-[#f5f3ef]">
+                        <td className="px-8 py-5 font-semibold">
                           {item.description}
                         </td>
-                        <td className="px-8 py-5 text-sm text-[#4d4635]">
+
+                        <td className="px-8 py-5 text-[#4d4635]">
                           {item.date}
                         </td>
+
                         <td className="px-8 py-5">
                           <span
                             className={`rounded-full px-3 py-1 text-xs font-bold ${item.style}`}
@@ -225,7 +176,8 @@ export default function EventLedgerPage() {
                             {item.category}
                           </span>
                         </td>
-                        <td className="px-8 py-5 text-right text-lg font-semibold">
+
+                        <td className="px-8 py-5 text-right text-lg font-bold">
                           {item.amount}
                         </td>
                       </tr>
@@ -237,6 +189,7 @@ export default function EventLedgerPage() {
                       <td className="px-8 py-6 text-right text-xl" colSpan={3}>
                         Total Gross Charges
                       </td>
+
                       <td className="px-8 py-6 text-right text-xl text-[#735c00]">
                         $142,580.00
                       </td>
@@ -247,36 +200,36 @@ export default function EventLedgerPage() {
             </section>
 
             <section className="col-span-12 overflow-hidden rounded-xl border border-[#d0c5af] bg-white shadow-sm lg:col-span-5">
-              <div className="flex items-center gap-3 border-b border-[#d0c5af]/40 p-6">
-                <GitBranch size={22} className="text-[#735c00]" />
-                <h2 className="text-xl font-semibold">Split Billing Rules</h2>
+              <div className="flex items-center gap-3 border-b border-[#d0c5af]/50 p-6">
+                <span className="text-2xl text-[#735c00]">⤨</span>
+                <h2 className="text-xl font-bold">Split Billing Rules</h2>
               </div>
 
               <div className="space-y-6 p-6">
-                <RuleCard
+                <BillingRule
                   checked
                   title="Auto-Bill Rooms to Master"
-                  description="Room & Tax only; incidentals billed to individual."
+                  text="Room & Tax only; incidentals billed to individual."
                 />
 
-                <RuleCard
+                <BillingRule
                   title="Bill Incidentals to Master"
-                  description="Minibar, Room Service, and Amenities charges."
+                  text="Minibar, Room Service, and Amenities charges."
                 />
 
                 <div className="space-y-3">
-                  <p className="px-1 text-sm font-bold text-[#4d4635]">
+                  <p className="font-bold text-[#4d4635]">
                     Override Discount (%)
                   </p>
 
                   <div className="flex gap-2">
                     <input
                       type="number"
-                      defaultValue="15"
-                      className="flex-1 rounded-lg border border-[#d0c5af] p-3 outline-none focus:ring-2 focus:ring-[#d4af37]/40"
+                      defaultValue={15}
+                      className="flex-1 rounded-lg border border-[#d0c5af] p-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
                     />
 
-                    <button className="rounded-lg bg-[#565e74] px-4 font-bold text-white">
+                    <button className="rounded-lg bg-[#565e74] px-5 font-bold text-white">
                       Apply
                     </button>
                   </div>
@@ -285,37 +238,41 @@ export default function EventLedgerPage() {
             </section>
 
             <section className="col-span-12 overflow-hidden rounded-xl border border-[#d0c5af] bg-white shadow-sm lg:col-span-7">
-              <div className="flex items-center justify-between border-b border-[#d0c5af]/40 p-6">
+              <div className="flex items-center justify-between border-b border-[#d0c5af]/50 p-6">
                 <div className="flex items-center gap-3">
-                  <Link2 size={22} className="text-[#735c00]" />
-                  <h2 className="text-xl font-semibold">Linked Guest Folios</h2>
+                  <span className="text-2xl text-[#735c00]">🔗</span>
+                  <h2 className="text-xl font-bold">Linked Guest Folios</h2>
                 </div>
 
-                <span className="text-xs font-bold text-[#4d4635]">
-                  120 TOTAL GUESTS
+                <span className="text-xs font-bold uppercase text-[#4d4635]">
+                  120 Total Guests
                 </span>
               </div>
 
               <div className="p-6">
                 <div className="max-h-[320px] space-y-4 overflow-y-auto pr-2">
-                  {linkedFolios.map((folio, index) => (
+                  {linkedFolios.map((folio) => (
                     <div
                       key={folio.name}
-                      className={`flex cursor-pointer items-center justify-between rounded-lg border p-4 transition hover:border-[#735c00]/50 ${
-                        index === 0
+                      className={`flex cursor-pointer items-center justify-between rounded-xl border p-4 transition hover:border-[#735c00]/50 ${
+                        folio.active
                           ? "border-transparent bg-[#f5f3ef]"
-                          : "border-[#d0c5af]/40 bg-white"
+                          : "border-[#d0c5af]/50 bg-white"
                       }`}
                     >
                       <div className="flex items-center gap-4">
                         <div
-                          className={`flex h-10 w-10 items-center justify-center rounded-full font-bold ${folio.bg} ${folio.text}`}
+                          className={`flex h-10 w-10 items-center justify-center rounded-full font-bold ${
+                            folio.active
+                              ? "bg-[#d4af37] text-white"
+                              : "bg-[#dae2fd] text-[#565e74]"
+                          }`}
                         >
                           {folio.initials}
                         </div>
 
                         <div>
-                          <p className="text-sm font-bold">{folio.name}</p>
+                          <p className="font-bold">{folio.name}</p>
                           <p className="text-sm text-[#4d4635]">
                             {folio.room}
                           </p>
@@ -323,7 +280,7 @@ export default function EventLedgerPage() {
                       </div>
 
                       <div className="text-right">
-                        <p className="text-sm font-bold">{folio.amount}</p>
+                        <p className="font-bold">{folio.amount}</p>
                         <p className="text-[10px] font-bold uppercase text-[#735c00]">
                           Billed to Master
                         </p>
@@ -332,34 +289,15 @@ export default function EventLedgerPage() {
                   ))}
                 </div>
 
-                <button className="mt-6 w-full rounded-lg border border-[#565e74] py-3 text-sm font-bold text-[#565e74] transition hover:bg-[#565e74]/5">
+                <button className="mt-6 w-full rounded-xl border border-[#565e74] py-3 font-bold text-[#565e74] transition hover:bg-[#565e74]/5">
                   View All Linked Folios (120)
                 </button>
               </div>
             </section>
-          </div>
-
-          <footer className="mt-12 flex flex-col items-center justify-between gap-4 border-t border-[#d0c5af]/40 pt-12 text-[#4d4635] md:flex-row">
-            <p className="text-sm">
-              © 2024 LuxeStay Elite Operations System. All transactions
-              encrypted and audited.
-            </p>
-
-            <div className="flex gap-8">
-              <a className="text-xs font-bold uppercase tracking-wider hover:text-[#735c00]">
-                Audit Log
-              </a>
-              <a className="text-xs font-bold uppercase tracking-wider hover:text-[#735c00]">
-                Contact Finance
-              </a>
-              <a className="text-xs font-bold uppercase tracking-wider hover:text-[#735c00]">
-                System Status
-              </a>
-            </div>
-          </footer>
-        </section>
-      </main>
-    </div>
+          </section>
+        </main>
+      </div>
+    </ProtectedRoute>
   );
 }
 
@@ -367,7 +305,7 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-4">
       <span className="font-bold text-[#4d4635]">{label}</span>
-      <span className="text-right text-[#1b1c1a]">{value}</span>
+      <span className="text-right">{value}</span>
     </div>
   );
 }
@@ -385,45 +323,41 @@ function SummaryCard({
 }) {
   return (
     <div
-      className={`flex-1 text-center ${
-        last ? "" : "border-b border-[#d0c5af]/40 pb-6 md:border-b-0 md:border-r md:pb-0"
+      className={`text-center ${
+        !last
+          ? "border-b border-[#d0c5af]/50 pb-6 md:border-b-0 md:border-r md:pb-0"
+          : "pt-6 md:pt-0"
       }`}
     >
-      <p className="mb-1 text-xs font-bold uppercase text-[#4d4635]">
+      <p className="text-sm font-bold uppercase tracking-widest text-[#4d4635]">
         {label}
       </p>
 
-      <p className={`text-4xl font-bold ${color}`}>{value}</p>
+      <p className={`mt-2 text-4xl font-extrabold ${color}`}>{value}</p>
     </div>
   );
 }
 
-function RuleCard({
+function BillingRule({
   checked = false,
   title,
-  description,
+  text,
 }: {
   checked?: boolean;
   title: string;
-  description: string;
+  text: string;
 }) {
   return (
-    <label
-      className={`flex cursor-pointer items-center gap-3 rounded-lg border p-4 ${
-        checked
-          ? "border-[#d0c5af]/40 bg-[#f5f3ef]"
-          : "border-[#d0c5af]/40 bg-white"
-      }`}
-    >
+    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#d0c5af]/50 bg-[#f5f3ef] p-4">
       <input
         type="checkbox"
         defaultChecked={checked}
-        className="h-5 w-5 rounded text-[#735c00]"
+        className="mt-1 h-5 w-5 rounded text-[#735c00]"
       />
 
       <div>
-        <p className="text-sm font-bold">{title}</p>
-        <p className="text-sm text-[#4d4635]">{description}</p>
+        <p className="font-bold">{title}</p>
+        <p className="text-sm text-[#4d4635]">{text}</p>
       </div>
     </label>
   );

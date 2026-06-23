@@ -1,367 +1,349 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import AppSidebar from "@/components/layout/AppSidebar";
-import {
-  Search,
-  Bell,
-  Hotel,
-  DoorOpen,
-  Percent,
-  Wallet,
-  BellRing,
-  Shield,
-  CloudSync,
-  Palette,
-  CheckCircle,
-  ShieldCheck,
-} from "lucide-react";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { AuthUser, getUser, logout } from "@/utils/auth";
 
-const categories = [
-  { name: "Hotel Profile", icon: Hotel, active: true },
-  { name: "Room Types", icon: DoorOpen },
-  { name: "Tax Settings", icon: Percent },
-  { name: "Payment Gateways", icon: Wallet },
-  { name: "Notifications", icon: BellRing },
-  { name: "Security", icon: Shield },
-  { name: "Backup", icon: CloudSync },
-  { name: "Theme Customization", icon: Palette },
-];
+const allowedRoles = [
+  "owner",
+  "manager",
+  "receptionist",
+  "kitchen",
+  "inventory",
+  "waiter",
+  "events",
+  "parking",
+  "game_staff",
+] as const;
 
-const preferences = [
+const activityLogs = [
   {
-    title: "Auto-Nights Audit",
-    description: "Automatically close the day at 2:00 AM",
-    enabled: true,
+    action: "Logged in",
+    module: "Authentication",
+    time: "Today, 09:15 AM",
+    status: "Success",
   },
   {
-    title: "Smart Overbooking",
-    description: "Allow 2% variance on standard rooms",
-    enabled: false,
+    action: "Opened dashboard",
+    module: "Dashboard",
+    time: "Today, 09:17 AM",
+    status: "Success",
   },
   {
-    title: "Guest Self Check-in",
-    description: "Enable digital keys via the mobile app",
-    enabled: true,
+    action: "Updated profile settings",
+    module: "Settings",
+    time: "Yesterday, 04:20 PM",
+    status: "Success",
   },
 ];
 
 export default function SettingsPage() {
-  const [toggles, setToggles] = useState(preferences);
-  const [toastOpen, setToastOpen] = useState(false);
+  const router = useRouter();
+  const [user, setUser] = useState<AuthUser | null>(null);
 
-  const handleSave = () => {
-    setToastOpen(true);
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
 
-    setTimeout(() => {
-      setToastOpen(false);
-    }, 3000);
-  };
-
-  const togglePreference = (index: number) => {
-    setToggles((current) =>
-      current.map((item, currentIndex) =>
-        currentIndex === index ? { ...item, enabled: !item.enabled } : item
-      )
-    );
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
   };
 
   return (
-    <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
-      <AppSidebar />
+    <ProtectedRoute allowedRoles={[...allowedRoles]}>
+      <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
+        <AppSidebar />
 
-      <main className="min-h-screen lg:ml-[280px]">
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between bg-[#fbf9f5] px-8">
-          <div className="relative w-full max-w-md">
-            <Search
-              size={20}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4d4635]"
-            />
+        <main className="px-8 py-10 lg:ml-[280px]">
+          <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#735c00]">
+                System Settings
+              </p>
 
-            <input
-              type="text"
-              placeholder="Search settings or tools..."
-              className="w-full rounded-lg border-none bg-[#f5f3ef] py-2 pl-10 pr-4 text-sm outline-none focus:ring-2 focus:ring-[#d4af37]/40"
-            />
-          </div>
+              <h1 className="mt-3 text-4xl font-bold text-[#735c00]">
+                Settings
+              </h1>
 
-          <div className="flex items-center gap-6">
-            <button className="relative rounded-full p-2 transition hover:bg-[#eae8e4]">
-              <Bell size={22} className="text-[#4d4635]" />
-              <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#ba1a1a]" />
-            </button>
+              <p className="mt-2 text-[#4d4635]">
+                Manage your profile, account security, system preferences, and
+                login session.
+              </p>
+            </div>
 
-            <div className="flex items-center gap-3 border-l border-[#d0c5af] pl-4">
-              <div className="hidden text-right md:block">
-                <p className="text-sm font-bold">Julian Voss</p>
-                <p className="text-xs text-[#4d4635]">General Manager</p>
-              </div>
-
-              <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#d4af37] bg-[#131b2e] font-bold text-[#ffe088]">
-                JV
-              </div>
+            <div className="rounded-2xl border border-[#d0c5af] bg-white px-6 py-4 shadow-sm">
+              <p className="text-sm font-bold text-[#4d4635]">Current Role</p>
+              <p className="mt-1 text-xl font-extrabold capitalize text-[#735c00]">
+                {user?.role?.replace("_", " ") || "Loading..."}
+              </p>
             </div>
           </div>
-        </header>
 
-        <section className="mx-auto max-w-[1600px] px-8 py-10">
-          <div className="mb-10">
-            <h1 className="text-4xl font-bold">System Settings</h1>
+          <section className="mb-8 grid gap-6 md:grid-cols-4">
+            <StatCard label="Account Status" value="Active" />
+            <StatCard label="Role" value={user?.role?.replace("_", " ") || "-"} />
+            <StatCard label="Login Session" value="Valid" />
+            <StatCard label="Security" value="Enabled" />
+          </section>
 
-            <p className="mt-2 max-w-2xl text-[#4d4635]">
-              Configure global operational parameters, regional compliance, and
-              system-wide aesthetics for the LuxeStay platform.
-            </p>
-          </div>
+          <div className="grid gap-8 xl:grid-cols-[1fr_1fr]">
+            <section className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
+              <h2 className="text-2xl font-bold">Profile Details</h2>
 
-          <div className="grid grid-cols-12 gap-6">
-            <aside className="col-span-12 lg:col-span-3">
-              <div className="settings-card sticky top-24 p-2">
-                <nav className="flex flex-col space-y-1">
-                  {categories.map((category) => {
-                    const Icon = category.icon;
+              <p className="mt-1 text-sm text-[#4d4635]">
+                Update basic staff profile information.
+              </p>
 
-                    return (
-                      <button
-                        key={category.name}
-                        className={`flex items-center gap-3 rounded-lg p-3 text-sm font-bold transition ${
-                          category.active
-                            ? "bg-[#d4af37]/20 text-[#735c00]"
-                            : "text-[#4d4635] hover:bg-[#eae8e4]"
-                        }`}
-                      >
-                        <Icon size={20} />
-                        {category.name}
-                      </button>
-                    );
-                  })}
-                </nav>
+              <div className="mt-6 space-y-5">
+                <div>
+                  <label className="text-sm font-bold text-[#4d4635]">
+                    Full Name
+                  </label>
+
+                  <input
+                    type="text"
+                    defaultValue={user?.name || ""}
+                    placeholder="Staff name"
+                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-bold text-[#4d4635]">
+                    Email
+                  </label>
+
+                  <input
+                    type="email"
+                    defaultValue={user?.email || ""}
+                    placeholder="staff@luxestay.com"
+                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-bold text-[#4d4635]">
+                    Role
+                  </label>
+
+                  <input
+                    type="text"
+                    value={user?.role?.replace("_", " ") || ""}
+                    readOnly
+                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#eae8e4] px-4 py-3 font-bold capitalize text-[#735c00] outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm font-bold text-[#4d4635]">
+                    Department
+                  </label>
+
+                  <select className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
+                    <option>Administration</option>
+                    <option>Front Office</option>
+                    <option>Kitchen</option>
+                    <option>Inventory</option>
+                    <option>Restaurant</option>
+                    <option>Events</option>
+                    <option>Parking</option>
+                    <option>Games & Amenities</option>
+                  </select>
+                </div>
+
+                <button className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]">
+                  Save Profile
+                </button>
               </div>
-            </aside>
+            </section>
 
-            <div className="col-span-12 space-y-6 lg:col-span-9">
-              <section className="settings-card border-l-4 border-l-[#735c00]">
-                <div className="flex items-center justify-between border-b border-[#d0c5af] px-8 py-6">
-                  <div>
-                    <h2 className="text-xl font-semibold">Hotel Profile</h2>
-                    <p className="text-sm text-[#4d4635]">
-                      Basic identification and contact details for the property.
-                    </p>
-                  </div>
+            <section className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
+              <h2 className="text-2xl font-bold">Security</h2>
 
-                  <button
-                    onClick={handleSave}
-                    className="rounded-lg bg-[#735c00] px-6 py-2 text-sm font-bold text-white transition hover:opacity-90"
-                  >
-                    Save Changes
-                  </button>
+              <p className="mt-1 text-sm text-[#4d4635]">
+                Change password and protect your account.
+              </p>
+
+              <div className="mt-6 space-y-5">
+                <div>
+                  <label className="text-sm font-bold text-[#4d4635]">
+                    Current Password
+                  </label>
+
+                  <input
+                    type="password"
+                    placeholder="Enter current password"
+                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                  />
                 </div>
 
-                <div className="p-8">
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                    <FormInput
-                      label="Property Name"
-                      defaultValue="LuxeStay Elite Paris"
-                    />
+                <div>
+                  <label className="text-sm font-bold text-[#4d4635]">
+                    New Password
+                  </label>
 
-                    <FormInput
-                      label="Official Website"
-                      type="url"
-                      defaultValue="https://luxestay.com/paris"
-                    />
-
-                    <div className="space-y-2 md:col-span-2">
-                      <label className="ml-1 text-sm font-bold">
-                        Physical Address
-                      </label>
-
-                      <textarea
-                        rows={3}
-                        defaultValue="15 Avenue Montaigne, 75008 Paris, France"
-                        className="w-full rounded-lg border border-[#d0c5af] bg-[#f5f3ef] p-3 text-sm outline-none focus:ring-2 focus:ring-[#d4af37]/40"
-                      />
-                    </div>
-
-                    <FormInput
-                      label="Property Tax ID (VAT)"
-                      defaultValue="FR 99 123456789"
-                    />
-
-                    <FormInput
-                      label="Business Registration"
-                      defaultValue="RCS Paris B 123 456 789"
-                    />
-                  </div>
+                  <input
+                    type="password"
+                    placeholder="Enter new password"
+                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                  />
                 </div>
-              </section>
 
-              <section className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div className="settings-card border-l-4 border-l-[#131b2e] p-8">
-                  <h2 className="mb-2 text-xl font-semibold">
-                    System Preferences
-                  </h2>
+                <div>
+                  <label className="text-sm font-bold text-[#4d4635]">
+                    Confirm Password
+                  </label>
 
-                  <p className="mb-6 text-sm text-[#4d4635]">
-                    Automated triggers and operational behaviors.
-                  </p>
+                  <input
+                    type="password"
+                    placeholder="Confirm new password"
+                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                  />
+                </div>
 
-                  <div className="space-y-6">
-                    {toggles.map((preference, index) => (
-                      <div
-                        key={preference.title}
-                        className="flex items-center justify-between gap-4"
-                      >
-                        <div>
-                          <p className="text-sm font-bold">
-                            {preference.title}
-                          </p>
-                          <p className="text-xs text-[#4d4635]">
-                            {preference.description}
-                          </p>
-                        </div>
+                <button className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white">
+                  Update Password
+                </button>
+              </div>
+            </section>
 
-                        <button
-                          onClick={() => togglePreference(index)}
-                          className={`relative h-6 w-11 rounded-full transition ${
-                            preference.enabled
-                              ? "bg-[#735c00]"
-                              : "bg-[#e4e2de]"
-                          }`}
-                        >
-                          <span
-                            className={`absolute top-[2px] h-5 w-5 rounded-full bg-white transition ${
-                              preference.enabled ? "left-[22px]" : "left-[2px]"
-                            }`}
-                          />
-                        </button>
-                      </div>
+            <section className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm xl:col-span-2">
+              <h2 className="text-2xl font-bold">System Preferences</h2>
+
+              <p className="mt-1 text-sm text-[#4d4635]">
+                Control notification and system behavior preferences.
+              </p>
+
+              <div className="mt-6 grid gap-5 md:grid-cols-3">
+                <PreferenceCard
+                  title="Notifications"
+                  text="Receive alerts for bookings, events, orders, payments, and system updates."
+                />
+
+                <PreferenceCard
+                  title="Audit Logs"
+                  text="Track account actions and important system changes."
+                />
+
+                <PreferenceCard
+                  title="Role Based Access"
+                  text="Current user access is controlled by assigned staff role."
+                />
+
+                <PreferenceCard
+                  title="Payment Alerts"
+                  text="Get notified when payments, refunds, or settlements need review."
+                />
+
+                <PreferenceCard
+                  title="Inventory Alerts"
+                  text="Receive warnings when stock items reach low or critical level."
+                />
+
+                <PreferenceCard
+                  title="Event Reminders"
+                  text="Receive reminders about upcoming event bookings and venue schedules."
+                />
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm xl:col-span-2">
+              <h2 className="text-2xl font-bold">Recent Account Activity</h2>
+
+              <p className="mt-1 text-sm text-[#4d4635]">
+                Latest actions from this account.
+              </p>
+
+              <div className="mt-6 overflow-x-auto">
+                <table className="w-full min-w-[800px] text-left">
+                  <thead>
+                    <tr className="border-b border-[#d0c5af] bg-[#f5f3ef] text-xs uppercase tracking-widest text-[#4d4635]">
+                      <th className="px-6 py-4">Action</th>
+                      <th className="px-6 py-4">Module</th>
+                      <th className="px-6 py-4">Time</th>
+                      <th className="px-6 py-4">Status</th>
+                    </tr>
+                  </thead>
+
+                  <tbody className="divide-y divide-[#d0c5af]">
+                    {activityLogs.map((log) => (
+                      <tr key={log.action} className="transition hover:bg-[#fbf9f5]">
+                        <td className="px-6 py-5 font-bold">{log.action}</td>
+
+                        <td className="px-6 py-5 text-[#4d4635]">
+                          {log.module}
+                        </td>
+
+                        <td className="px-6 py-5 text-[#4d4635]">
+                          {log.time}
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
+                            {log.status}
+                          </span>
+                        </td>
+                      </tr>
                     ))}
-                  </div>
-                </div>
+                  </tbody>
+                </table>
+              </div>
+            </section>
 
-                <div className="settings-card p-8">
-                  <h2 className="mb-2 text-xl font-semibold">
-                    Regional Controls
-                  </h2>
+            <section className="rounded-2xl border border-[#ba1a1a]/30 bg-[#ffdad6]/40 p-6 shadow-sm xl:col-span-2">
+              <h2 className="text-2xl font-bold text-[#ba1a1a]">
+                Logout Account
+              </h2>
 
-                  <p className="mb-6 text-sm text-[#4d4635]">
-                    Localization for billing and reporting.
-                  </p>
+              <p className="mt-2 text-[#93000a]">
+                This will remove your login session from this browser and return
+                you to the login page.
+              </p>
 
-                  <div className="space-y-4">
-                    <SelectInput
-                      label="System Currency"
-                      options={[
-                        "Euro (EUR) - €",
-                        "US Dollar (USD) - $",
-                        "British Pound (GBP) - £",
-                      ]}
-                    />
-
-                    <SelectInput
-                      label="Time Zone"
-                      options={[
-                        "(GMT+01:00) Central European Time",
-                        "(GMT+00:00) Western European Time",
-                      ]}
-                    />
-
-                    <SelectInput
-                      label="Primary Language"
-                      options={["English (UK)", "French (FR)", "German (DE)"]}
-                    />
-                  </div>
-                </div>
-              </section>
-
-              <section className="settings-card bg-[#131b2e] p-8 text-white">
-                <div className="flex flex-col justify-between gap-6 md:flex-row md:items-center">
-                  <div className="flex items-start gap-4">
-                    <div className="rounded-xl bg-[#735c00]/20 p-3">
-                      <ShieldCheck size={34} className="text-[#d4af37]" />
-                    </div>
-
-                    <div>
-                      <h2 className="text-xl font-semibold">
-                        Security Infrastructure
-                      </h2>
-                      <p className="text-sm text-white/60">
-                        Manage API access tokens and enterprise-grade encryption
-                        settings.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-4">
-                    <button className="rounded-lg border border-white/20 px-6 py-2 text-sm font-bold transition hover:bg-white/5">
-                      Audit Logs
-                    </button>
-
-                    <button className="rounded-lg bg-[#735c00] px-6 py-2 text-sm font-bold text-white transition hover:opacity-90">
-                      Configure IAM
-                    </button>
-                  </div>
-                </div>
-              </section>
-            </div>
+              <button
+                onClick={handleLogout}
+                className="mt-6 rounded-xl bg-[#ba1a1a] px-6 py-3 font-bold text-white transition hover:bg-[#93000a]"
+              >
+                Logout
+              </button>
+            </section>
           </div>
-        </section>
-      </main>
-
-      <div
-        className={`fixed bottom-8 right-8 z-[100] transition-all duration-500 ${
-          toastOpen
-            ? "translate-y-0 opacity-100"
-            : "translate-y-24 opacity-0"
-        }`}
-      >
-        <div className="flex items-center gap-3 rounded-xl border border-[#d4af37]/30 bg-[#131b2e] px-6 py-4 text-white shadow-2xl">
-          <CheckCircle size={24} className="text-[#d4af37]" />
-
-          <div>
-            <p className="text-sm font-bold">Settings updated</p>
-            <p className="text-xs opacity-70">
-              Property profile synchronized successfully.
-            </p>
-          </div>
-        </div>
+        </main>
       </div>
+    </ProtectedRoute>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
+      <p className="text-sm font-bold uppercase tracking-widest text-[#4d4635]">
+        {label}
+      </p>
+
+      <p className="mt-2 text-2xl font-extrabold capitalize text-[#735c00]">
+        {value}
+      </p>
     </div>
   );
 }
 
-function FormInput({
-  label,
-  type = "text",
-  defaultValue,
-}: {
-  label: string;
-  type?: string;
-  defaultValue: string;
-}) {
+function PreferenceCard({ title, text }: { title: string; text: string }) {
   return (
-    <div className="space-y-2">
-      <label className="ml-1 text-sm font-bold">{label}</label>
+    <div className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-5">
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <h3 className="font-bold text-[#735c00]">{title}</h3>
 
-      <input
-        type={type}
-        defaultValue={defaultValue}
-        className="w-full rounded-lg border border-[#d0c5af] bg-[#f5f3ef] p-3 text-sm outline-none focus:ring-2 focus:ring-[#d4af37]/40"
-      />
-    </div>
-  );
-}
+        <label className="relative inline-flex cursor-pointer items-center">
+          <input type="checkbox" className="peer sr-only" defaultChecked />
+          <div className="peer h-6 w-11 rounded-full bg-[#d0c5af] after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all peer-checked:bg-[#735c00] peer-checked:after:translate-x-full" />
+        </label>
+      </div>
 
-function SelectInput({ label, options }: { label: string; options: string[] }) {
-  return (
-    <div className="space-y-1">
-      <label className="text-xs font-bold text-[#4d4635]">{label}</label>
-
-      <select className="w-full rounded-lg border border-[#d0c5af] bg-[#f5f3ef] p-2.5 text-sm outline-none focus:ring-2 focus:ring-[#d4af37]/40">
-        {options.map((option) => (
-          <option key={option}>{option}</option>
-        ))}
-      </select>
+      <p className="text-sm leading-6 text-[#4d4635]">{text}</p>
     </div>
   );
 }
