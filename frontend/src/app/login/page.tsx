@@ -1,0 +1,113 @@
+"use client";
+
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getDashboardByRole, saveAuth, UserRole } from "@/utils/auth";
+
+export default function LoginPage() {
+  const router = useRouter();
+
+  const [email, setEmail] = useState("manager@luxestay.com");
+  const [password, setPassword] = useState("123456");
+  const [role, setRole] = useState<UserRole>("manager");
+  const [error, setError] = useState("");
+
+  const handleLogin = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+
+    if (!email || !password) {
+      setError("Email and password are required");
+      return;
+    }
+
+    // Temporary frontend-only login.
+    // Later we will replace this with backend API login.
+    const fakeToken = "demo-token";
+
+    const user = {
+      id: "1",
+      name: "Julian Sterling",
+      email,
+      role,
+    };
+
+    saveAuth(fakeToken, user);
+
+    router.push(getDashboardByRole(role));
+  };
+
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[#fbf9f5] px-6 text-[#1b1c1a]">
+      <form
+        onSubmit={handleLogin}
+        className="w-full max-w-md rounded-3xl border border-[#d0c5af] bg-white p-8 shadow-xl"
+      >
+        <h1 className="text-4xl font-extrabold text-[#735c00]">LuxeStay</h1>
+
+        <p className="mt-2 text-sm uppercase tracking-[0.25em] text-[#4d4635]">
+          Staff Login
+        </p>
+
+        {error && (
+          <div className="mt-6 rounded-xl bg-[#ffdad6] p-3 text-sm font-bold text-[#ba1a1a]">
+            {error}
+          </div>
+        )}
+
+        <div className="mt-8 space-y-5">
+          <div>
+            <label className="text-sm font-bold text-[#4d4635]">Email</label>
+            <input
+              type="email"
+              value={email}
+              className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#d4af37]/40"
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-bold text-[#4d4635]">
+              Password
+            </label>
+            <input
+              type="password"
+              value={password}
+              className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#d4af37]/40"
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="text-sm font-bold text-[#4d4635]">
+              Login as Role
+            </label>
+
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value as UserRole)}
+              className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#d4af37]/40"
+            >
+              <option value="owner">Owner</option>
+              <option value="manager">Manager</option>
+              <option value="receptionist">Receptionist</option>
+              <option value="kitchen">Kitchen</option>
+              <option value="inventory">Inventory</option>
+              <option value="waiter">Waiter</option>
+              <option value="events">Events Staff</option>
+              <option value="parking">Parking</option>
+              <option value="game_staff">Game Staff</option>
+            </select>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          className="mt-8 w-full rounded-xl bg-[#735c00] py-4 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
+        >
+          Login
+        </button>
+      </form>
+    </main>
+  );
+}

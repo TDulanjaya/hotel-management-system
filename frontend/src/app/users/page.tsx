@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import AppSidebar from "@/components/layout/AppSidebar";
+import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import {
   Search,
   Bell,
@@ -189,30 +190,32 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
-      <AppSidebar />
+    <ProtectedRoute allowedRoles={["owner", "manager"]}>
+      <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
+        <AppSidebar />
 
-      <main className="min-h-screen lg:ml-[280px]">
-        <TopBar />
+        <main className="min-h-screen lg:ml-[280px]">
+          <TopBar />
 
-        <section className="mx-auto max-w-[1600px] space-y-10 p-8">
-          <PageHeader onAddUser={() => setModalOpen(true)} />
+          <section className="mx-auto max-w-[1600px] space-y-10 p-8">
+            <PageHeader onAddUser={() => setModalOpen(true)} />
 
-          <StatsGrid />
+            <StatsGrid />
 
-          <UsersTable users={users} onToggleStatus={toggleUserStatus} />
+            <UsersTable users={users} onToggleStatus={toggleUserStatus} />
 
-          <PermissionsMatrix />
-        </section>
-      </main>
+            <PermissionsMatrix />
+          </section>
+        </main>
 
-      {modalOpen && (
-        <AddUserModal
-          onClose={() => setModalOpen(false)}
-          onSubmit={handleCreateUser}
-        />
-      )}
-    </div>
+        {modalOpen && (
+          <AddUserModal
+            onClose={() => setModalOpen(false)}
+            onSubmit={handleCreateUser}
+          />
+        )}
+      </div>
+    </ProtectedRoute>
   );
 }
 
@@ -505,7 +508,10 @@ function PermissionsMatrix() {
                 </th>
 
                 {roles.map((role) => (
-                  <th key={role} className="px-6 py-6 text-center text-xs font-bold">
+                  <th
+                    key={role}
+                    className="px-6 py-6 text-center text-xs font-bold"
+                  >
                     {role}
                   </th>
                 ))}
@@ -574,7 +580,11 @@ function AddUserModal({
 
         <form onSubmit={onSubmit} className="space-y-6 p-8">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <FormInput label="Full Legal Name" placeholder="e.g. Marcus Aurelius" />
+            <FormInput
+              label="Full Legal Name"
+              placeholder="e.g. Marcus Aurelius"
+            />
+
             <FormInput
               label="Work Email Address"
               type="email"
