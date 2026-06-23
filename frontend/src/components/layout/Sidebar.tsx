@@ -22,7 +22,7 @@ const menuItems = [
   { name: "Event List", href: "/events/list", icon: "▤" },
   { name: "New Event", href: "/events/new", icon: "+" },
   { name: "Event Ledger", href: "/events/ledger", icon: "▥" },
-  { name: "Split Billing", href: "/events/split-billing", icon: "Rs" },
+  { name: "Split Billing", href: "/events/split-billing", icon: "$" },
 
   { name: "Games & Amenities", href: "/games", icon: "◇" },
   { name: "Venues", href: "/venues", icon: "▥" },
