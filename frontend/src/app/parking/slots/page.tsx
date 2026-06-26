@@ -1,97 +1,85 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-
-const parkingRecords = [
-  {
-    id: "PK-1001",
-    vehicleNo: "CAB-4521",
-    vehicle: "Honda Fit GP1",
-    guest: "Daniel Smith",
-    slot: "A-12",
-    service: "Parking Only",
-    checkIn: "08:20 AM",
-    checkOut: "02:15 PM",
-    amount: "Rs 25.00",
-    status: "Completed",
-  },
-  {
-    id: "PK-1002",
-    vehicleNo: "KQ-8821",
-    vehicle: "Toyota Yaris",
-    guest: "Olivia Brown",
-    slot: "A-18",
-    service: "Parking + Wash",
-    checkIn: "09:10 AM",
-    checkOut: "03:30 PM",
-    amount: "Rs 45.00",
-    status: "Completed",
-  },
-  {
-    id: "PK-1003",
-    vehicleNo: "WP-7781",
-    vehicle: "Toyota Corolla",
-    guest: "Walk-in Guest",
-    slot: "B-09",
-    service: "Parking Only",
-    checkIn: "10:45 AM",
-    checkOut: "-",
-    amount: "Rs 15.00",
-    status: "Active",
-  },
-  {
-    id: "PK-1004",
-    vehicleNo: "CAQ-3021",
-    vehicle: "Honda Civic",
-    guest: "Marcus Kane",
-    slot: "B-14",
-    service: "Valet Service",
-    checkIn: "11:30 AM",
-    checkOut: "04:20 PM",
-    amount: "Rs 60.00",
-    status: "Completed",
-  },
-  {
-    id: "PK-1005",
-    vehicleNo: "KV-5520",
-    vehicle: "Suzuki Wagon R",
-    guest: "Event Guest",
-    slot: "C-04",
-    service: "Event Parking",
-    checkIn: "01:00 PM",
-    checkOut: "-",
-    amount: "Rs 20.00",
-    status: "Active",
-  },
-];
-
-const recordStats = [
-  {
-    label: "Total Records",
-    value: "128",
-  },
-  {
-    label: "Active Parking",
-    value: "18",
-  },
-  {
-    label: "Completed Today",
-    value: "42",
-  },
-  {
-    label: "Today Income",
-    value: "Rs 780",
-  },
-];
+import { getParkingBookings, deleteParkingBooking as apiDeleteParkingBooking } from "@/lib/api/parkingApi";
+import { getUser, AuthUser } from "@/utils/auth";
 
 function getStatusClass(status: string) {
-  if (status === "Completed") {
+  if (status === "Completed" || status === "CHECKED_OUT") {
     return "bg-green-100 text-green-700";
   }
-
-  return "bg-blue-100 text-blue-700";
+  if (status === "Active" || status === "CHECKED_IN" || status === "Occupied") {
+    return "bg-blue-100 text-blue-700";
+  }
+  return "bg-slate-100 text-slate-700";
 }
 
 export default function ParkingRecordsPage() {
+  const [parkingRecords, setParkingRecords] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  const fetchRecords = async () => {
+    try {
+      setLoading(true);
+      setError("");
+      const data = await getParkingBookings();
+      setParkingRecords(data);
+    } catch (err: any) {
+      console.error(err);
+      setError("Failed to load parking records.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    setUser(getUser());
+    fetchRecords();
+  }, []);
+
+  const deleteRecord = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this parking record?")) return;
+    try {
+      await apiDeleteParkingBooking(id);
+      setParkingRecords((prev) => prev.filter((p) => p.id !== id));
+      alert("Parking record deleted successfully.");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to delete parking record.");
+    }
+  };
+
+  const activeRecords = parkingRecords.filter(p => p.status === "CHECKED_IN" || p.status === "Active" || p.status === "Occupied").length;
+  const completedToday = parkingRecords.filter(p => p.status === "CHECKED_OUT" || p.status === "Completed").length; // simplified logic
+  const todayIncome = parkingRecords.reduce((total, p) => total + (Number(p.amount) || 0), 0);
+
+  const recordStats = [
+    {
+      label: "Total Records",
+      value: String(parkingRecords.length),
+    },
+    {
+      label: "Active Parking",
+      value: String(activeRecords),
+    },
+    {
+      label: "Completed",
+      value: String(completedToday),
+    },
+    {
+      label: "Total Income",
+      value: `Rs ${todayIncome.toLocaleString()}`,
+    },
+  ];
+
+  const canEdit = user?.role === "OWNER" || user?.role === "MANAGER" || user?.role === "PARKING";
+  const canDelete = user?.role === "OWNER" || user?.role === "MANAGER";
+
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "PARKING"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
@@ -115,19 +103,12 @@ export default function ParkingRecordsPage() {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <a
+              <Link
                 href="/parking"
                 className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
               >
                 Back to Parking
-              </a>
-
-              <a
-                href="/parking/new"
-                className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
-              >
-                New Parking
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -147,10 +128,10 @@ export default function ParkingRecordsPage() {
 
               <select className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
                 <option>All Services</option>
-                <option>Parking Only</option>
-                <option>Parking + Wash</option>
-                <option>Valet Service</option>
-                <option>Event Parking</option>
+                <option>Hotel Guest</option>
+                <option>Walk-in</option>
+                <option>Event Guest</option>
+                <option>Valet</option>
               </select>
 
               <select className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
@@ -174,70 +155,109 @@ export default function ParkingRecordsPage() {
               </p>
             </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1150px] text-left">
-                <thead>
-                  <tr className="border-b border-[#d0c5af] bg-[#f5f3ef] text-xs uppercase tracking-widest text-[#4d4635]">
-                    <th className="px-6 py-4">Record ID</th>
-                    <th className="px-6 py-4">Vehicle No</th>
-                    <th className="px-6 py-4">Vehicle</th>
-                    <th className="px-6 py-4">Guest</th>
-                    <th className="px-6 py-4">Slot</th>
-                    <th className="px-6 py-4">Service</th>
-                    <th className="px-6 py-4">Check In</th>
-                    <th className="px-6 py-4">Check Out</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4 text-right">Amount</th>
-                  </tr>
-                </thead>
-
-                <tbody className="divide-y divide-[#d0c5af]">
-                  {parkingRecords.map((record) => (
-                    <tr key={record.id} className="transition hover:bg-[#fbf9f5]">
-                      <td className="px-6 py-5 font-bold">{record.id}</td>
-
-                      <td className="px-6 py-5 font-semibold">
-                        {record.vehicleNo}
-                      </td>
-
-                      <td className="px-6 py-5 text-[#4d4635]">
-                        {record.vehicle}
-                      </td>
-
-                      <td className="px-6 py-5">{record.guest}</td>
-
-                      <td className="px-6 py-5">
-                        <span className="rounded-full bg-[#d4af37]/20 px-3 py-1 text-xs font-bold text-[#735c00]">
-                          {record.slot}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-5 text-[#4d4635]">
-                        {record.service}
-                      </td>
-
-                      <td className="px-6 py-5">{record.checkIn}</td>
-
-                      <td className="px-6 py-5">{record.checkOut}</td>
-
-                      <td className="px-6 py-5">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(
-                            record.status
-                          )}`}
-                        >
-                          {record.status}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-5 text-right font-bold text-[#735c00]">
-                        {record.amount}
-                      </td>
+            {loading ? (
+              <div className="p-10 text-center">
+                <p className="text-lg font-bold text-[#735c00]">Loading parking records...</p>
+              </div>
+            ) : error ? (
+              <div className="p-10 text-center">
+                <p className="text-lg font-bold text-red-600">{error}</p>
+                <button onClick={fetchRecords} className="mt-4 rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white">Try Again</button>
+              </div>
+            ) : parkingRecords.length === 0 ? (
+              <div className="p-10 text-center">
+                <h3 className="text-xl font-bold text-[#735c00]">No parking slots found</h3>
+                <p className="mt-2 text-[#4d4635]">There are no parking records available.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[1150px] text-left">
+                  <thead>
+                    <tr className="border-b border-[#d0c5af] bg-[#f5f3ef] text-xs uppercase tracking-widest text-[#4d4635]">
+                      <th className="px-6 py-4">Record ID</th>
+                      <th className="px-6 py-4">Vehicle No</th>
+                      <th className="px-6 py-4">Vehicle</th>
+                      <th className="px-6 py-4">Guest</th>
+                      <th className="px-6 py-4">Slot</th>
+                      <th className="px-6 py-4">Service</th>
+                      <th className="px-6 py-4">Check In</th>
+                      <th className="px-6 py-4">Check Out</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4 text-right">Amount</th>
+                      <th className="px-6 py-4 text-right">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+
+                  <tbody className="divide-y divide-[#d0c5af]">
+                    {parkingRecords.map((record) => (
+                      <tr key={record.id} className="transition hover:bg-[#fbf9f5]">
+                        <td className="px-6 py-5 font-bold">{record.id?.substring(0, 8)}</td>
+
+                        <td className="px-6 py-5 font-semibold">
+                          {record.vehicleNumber || "-"}
+                        </td>
+
+                        <td className="px-6 py-5 text-[#4d4635]">
+                          {record.vehicleModel || "-"}
+                        </td>
+
+                        <td className="px-6 py-5">{record.guestName || record.driverName || "-"}</td>
+
+                        <td className="px-6 py-5">
+                          <span className="rounded-full bg-[#d4af37]/20 px-3 py-1 text-xs font-bold text-[#735c00]">
+                            {record.slotNumber || "-"}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-5 text-[#4d4635]">
+                          {record.serviceType || "-"}
+                        </td>
+
+                        <td className="px-6 py-5">{record.checkInTime ? new Date(record.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "-"}</td>
+
+                        <td className="px-6 py-5">{record.expectedCheckOutTime ? new Date(record.expectedCheckOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "-"}</td>
+
+                        <td className="px-6 py-5">
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(
+                              record.status || ""
+                            )}`}
+                          >
+                            {record.status}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-5 text-right font-bold text-[#735c00]">
+                          Rs {record.amount || 0}
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <div className="flex justify-end gap-3">
+                            {canEdit && (
+                              <Link
+                                href={`/parking/edit?id=${record.id}`}
+                                className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
+                              >
+                                Edit
+                              </Link>
+                            )}
+
+                            {canDelete && (
+                              <button
+                                onClick={() => deleteRecord(record.id)}
+                                className="rounded-lg border border-red-200 px-4 py-2 text-sm font-bold text-red-700 transition hover:bg-red-50"
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </section>
         </main>
       </div>

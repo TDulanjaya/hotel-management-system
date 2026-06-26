@@ -14,7 +14,7 @@ type MenuItem = {
 };
 
 const menuItems: MenuItem[] = [
-  { name: "Dashboard", href: "/dashboard", icon: "▦", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST", "EVENTS", "INVENTORY", "PARKING", "WAITER", "ROOM_SERVICE", "COOK", "GAME_STAFF"] },
+  { name: "Dashboard", href: "/dashboard", icon: "▦", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"] },
   { name: "Users", href: "/users", icon: "♙", allowedRoles: ["OWNER", "MANAGER"] },
   { name: "Venues", href: "/venues", icon: "▥", allowedRoles: ["OWNER", "MANAGER", "EVENTS"] },
   { name: "Service Pricing", href: "/pricing", icon: "₨", allowedRoles: ["OWNER", "MANAGER"] },
