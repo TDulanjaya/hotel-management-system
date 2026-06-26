@@ -15,7 +15,7 @@ public class CorsConfig implements WebMvcConfigurer {
                         "http://127.0.0.1:3000"
                 )
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .allowCredentials(false);
+                .allowedHeaders("Authorization", "Content-Type")
+                .allowCredentials(true);
     }
 }

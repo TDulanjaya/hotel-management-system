@@ -8,7 +8,7 @@ const navItems = [
   { name: "Guests", href: "/guests", icon: "♙" },
   { name: "Folios/Billing", href: "/folio", icon: "▤" },
   { name: "Room Service", href: "/room-service", icon: "⌂" },
-  { name: "Inventory", href: "/inventory", icon: "▥" },
+  { name: "INVENTORY", href: "/inventory", icon: "▥" },
   { name: "Reports", href: "/reports", icon: "▧" },
 ];
 
@@ -54,7 +54,7 @@ const activities = [
 const flowItems = [
   { label: "Check-ins", note: "18 scheduled today", value: "18", icon: "↳" },
   { label: "Check-outs", note: "12 due by 11:00 AM", value: "12", icon: "↲" },
-  { label: "Parking", note: "42/50 slots occupied", value: "85%", icon: "P" },
+  { label: "PARKING", note: "42/50 slots occupied", value: "85%", icon: "P" },
   { label: "Active Events", note: "Ballroom A & Terrace", value: "2", icon: "▣" },
 ];
 
@@ -312,7 +312,7 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-4">
                       <div
                         className={`flex h-12 w-12 items-center justify-center rounded-xl font-bold ${
-                          item.label === "Parking"
+                          item.label === "PARKING"
                             ? "bg-[#fff6d8] text-[#806300]"
                             : "bg-[#eef2ff] text-[#3d4b61]"
                         }`}

@@ -114,7 +114,7 @@ export default function GamesPage() {
   };
 
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "game_staff"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "GAME_STAFF"]}>
       <div className="min-h-screen bg-[#f5f3ef] text-[#1b1c1a]">
         <AppSidebar />
 

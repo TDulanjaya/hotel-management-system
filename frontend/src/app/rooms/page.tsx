@@ -1,3 +1,5 @@
+"use client";
+
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
@@ -10,63 +12,10 @@ const statusFilters = [
   { label: "Maintenance", count: 2, color: "gray" },
 ];
 
-const rooms = [
-  {
-    number: "402",
-    type: "Presidential Suite",
-    bed: "King",
-    floor: "Floor 4",
-    status: "AVAILABLE",
-    statusColor: "green",
-    note: "Inspected",
-    price: "Rs 1,250",
-    buttons: ["View Details", "Quick Book"],
-  },
-  {
-    number: "308",
-    type: "Deluxe",
-    bed: "King",
-    floor: "Floor 3",
-    status: "CLEANING",
-    statusColor: "yellow",
-    note: "In Progress - 15m left",
-    price: "Rs 450",
-    buttons: ["View Details", "Locked"],
-  },
-  {
-    number: "215",
-    type: "Standard",
-    bed: "Twin",
-    floor: "Floor 2",
-    status: "OCCUPIED",
-    statusColor: "red",
-    note: "Guest: Mr. Alexander Thorne",
-    price: "Rs 280",
-    buttons: ["Guest Folio", "Service Req."],
-  },
-  {
-    number: "501",
-    type: "Executive Suite",
-    bed: "Suite",
-    floor: "Floor 5",
-    status: "MAINTENANCE",
-    statusColor: "gray",
-    note: "AC Repair Required",
-    price: "Rs 950",
-    buttons: ["Work Order", "Blocked"],
-  },
-  {
-    number: "403",
-    type: "Junior Suite",
-    bed: "Queen",
-    floor: "Floor 4",
-    status: "AVAILABLE",
-    statusColor: "green",
-    note: "Ready for Check-in",
-    price: "Rs 680",
-    buttons: ["View Details", "Quick Book"],
-  },
-];
+import { getRooms, deleteRoom as apiDeleteRoom } from "@/lib/api/roomApi";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { getUser, AuthUser } from "@/utils/auth";
 
 function getStatusStyles(color: string) {
   if (color === "green") {
@@ -105,8 +54,39 @@ function getStatusStyles(color: string) {
 }
 
 export default function RoomsPage() {
+  const [rooms, setRooms] = useState<any[]>([]);
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    setUser(getUser());
+    async function loadRooms() {
+      try {
+        const data = await getRooms();
+        setRooms(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    loadRooms();
+  }, []);
+
+  const deleteRoomRecord = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this room?")) return;
+    try {
+      await apiDeleteRoom(id);
+      setRooms(prev => prev.filter(r => r.id !== id));
+      alert("Room deleted successfully.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete room.");
+    }
+  };
+
+  const canEdit = user?.role === "OWNER" || user?.role === "MANAGER" || user?.role === "RECEPTIONIST";
+  const canDelete = user?.role === "OWNER" || user?.role === "MANAGER";
+
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "receptionist"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "RECEPTIONIST"]}>
       <div className="min-h-screen bg-[#f8f5ef] text-[#181818]">
         <AppSidebar />
 
@@ -135,12 +115,7 @@ export default function RoomsPage() {
                 ♧
               </button>
 
-              <a
-                href="/reservations/new"
-                className="rounded-xl bg-[#806300] px-8 py-4 text-lg font-semibold text-white transition hover:-translate-y-1 hover:bg-[#6b5400] hover:shadow-xl"
-              >
-                + New Reservation
-              </a>
+
 
               <div className="flex h-11 w-11 items-center justify-center rounded-full border-4 border-[#d8b328] bg-white shadow">
                 🧑
@@ -164,9 +139,9 @@ export default function RoomsPage() {
                 </p>
               </div>
 
-              <button className="rounded-2xl bg-[#d8b328] px-8 py-4 text-lg font-semibold text-[#4c3a00] shadow-lg transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl">
+              <Link href="/rooms/new" className="rounded-2xl bg-[#d8b328] px-8 py-4 text-lg font-semibold text-[#4c3a00] shadow-lg transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl">
                 ⊕ Add Room
-              </button>
+              </Link>
             </div>
 
             <div className="room-fade delay-100 mb-5 flex flex-wrap items-center gap-5">
@@ -207,82 +182,100 @@ export default function RoomsPage() {
             </div>
 
             <div className="grid gap-7 md:grid-cols-2 xl:grid-cols-4">
-              {rooms.map((room, index) => {
-                const styles = getStatusStyles(room.statusColor);
-
-                return (
-                  <article
-                    key={room.number}
-                    className={`room-card room-fade rounded-2xl border border-[#d9cfbd] border-l-4 bg-white p-7 shadow-sm transition hover:-translate-y-2 hover:shadow-2xl ${styles.card}`}
-                    style={{ animationDelay: `${0.18 + index * 0.07}s` }}
-                  >
-                    <div className="mb-6 flex items-start justify-between gap-4">
-                      <div>
-                        <h2 className="text-2xl font-extrabold">
-                          Room {room.number}
-                        </h2>
-
-                        <p className="mt-1 text-xl text-[#3f3b35]">
-                          {room.type}
-                        </p>
-
-                        <p className="mt-1 text-lg text-[#3f3b35]">
-                          {room.bed} • {room.floor}
-                        </p>
+              {rooms.length === 0 ? (
+                <div className="col-span-full rounded-2xl border border-[#d9cfbd] bg-white p-10 text-center shadow-sm">
+                  <p className="text-xl font-bold text-[#735c00]">No rooms found</p>
+                  <p className="mt-2 text-[#4d4635]">Add a new room to get started.</p>
+                </div>
+              ) : (
+                rooms.map((room, index) => {
+                  let color = "green";
+                  if (room.status === "OCCUPIED") color = "red";
+                  if (room.status === "CLEANING") color = "yellow";
+                  if (room.status === "MAINTENANCE") color = "gray";
+                  
+                  const styles = getStatusStyles(color);
+  
+                  return (
+                    <article
+                      key={room.id || index}
+                      className={`room-card room-fade rounded-2xl border border-[#d9cfbd] border-l-4 bg-white p-7 shadow-sm transition hover:-translate-y-2 hover:shadow-2xl ${styles.card}`}
+                      style={{ animationDelay: `${0.18 + index * 0.07}s` }}
+                    >
+                      <div className="mb-6 flex items-start justify-between gap-4">
+                        <div>
+                          <h2 className="text-2xl font-extrabold">
+                            Room {room.roomNumber}
+                          </h2>
+  
+                          <p className="mt-1 text-xl text-[#3f3b35]">
+                            {room.roomType}
+                          </p>
+  
+                          <p className="mt-1 text-lg text-[#3f3b35]">
+                            Cap: {room.capacity} • {room.floor}
+                          </p>
+                        </div>
+  
+                        <span
+                          className={`rounded-full px-4 py-2 text-sm font-extrabold tracking-widest ${styles.badge}`}
+                        >
+                          {room.status}
+                        </span>
                       </div>
+  
+                      <div className="mb-6 flex min-h-[58px] items-center gap-3 text-lg text-[#3f3b35]">
+                        <span className="text-xl">
+                          {color === "red"
+                            ? "♙"
+                            : color === "yellow"
+                            ? "▥"
+                            : color === "gray"
+                            ? "♨"
+                            : "◉"}
+                        </span>
+  
+                        <span
+                          className={
+                            color === "gray" ? "text-red-600" : ""
+                          }
+                        >
+                          {room.description || "No notes"}
+                        </span>
+                      </div>
+  
+                      <div className="mb-6">
+                        <strong className="text-2xl">Rs {room.pricePerNight}</strong>
+                        <span className="text-lg text-[#3f3b35]"> / night</span>
+                      </div>
+  
+                      <div className="grid grid-cols-3 gap-2">
+                        <button className="rounded-xl bg-[#ece9e2] px-2 py-3 text-sm font-bold text-[#181818] transition hover:bg-[#ded8cc]">
+                          View
+                        </button>
+  
+                        {canEdit && (
+                          <Link
+                            href={`/rooms/${room.id}/edit`}
+                            className="rounded-xl border border-[#806300] bg-white px-2 py-3 text-center text-sm font-bold text-[#806300] transition hover:-translate-y-1 hover:shadow-lg"
+                          >
+                            Edit
+                          </Link>
+                        )}
 
-                      <span
-                        className={`rounded-full px-4 py-2 text-sm font-extrabold tracking-widest ${styles.badge}`}
-                      >
-                        {room.status}
-                      </span>
-                    </div>
-
-                    <div className="mb-6 flex min-h-[58px] items-center gap-3 text-lg text-[#3f3b35]">
-                      <span className="text-xl">
-                        {room.statusColor === "red"
-                          ? "♙"
-                          : room.statusColor === "yellow"
-                          ? "▥"
-                          : room.statusColor === "gray"
-                          ? "♨"
-                          : "◉"}
-                      </span>
-
-                      <span
-                        className={
-                          room.statusColor === "gray" ? "text-red-600" : ""
-                        }
-                      >
-                        {room.note}
-                      </span>
-                    </div>
-
-                    <div className="mb-6">
-                      <strong className="text-2xl">{room.price}</strong>
-                      <span className="text-lg text-[#3f3b35]"> / night</span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                      <button className="rounded-xl bg-[#ece9e2] px-4 py-3 text-lg text-[#181818] transition hover:bg-[#ded8cc]">
-                        {room.buttons[0]}
-                      </button>
-
-                      <button
-                        className={`rounded-xl px-4 py-3 text-lg transition hover:-translate-y-1 hover:shadow-lg ${
-                          room.buttons[1] === "Quick Book"
-                            ? "bg-[#806300] text-white"
-                            : room.buttons[1] === "Service Req."
-                            ? "bg-[#4b5872] text-white"
-                            : "bg-[#eee6ce] text-[#d0a100]"
-                        }`}
-                      >
-                        {room.buttons[1]}
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
+                        {canDelete && (
+                          <button
+                            onClick={() => deleteRoomRecord(room.id)}
+                            className="rounded-xl bg-red-100 px-2 py-3 text-sm font-bold text-red-700 transition hover:-translate-y-1 hover:bg-red-200 hover:shadow-lg"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })
+              )}
             </div>
           </section>
         </main>

@@ -93,7 +93,7 @@ function getStatusClass(status: string) {
 
 export default function ParkingRecordsPage() {
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "parking"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "PARKING"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

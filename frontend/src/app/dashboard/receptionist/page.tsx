@@ -162,7 +162,7 @@ function roomStatusClass(status: string) {
 
 export default function ReceptionistDashboardPage() {
   return (
-    <ProtectedRoute allowedRoles={["receptionist", "manager", "owner"]}>
+    <ProtectedRoute allowedRoles={["RECEPTIONIST", "MANAGER", "OWNER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

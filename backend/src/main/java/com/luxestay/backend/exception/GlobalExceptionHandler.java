@@ -19,6 +19,22 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler({IllegalArgumentException.class, IllegalStateException.class})
+    public ResponseEntity<Map<String, String>> handleBadRequestExceptions(RuntimeException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", "Bad Request");
+        error.put("message", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<Map<String, String>> handleResponseStatusException(org.springframework.web.server.ResponseStatusException ex) {
+        Map<String, String> error = new HashMap<>();
+        error.put("error", ex.getStatusCode().toString());
+        error.put("message", ex.getReason());
+        return new ResponseEntity<>(error, ex.getStatusCode());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGlobalException(Exception ex) {
         Map<String, String> error = new HashMap<>();

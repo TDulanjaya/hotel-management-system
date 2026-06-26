@@ -170,7 +170,7 @@ function getRateClass(rate: string) {
 
 export default function ParkingIncomeReportPage() {
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

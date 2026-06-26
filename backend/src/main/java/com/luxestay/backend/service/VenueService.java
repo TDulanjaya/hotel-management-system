@@ -17,39 +17,7 @@ public class VenueService {
         this.venueRepository = venueRepository;
     }
 
-    @PostConstruct
-    public void seedData() {
-        if (venueRepository.count() == 0) {
-            Venue grandBallroom = Venue.builder()
-                    .id("VEN-1001")
-                    .name("Grand Ballroom")
-                    .type("Banquet Hall")
-                    .capacity(250)
-                    .size("5000 sqft")
-                    .location("Ground Floor")
-                    .status("Available")
-                    .price(2500.00)
-                    .image("")
-                    .tags(List.of("Wedding", "Corporate", "Luxury"))
-                    .build();
 
-            Venue rooftop = Venue.builder()
-                    .id("VEN-1002")
-                    .name("Rooftop Lounge")
-                    .type("Rooftop")
-                    .capacity(80)
-                    .size("2000 sqft")
-                    .location("Top Floor")
-                    .status("Available")
-                    .price(1200.00)
-                    .image("")
-                    .tags(List.of("Party", "Dinner", "Private Event"))
-                    .build();
-
-            venueRepository.save(grandBallroom);
-            venueRepository.save(rooftop);
-        }
-    }
 
     public List<Venue> getAllVenues() {
         return venueRepository.findAll();

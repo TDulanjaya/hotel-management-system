@@ -31,7 +31,7 @@ const incomeRows = [
     percent: "55%",
   },
   {
-    source: "Events",
+    source: "EVENTS",
     amount: "Rs 12,400",
     percent: "29%",
   },
@@ -94,7 +94,7 @@ const profitRows = [
   },
   {
     id: "NP-1003",
-    department: "Events",
+    department: "EVENTS",
     income: "Rs 12,400",
     expenses: "Rs 7,200",
     profit: "Rs 5,200",
@@ -102,7 +102,7 @@ const profitRows = [
   },
   {
     id: "NP-1004",
-    department: "Parking",
+    department: "PARKING",
     income: "Rs 810",
     expenses: "Rs 180",
     profit: "Rs 630",
@@ -122,7 +122,7 @@ const monthlyProfit = [
 
 export default function NetProfitReportPage() {
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { getUser, AuthUser } from "@/utils/auth";
+
+import { getEvents, deleteEvent as apiDeleteEvent } from "@/lib/api/eventApi";
 
 type SavedEvent = {
   id: string;
@@ -15,13 +18,13 @@ type SavedEvent = {
   organizerName: string;
   phone: string;
   status: string;
-  selectedVenue: {
+  selectedVenue?: {
     name: string;
     type: string;
     capacity: number;
     price: number;
   };
-  selectedPackages: {
+  selectedPackages?: {
     id: string;
     name: string;
     priceType: "perPerson" | "fixed";
@@ -52,20 +55,39 @@ function getStatusClass(status: string) {
 
 export default function EventsListPage() {
   const [events, setEvents] = useState<SavedEvent[]>([]);
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
-    const savedEvents = JSON.parse(localStorage.getItem("hotel_events") || "[]");
-    setEvents(savedEvents);
+    setUser(getUser());
+    async function loadEvents() {
+      try {
+        const data = await getEvents();
+        setEvents(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    loadEvents();
   }, []);
 
-  const deleteEvent = (id: string) => {
-    const updatedEvents = events.filter((event) => event.id !== id);
-    setEvents(updatedEvents);
-    localStorage.setItem("hotel_events", JSON.stringify(updatedEvents));
+  const deleteEvent = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this record?")) return;
+    try {
+      await apiDeleteEvent(id);
+      const updatedEvents = events.filter((event) => event.id !== id);
+      setEvents(updatedEvents);
+      alert("Event deleted successfully.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete event.");
+    }
   };
 
+  const canEdit = user?.role === "OWNER" || user?.role === "MANAGER" || user?.role === "EVENTS";
+  const canDelete = user?.role === "OWNER" || user?.role === "MANAGER" || user?.role === "EVENTS";
+
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "events"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "EVENTS"]}>
       <div className="min-h-screen bg-[#f8f5ef] text-[#181818]">
         <AppSidebar />
 
@@ -210,19 +232,23 @@ export default function EventsListPage() {
 
                         <td className="px-6 py-5">
                           <div className="flex justify-end gap-3">
-                            <Link
-                              href={`/events/${event.id}`}
-                              className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
-                            >
-                              View
-                            </Link>
+                            {canEdit && (
+                              <Link
+                                href={`/events/${event.id}/edit`}
+                                className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
+                              >
+                                Edit
+                              </Link>
+                            )}
 
-                            <button
-                              onClick={() => deleteEvent(event.id)}
-                              className="rounded-lg border border-red-200 px-4 py-2 text-sm font-bold text-red-700 transition hover:bg-red-50"
-                            >
-                              Delete
-                            </button>
+                            {canDelete && (
+                              <button
+                                onClick={() => deleteEvent(event.id)}
+                                className="rounded-lg border border-red-200 px-4 py-2 text-sm font-bold text-red-700 transition hover:bg-red-50"
+                              >
+                                Delete
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

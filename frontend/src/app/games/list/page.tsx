@@ -50,7 +50,7 @@ function getStatusClass(status: string) {
 
 export default function GamesListPage() {
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "game_staff"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "GAME_STAFF"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

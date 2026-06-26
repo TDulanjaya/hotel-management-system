@@ -162,7 +162,7 @@ export default function ManagerDashboardPage() {
   };
 
   return (
-    <ProtectedRoute allowedRoles={["manager", "owner"]}>
+    <ProtectedRoute allowedRoles={["MANAGER", "OWNER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

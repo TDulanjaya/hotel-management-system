@@ -6,7 +6,7 @@ const users = [
     id: "USR-001",
     name: "Alexander Wright",
     email: "owner@luxestay.com",
-    role: "Owner",
+    role: "OWNER",
     department: "Administration",
     status: "Active",
   },
@@ -14,7 +14,7 @@ const users = [
     id: "USR-002",
     name: "Julian Sterling",
     email: "manager@luxestay.com",
-    role: "Manager",
+    role: "MANAGER",
     department: "Operations",
     status: "Active",
   },
@@ -22,7 +22,7 @@ const users = [
     id: "USR-003",
     name: "Emma Johnson",
     email: "receptionist@luxestay.com",
-    role: "Receptionist",
+    role: "RECEPTIONIST",
     department: "Front Office",
     status: "Active",
   },
@@ -31,7 +31,7 @@ const users = [
     name: "Marcus Thorne",
     email: "kitchen@luxestay.com",
     role: "Kitchen Staff",
-    department: "Kitchen",
+    department: "COOK",
     status: "Inactive",
   },
   {
@@ -39,7 +39,7 @@ const users = [
     name: "Sarah Lopez",
     email: "events@luxestay.com",
     role: "Events Staff",
-    department: "Events",
+    department: "EVENTS",
     status: "Active",
   },
 ];
@@ -54,7 +54,7 @@ function getStatusClass(status: string) {
 
 export default function UsersListPage() {
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

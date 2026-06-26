@@ -1,161 +1,128 @@
 "use client";
 
+import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { createInventoryItem } from "@/lib/api/inventoryApi";
 
 export default function NewInventoryItemPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const [formData, setFormData] = useState({
+    itemName: "",
+    category: "Kitchen",
+    quantity: 0,
+    unit: "pcs",
+    reorderLevel: 10,
+    supplierName: "",
+    purchasePrice: 0,
+    status: "In Stock"
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      await createInventoryItem({
+        ...formData,
+        quantity: Number(formData.quantity),
+        reorderLevel: Number(formData.reorderLevel),
+        purchasePrice: Number(formData.purchasePrice),
+      });
+      router.push("/inventory");
+    } catch (err: any) {
+      setError(err.message || "Failed to add inventory item");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "inventory"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "INVENTORY"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
-
         <main className="px-8 py-10 lg:ml-[280px]">
-          <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#735c00]">
-                Inventory Management
-              </p>
-
-              <h1 className="mt-3 text-4xl font-bold text-[#735c00]">
-                Add New Inventory Item
-              </h1>
-
-              <p className="mt-2 text-[#4d4635]">
-                Add a new stock item with category, supplier, stock level,
-                reorder quantity, and storage details.
-              </p>
-            </div>
-
-            <button
-              onClick={() => router.push("/inventory")}
-              className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
-            >
-              Back to Inventory
-            </button>
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-[#735c00]">Add New Item</h1>
           </div>
-
-          <section className="grid gap-8 xl:grid-cols-[1fr_1fr]">
-            <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-              <h2 className="text-2xl font-bold">Item Details</h2>
-
-              <div className="mt-6 space-y-5">
-                <InputField label="Item Name" placeholder="Enter item name" />
-
+          
+          <div className="max-w-2xl rounded-2xl border border-[#d0c5af] bg-white p-8 shadow-sm">
+            {error && <div className="mb-4 text-red-600">{error}</div>}
+            
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-bold text-[#4d4635]">Item Name</label>
+                <input required type="text" name="itemName" value={formData.itemName} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-bold text-[#4d4635]">
-                    Category
-                  </label>
-
-                  <select className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                    <option>Kitchen</option>
-                    <option>Restaurant</option>
-                    <option>Housekeeping</option>
-                    <option>Amenities</option>
-                    <option>Maintenance</option>
-                    <option>Office</option>
+                  <label className="block text-sm font-bold text-[#4d4635]">Category</label>
+                  <select name="category" value={formData.category} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3">
+                    <option value="Kitchen">Kitchen</option>
+                    <option value="Housekeeping">Housekeeping</option>
+                    <option value="Restaurant">Restaurant</option>
+                    <option value="Amenities">Amenities</option>
                   </select>
                 </div>
-
-                <InputField label="Unit" placeholder="kg / pcs / liters / sets" />
-
-                <InputField label="Supplier" placeholder="Enter supplier name" />
-
-                <InputField
-                  label="Storage Location"
-                  placeholder="Example: Kitchen Store A"
-                />
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-              <h2 className="text-2xl font-bold">Stock Control</h2>
-
-              <div className="mt-6 space-y-5">
-                <InputField
-                  label="Opening Stock"
-                  type="number"
-                  placeholder="Enter current quantity"
-                />
-
-                <InputField
-                  label="Minimum Stock"
-                  type="number"
-                  placeholder="Enter minimum quantity"
-                />
-
-                <InputField
-                  label="Reorder Quantity"
-                  type="number"
-                  placeholder="Enter reorder quantity"
-                />
-
-                <InputField label="Unit Cost" placeholder="Example: Rs 4.20" />
-
                 <div>
-                  <label className="text-sm font-bold text-[#4d4635]">
-                    Stock Status
-                  </label>
-
-                  <select className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                    <option>In Stock</option>
-                    <option>Low Stock</option>
-                    <option>Critical</option>
-                    <option>Out of Stock</option>
-                  </select>
+                  <label className="block text-sm font-bold text-[#4d4635]">Unit Type</label>
+                  <input required type="text" name="unit" placeholder="e.g. pcs, kg, liters" value={formData.unit} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
                 </div>
               </div>
-            </div>
 
-            <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm xl:col-span-2">
-              <h2 className="text-2xl font-bold">Additional Notes</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-[#4d4635]">Initial Quantity</label>
+                  <input required type="number" name="quantity" value={formData.quantity} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-[#4d4635]">Reorder Level</label>
+                  <input required type="number" name="reorderLevel" value={formData.reorderLevel} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+                </div>
+              </div>
 
-              <textarea
-                placeholder="Add item notes, supplier instructions, or reorder details..."
-                rows={5}
-                className="mt-6 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-[#4d4635]">Purchase Price (Initial)</label>
+                  <input required type="number" name="purchasePrice" value={formData.purchasePrice} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-[#4d4635]">Supplier Name</label>
+                  <input required type="text" name="supplierName" value={formData.supplierName} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+                </div>
+              </div>
 
-              <div className="mt-6 flex flex-wrap gap-4">
-                <button className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]">
-                  Save Item
+              <div>
+                <label className="block text-sm font-bold text-[#4d4635]">Status</label>
+                <select name="status" value={formData.status} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3">
+                  <option value="In Stock">In Stock</option>
+                  <option value="Low Stock">Low Stock</option>
+                  <option value="Critical">Critical</option>
+                </select>
+              </div>
+
+              <div className="flex gap-4 pt-4">
+                <button type="submit" disabled={loading} className="rounded-xl bg-[#735c00] px-8 py-3 font-bold text-white transition hover:bg-[#d4af37]">
+                  {loading ? "Saving..." : "Save Item"}
                 </button>
-
-                <button
-                  onClick={() => router.push("/inventory")}
-                  className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
-                >
+                <Link href="/inventory" className="rounded-xl border border-[#d0c5af] px-8 py-3 font-bold text-[#4d4635] transition hover:bg-[#f5f3ef]">
                   Cancel
-                </button>
+                </Link>
               </div>
-            </div>
-          </section>
+            </form>
+          </div>
         </main>
       </div>
     </ProtectedRoute>
-  );
-}
-
-function InputField({
-  label,
-  placeholder,
-  type = "text",
-}: {
-  label: string;
-  placeholder: string;
-  type?: string;
-}) {
-  return (
-    <div>
-      <label className="text-sm font-bold text-[#4d4635]">{label}</label>
-
-      <input
-        type={type}
-        placeholder={placeholder}
-        className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-      />
-    </div>
   );
 }

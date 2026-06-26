@@ -28,7 +28,7 @@ const lowStockItems = [
   {
     id: "INV-1002",
     item: "Basmati Rice",
-    category: "Kitchen",
+    category: "COOK",
     currentStock: "35 kg",
     minimumStock: "50 kg",
     reorderQty: "100 kg",
@@ -83,7 +83,7 @@ const lowStockItems = [
   {
     id: "INV-1009",
     item: "Chicken Breast",
-    category: "Kitchen",
+    category: "COOK",
     currentStock: "14 kg",
     minimumStock: "25 kg",
     reorderQty: "50 kg",
@@ -105,7 +105,7 @@ const purchaseRequests = [
   {
     id: "PR-002",
     item: "Basmati Rice",
-    requestedBy: "Kitchen",
+    requestedBy: "COOK",
     quantity: "100 kg",
     estimatedCost: "Rs 420",
     status: "Pending Approval",
@@ -142,7 +142,7 @@ function getPriorityClass(priority: string) {
 
 export default function LowStockReportPage() {
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

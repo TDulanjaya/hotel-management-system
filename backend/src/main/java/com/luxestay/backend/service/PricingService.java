@@ -17,33 +17,7 @@ public class PricingService {
         this.pricingItemRepository = pricingItemRepository;
     }
 
-    @PostConstruct
-    public void seedData() {
-        if (pricingItemRepository.count() == 0) {
-            PricingItem roomPrice = PricingItem.builder()
-                    .id("PR-1001")
-                    .name("Deluxe Room")
-                    .category("Room")
-                    .description("Deluxe room price per night")
-                    .priceType("Per Night")
-                    .price(250.00)
-                    .status("Active")
-                    .build();
 
-            PricingItem parkingPrice = PricingItem.builder()
-                    .id("PR-1002")
-                    .name("Parking")
-                    .category("Parking")
-                    .description("Parking price per hour")
-                    .priceType("Per Hour")
-                    .price(5.00)
-                    .status("Active")
-                    .build();
-
-            pricingItemRepository.save(roomPrice);
-            pricingItemRepository.save(parkingPrice);
-        }
-    }
 
     public List<PricingItem> getAllPricingItems() {
         return pricingItemRepository.findAll();

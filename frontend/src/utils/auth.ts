@@ -1,13 +1,14 @@
 export type UserRole =
-  | "owner"
-  | "manager"
-  | "receptionist"
-  | "kitchen"
-  | "inventory"
-  | "waiter"
-  | "events"
-  | "parking"
-  | "game_staff";
+  | "OWNER"
+  | "MANAGER"
+  | "RECEPTIONIST"
+  | "COOK"
+  | "INVENTORY"
+  | "WAITER"
+  | "EVENTS"
+  | "PARKING"
+  | "GAME_STAFF"
+  | "ROOM_SERVICE";
 
 export type AuthUser = {
   id: string;
@@ -45,17 +46,24 @@ export function logout() {
   localStorage.removeItem("user");
 }
 
+export function hasRole(allowedRoles: UserRole[]): boolean {
+  const user = getUser();
+  if (!user) return false;
+  return allowedRoles.includes(user.role);
+}
+
 export function getDashboardByRole(role: UserRole) {
   const roleRoutes: Record<UserRole, string> = {
-    owner: "/dashboard/owner",
-    manager: "/dashboard/manager",
-    receptionist: "/dashboard/receptionist",
-    kitchen: "/kitchen",
-    inventory: "/inventory",
-    waiter: "/restaurant/orders",
-    events: "/events",
-    parking: "/parking",
-    game_staff: "/games",
+    OWNER: "/dashboard",
+    MANAGER: "/dashboard",
+    RECEPTIONIST: "/rooms",
+    COOK: "/kitchen-orders",
+    INVENTORY: "/inventory",
+    WAITER: "/restaurant-orders",
+    EVENTS: "/events",
+    PARKING: "/parking",
+    GAME_STAFF: "/games",
+    ROOM_SERVICE: "/room-service",
   };
 
   return roleRoutes[role] || "/dashboard";

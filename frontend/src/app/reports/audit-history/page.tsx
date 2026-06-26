@@ -28,7 +28,7 @@ const auditLogs = [
   {
     id: "AUD-1001",
     user: "Julian Sterling",
-    role: "Manager",
+    role: "MANAGER",
     action: "Generated Daily Revenue Report",
     module: "Reports",
     ip: "192.168.1.24",
@@ -40,7 +40,7 @@ const auditLogs = [
   {
     id: "AUD-1002",
     user: "Admin Owner",
-    role: "Owner",
+    role: "OWNER",
     action: "Created New User Account",
     module: "Users",
     ip: "192.168.1.10",
@@ -52,7 +52,7 @@ const auditLogs = [
   {
     id: "AUD-1003",
     user: "Front Desk Staff",
-    role: "Receptionist",
+    role: "RECEPTIONIST",
     action: "Attempted to Open Reports",
     module: "Reports",
     ip: "192.168.1.38",
@@ -64,7 +64,7 @@ const auditLogs = [
   {
     id: "AUD-1004",
     user: "Finance Manager",
-    role: "Manager",
+    role: "MANAGER",
     action: "Added New Payment",
     module: "Payments",
     ip: "192.168.1.31",
@@ -76,9 +76,9 @@ const auditLogs = [
   {
     id: "AUD-1005",
     user: "Kitchen Staff",
-    role: "Kitchen",
+    role: "COOK",
     action: "Updated Kitchen Order Status",
-    module: "Kitchen",
+    module: "COOK",
     ip: "192.168.1.42",
     date: "Oct 24, 2024",
     time: "12:40 PM",
@@ -170,7 +170,7 @@ function getStatusClass(status: string) {
 
 export default function AuditHistoryReportPage() {
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

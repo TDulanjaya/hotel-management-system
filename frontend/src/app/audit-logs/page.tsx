@@ -28,7 +28,7 @@ const auditLogs = [
   {
     id: "AUD-1001",
     user: "Admin Owner",
-    role: "Owner",
+    role: "OWNER",
     action: "Created new staff user",
     module: "Users",
     ip: "192.168.1.10",
@@ -41,7 +41,7 @@ const auditLogs = [
   {
     id: "AUD-1002",
     user: "Julian Sterling",
-    role: "Manager",
+    role: "MANAGER",
     action: "Generated daily revenue report",
     module: "Reports",
     ip: "192.168.1.24",
@@ -54,7 +54,7 @@ const auditLogs = [
   {
     id: "AUD-1003",
     user: "Front Desk Staff",
-    role: "Receptionist",
+    role: "RECEPTIONIST",
     action: "Attempted to access reports",
     module: "Reports",
     ip: "192.168.1.38",
@@ -67,7 +67,7 @@ const auditLogs = [
   {
     id: "AUD-1004",
     user: "Finance Manager",
-    role: "Manager",
+    role: "MANAGER",
     action: "Added new payment transaction",
     module: "Payments",
     ip: "192.168.1.31",
@@ -80,9 +80,9 @@ const auditLogs = [
   {
     id: "AUD-1005",
     user: "Kitchen Staff",
-    role: "Kitchen",
+    role: "COOK",
     action: "Updated kitchen order status",
-    module: "Kitchen",
+    module: "COOK",
     ip: "192.168.1.42",
     device: "Tablet / Android",
     date: "Oct 24, 2024",
@@ -176,7 +176,7 @@ function getSeverityClass(severity: string) {
 
 export default function AuditLogsPage() {
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

@@ -26,7 +26,7 @@ const restaurantPages = [
 
 export default function RestaurantPage() {
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "waiter"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "WAITER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

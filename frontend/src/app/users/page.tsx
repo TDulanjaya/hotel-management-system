@@ -1,6 +1,9 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+type PermissionType = "check" | "view" | "none";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import {
@@ -19,22 +22,19 @@ import {
   Circle,
   Minus,
   Eye,
-  X,
   Shield,
+  Trash2,
 } from "lucide-react";
+import { getUsers, deleteUser as apiDeleteUser } from "@/lib/api/userApi";
+import { getUser, AuthUser } from "@/utils/auth";
 
 type UserItem = {
+  id: string;
   name: string;
   email: string;
-  initials: string;
   role: string;
-  roleColor: string;
-  mfa: boolean;
-  lastActive: string;
   active: boolean;
 };
-
-type PermissionType = "check" | "view" | "none";
 
 const stats = [
   {
@@ -65,48 +65,17 @@ const stats = [
   },
 ];
 
-const initialUsers: UserItem[] = [
-  {
-    name: "Sofia Moretti",
-    email: "sofia.m@luxestay.com",
-    initials: "SM",
-    role: "Manager",
-    roleColor: "bg-[#735c00]/10 text-[#735c00] border-[#735c00]/20",
-    mfa: true,
-    lastActive: "2 mins ago",
-    active: true,
-  },
-  {
-    name: "James Kinsley",
-    email: "j.kinsley@luxestay.com",
-    initials: "JK",
-    role: "Receptionist",
-    roleColor: "bg-[#565e74]/10 text-[#565e74] border-[#565e74]/20",
-    mfa: false,
-    lastActive: "1 hour ago",
-    active: true,
-  },
-  {
-    name: "Elena Belova",
-    email: "e.belova@luxestay.com",
-    initials: "EB",
-    role: "Kitchen Staff",
-    roleColor: "bg-[#e4e2de] text-[#4d4635] border-[#d0c5af]",
-    mfa: true,
-    lastActive: "3 days ago",
-    active: false,
-  },
-];
+
 
 const roles = [
-  "Owner",
-  "Manager",
-  "Receptionist",
-  "Waiter",
-  "Kitchen",
-  "Inventory",
-  "Events",
-  "Parking",
+  "OWNER",
+  "MANAGER",
+  "RECEPTIONIST",
+  "WAITER",
+  "COOK",
+  "INVENTORY",
+  "EVENTS",
+  "PARKING",
   "Game Staff",
 ];
 
@@ -172,25 +141,33 @@ const permissionRows: {
   },
 ];
 
+function getRoleColor(role: string) {
+  if (role === "OWNER" || role === "MANAGER") return "bg-[#735c00]/10 text-[#735c00] border-[#735c00]/20";
+  if (role === "RECEPTIONIST") return "bg-[#565e74]/10 text-[#565e74] border-[#565e74]/20";
+  return "bg-[#e4e2de] text-[#4d4635] border-[#d0c5af]";
+}
+
+function getInitials(name: string) {
+  return name.split(" ").map(n => n[0]).join("").toUpperCase().substring(0, 2);
+}
+
 export default function UsersPage() {
-  const [users, setUsers] = useState<UserItem[]>(initialUsers);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [users, setUsers] = useState<UserItem[]>([]);
 
-  const toggleUserStatus = (index: number) => {
-    setUsers((currentUsers) =>
-      currentUsers.map((user, currentIndex) =>
-        currentIndex === index ? { ...user, active: !user.active } : user
-      )
-    );
-  };
-
-  const handleCreateUser = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setModalOpen(false);
-  };
+  useEffect(() => {
+    async function loadUsers() {
+      try {
+        const data = await getUsers();
+        setUsers(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    loadUsers();
+  }, []);
 
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 
@@ -198,22 +175,13 @@ export default function UsersPage() {
           <TopBar />
 
           <section className="mx-auto max-w-[1600px] space-y-10 p-8">
-            <PageHeader onAddUser={() => setModalOpen(true)} />
+            <PageHeader />
 
-            <StatsGrid />
-
-            <UsersTable users={users} onToggleStatus={toggleUserStatus} />
-
+            <StatsGrid userCount={users.length} />
+            <UsersTable users={users} setUsers={setUsers} />
             <PermissionsMatrix />
           </section>
         </main>
-
-        {modalOpen && (
-          <AddUserModal
-            onClose={() => setModalOpen(false)}
-            onSubmit={handleCreateUser}
-          />
-        )}
       </div>
     </ProtectedRoute>
   );
@@ -260,7 +228,7 @@ function TopBar() {
   );
 }
 
-function PageHeader({ onAddUser }: { onAddUser: () => void }) {
+function PageHeader() {
   return (
     <div className="flex flex-col justify-between gap-6 xl:flex-row xl:items-end">
       <div>
@@ -278,22 +246,49 @@ function PageHeader({ onAddUser }: { onAddUser: () => void }) {
           Export Audit Log
         </button>
 
-        <button
-          onClick={onAddUser}
+        <Link
+          href="/users/new"
           className="flex items-center gap-2 rounded-xl bg-[#735c00] px-8 py-3 text-sm font-bold text-white shadow-lg transition hover:scale-[1.02] active:scale-95"
         >
           <UserPlus size={18} />
           Add New User
-        </button>
+        </Link>
       </div>
     </div>
   );
 }
 
-function StatsGrid() {
+function StatsGrid({ userCount }: { userCount: number }) {
+  const dynamicStats = [
+    {
+      title: "Total Staff",
+      value: String(userCount),
+      icon: Users,
+      color: "text-[#735c00]",
+    },
+    {
+      title: "Active Roles",
+      value: "9",
+      icon: ShieldCheck,
+      color: "text-[#565e74]",
+    },
+    {
+      title: "Security Flags",
+      value: "0",
+      icon: ShieldAlert,
+      color: "text-[#ba1a1a]",
+    },
+    {
+      title: "MFA Adoption",
+      value: "-",
+      icon: KeyRound,
+      color: "text-[#735c00]",
+    },
+  ];
+
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
-      {stats.map((stat) => {
+      {dynamicStats.map((stat) => {
         const Icon = stat.icon;
 
         return (
@@ -303,18 +298,10 @@ function StatsGrid() {
           >
             <div className="mb-4 flex items-start justify-between">
               <div
-                className={`rounded-lg bg-[#735c00]/10 p-2 ${stat.color} ${
-                  stat.pulse ? "security-pulse" : ""
-                }`}
+                className={`rounded-lg bg-[#735c00]/10 p-2 ${stat.color}`}
               >
                 <Icon size={24} />
               </div>
-
-              {stat.note && (
-                <span className="rounded-full bg-green-50 px-2 py-1 text-xs text-green-600">
-                  {stat.note}
-                </span>
-              )}
             </div>
 
             <p className="text-xs font-bold uppercase tracking-widest text-[#4d4635]">
@@ -333,11 +320,31 @@ function StatsGrid() {
 
 function UsersTable({
   users,
-  onToggleStatus,
+  setUsers,
 }: {
   users: UserItem[];
-  onToggleStatus: (index: number) => void;
+  setUsers: React.Dispatch<React.SetStateAction<UserItem[]>>;
 }) {
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    setCurrentUser(getUser());
+  }, []);
+
+  const deleteUserRecord = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this user?")) return;
+    try {
+      await apiDeleteUser(id);
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+      alert("User deleted successfully.");
+    } catch (err: any) {
+      alert(err.message || "Failed to delete user.");
+    }
+  };
+
+  const canEdit = currentUser?.role === "OWNER" || currentUser?.role === "MANAGER";
+  const canDelete = currentUser?.role === "OWNER" || currentUser?.role === "MANAGER";
+
   return (
     <section className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-[#d0c5af] bg-white/60 p-6">
@@ -362,126 +369,145 @@ function UsersTable({
           </thead>
 
           <tbody className="divide-y divide-[#d0c5af]">
-            {users.map((user, index) => (
-              <tr
-                key={user.email}
-                className={`group border-l-4 transition hover:bg-[#fbf9f5] ${
-                  user.active ? "border-l-[#735c00]" : "border-l-[#ba1a1a]"
-                }`}
-              >
-                <td className="px-8 py-5">
-                  <div
-                    className={`flex items-center gap-3 ${
+            {users.length === 0 ? (
+              <tr>
+                <td colSpan={6} className="px-8 py-12 text-center text-[#4d4635]">
+                  <p className="text-lg font-bold">No users found</p>
+                  <p className="mt-1 text-sm">Add a new user to grant system access.</p>
+                </td>
+              </tr>
+            ) : (
+              users.map((user, index) => (
+                <tr
+                  key={user.id || user.email}
+                  className={`group border-l-4 transition hover:bg-[#fbf9f5] ${
+                    user.active ? "border-l-[#735c00]" : "border-l-[#ba1a1a]"
+                  }`}
+                >
+                  <td className="px-8 py-5">
+                    <div
+                      className={`flex items-center gap-3 ${
+                        user.active ? "" : "opacity-50"
+                      }`}
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#735c00]/10 font-bold text-[#735c00]">
+                        {getInitials(user.name)}
+                      </div>
+  
+                      <div>
+                        <p className="text-sm font-bold">{user.name}</p>
+                        <p className="text-xs text-[#4d4635]">{user.email}</p>
+                      </div>
+                    </div>
+                  </td>
+  
+                  <td className="px-8 py-5">
+                    <span
+                      className={`rounded-full border px-3 py-1 text-xs font-bold ${
+                        getRoleColor(user.role)
+                      } ${user.active ? "" : "opacity-50"}`}
+                    >
+                      {user.role}
+                    </span>
+                  </td>
+  
+                  <td className="px-8 py-5 text-center">
+                    <Circle size={22} className="mx-auto text-[#4d4635]" />
+                  </td>
+  
+                  <td
+                    className={`px-8 py-5 text-sm text-[#4d4635] ${
                       user.active ? "" : "opacity-50"
                     }`}
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#735c00]/10 font-bold text-[#735c00]">
-                      {user.initials}
+                    -
+                  </td>
+  
+                  <td className="px-8 py-5">
+                    <span className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${
+                      user.active ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                    }`}>
+                      {user.active ? "Active" : "Inactive"}
+                    </span>
+                  </td>
+  
+                  <td className="px-8 py-5 text-right">
+                    <div className="flex justify-end gap-2 opacity-0 transition group-hover:opacity-100">
+                      {!(currentUser?.role === "MANAGER" && (user.role === "OWNER" || user.role === "MANAGER")) && (
+                        <>
+                          {canEdit && (
+                            <Link href={`/users/${user.id}/edit`} className="rounded-lg p-2 text-[#4d4635] hover:bg-[#efeeea]">
+                              <Pencil size={18} />
+                            </Link>
+                          )}
+
+                          {canDelete && user.role !== "OWNER" && (
+                            <button onClick={() => deleteUserRecord(user.id)} className="rounded-lg p-2 text-red-600 hover:bg-red-50">
+                              <Trash2 size={18} />
+                            </button>
+                          )}
+                        </>
+                      )}
                     </div>
-
-                    <div>
-                      <p className="text-sm font-bold">{user.name}</p>
-                      <p className="text-xs text-[#4d4635]">{user.email}</p>
-                    </div>
-                  </div>
-                </td>
-
-                <td className="px-8 py-5">
-                  <span
-                    className={`rounded-full border px-3 py-1 text-xs font-bold ${
-                      user.roleColor
-                    } ${user.active ? "" : "opacity-50"}`}
-                  >
-                    {user.role}
-                  </span>
-                </td>
-
-                <td className="px-8 py-5 text-center">
-                  {user.mfa ? (
-                    <CheckCircle
-                      size={22}
-                      className={`mx-auto text-green-600 ${
-                        user.active ? "" : "opacity-50"
-                      }`}
-                    />
-                  ) : (
-                    <Circle size={22} className="mx-auto text-[#4d4635]" />
-                  )}
-                </td>
-
-                <td
-                  className={`px-8 py-5 text-sm text-[#4d4635] ${
-                    user.active ? "" : "opacity-50"
-                  }`}
-                >
-                  {user.lastActive}
-                </td>
-
-                <td className="px-8 py-5">
-                  <button
-                    onClick={() => onToggleStatus(index)}
-                    className={`relative h-6 w-11 rounded-full transition ${
-                      user.active ? "bg-[#735c00]" : "bg-[#e4e2de]"
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-[2px] h-5 w-5 rounded-full bg-white transition ${
-                        user.active ? "left-[22px]" : "left-[2px]"
-                      }`}
-                    />
-                  </button>
-                </td>
-
-                <td className="px-8 py-5 text-right">
-                  <div className="flex justify-end gap-2 opacity-0 transition group-hover:opacity-100">
-                    <button className="rounded-lg p-2 text-[#4d4635] hover:bg-[#efeeea]">
-                      <Pencil size={18} />
-                    </button>
-
-                    <button className="rounded-lg p-2 text-[#4d4635] hover:bg-[#efeeea]">
-                      <LockKeyhole size={18} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
       <div className="flex items-center justify-between border-t border-[#d0c5af] p-6 text-[#4d4635]">
-        <p className="text-sm">Showing 1 to 10 of 124 users</p>
-
-        <div className="flex gap-2">
-          <button
-            disabled
-            className="flex h-10 w-10 items-center justify-center rounded-lg opacity-30"
-          >
-            ‹
-          </button>
-
-          <button className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#735c00] font-bold text-white">
-            1
-          </button>
-
-          <button className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-[#efeeea]">
-            2
-          </button>
-
-          <button className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-[#efeeea]">
-            3
-          </button>
-
-          <button className="flex h-10 w-10 items-center justify-center rounded-lg hover:bg-[#efeeea]">
-            ›
-          </button>
-        </div>
+        <p className="text-sm">Showing {users.length} users</p>
       </div>
     </section>
   );
 }
 
 function PermissionsMatrix() {
+  const roles = [
+    "OWNER",
+    "MANAGER",
+    "RECEPTIONIST",
+    "WAITER",
+    "COOK",
+    "INVENTORY",
+    "EVENTS",
+    "PARKING",
+    "GAME_STAFF",
+  ];
+
+
+
+  const permissionRows: {
+    module: string;
+    permissions: PermissionType[];
+  }[] = [
+    {
+      module: "Room Reservations",
+      permissions: [
+        "check", "check", "check", "none", "none", "none", "check", "none", "none",
+      ],
+    },
+    {
+      module: "Billing & Folios",
+      permissions: [
+        "check", "check", "view", "none", "none", "none", "none", "none", "none",
+      ],
+    },
+    {
+      module: "Inventory Control",
+      permissions: [
+        "check", "check", "none", "none", "view", "check", "none", "none", "none",
+      ],
+    },
+    {
+      module: "System Settings",
+      permissions: [
+        "check", "view", "none", "none", "none", "none", "none", "none", "none",
+      ],
+    },
+  ];
   return (
     <section className="space-y-6">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -540,7 +566,7 @@ function PermissionsMatrix() {
   );
 }
 
-function PermissionIcon({ type }: { type: PermissionType }) {
+function PermissionIcon({ type }: { type: "check" | "view" | "none" }) {
   if (type === "check") {
     return <CheckCircle size={22} className="mx-auto text-[#735c00]" />;
   }
@@ -550,129 +576,4 @@ function PermissionIcon({ type }: { type: PermissionType }) {
   }
 
   return <Minus size={22} className="mx-auto text-[#4d4635]/20" />;
-}
-
-function AddUserModal({
-  onClose,
-  onSubmit,
-}: {
-  onClose: () => void;
-  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
-}) {
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#131b2e]/60 p-4 backdrop-blur-sm">
-      <div className="modal-pop w-full max-w-2xl overflow-hidden rounded-3xl bg-white shadow-2xl">
-        <div className="flex items-center justify-between border-b border-[#d0c5af] bg-[#f5f3ef] p-8">
-          <div>
-            <h2 className="text-2xl font-bold">Provision New Personnel</h2>
-            <p className="mt-1 text-sm text-[#4d4635]">
-              Assign secure credentials and access roles.
-            </p>
-          </div>
-
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 transition hover:bg-[#efeeea]"
-          >
-            <X size={22} />
-          </button>
-        </div>
-
-        <form onSubmit={onSubmit} className="space-y-6 p-8">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <FormInput
-              label="Full Legal Name"
-              placeholder="e.g. Marcus Aurelius"
-            />
-
-            <FormInput
-              label="Work Email Address"
-              type="email"
-              placeholder="m.aurelius@luxestay.com"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-[#4d4635]">
-              Primary Operational Role
-            </label>
-
-            <select className="w-full rounded-xl border border-[#d0c5af] bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#d4af37]/40">
-              <option>Select a role...</option>
-              <option>Manager</option>
-              <option>Receptionist</option>
-              <option>Waiter</option>
-              <option>Kitchen Staff</option>
-              <option>Inventory Staff</option>
-              <option>Event Coordinator</option>
-              <option>Parking Staff</option>
-              <option>Game Staff</option>
-            </select>
-          </div>
-
-          <div className="space-y-4 rounded-2xl border border-[#735c00]/10 bg-[#735c00]/5 p-6">
-            <h3 className="flex items-center gap-2 font-bold text-[#735c00]">
-              <Shield size={20} />
-              Security Provisions
-            </h3>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-bold">Enforce Multi-Factor Authentication</p>
-                <p className="text-xs text-[#4d4635]">
-                  Required for Manager and above roles.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                className="relative h-6 w-11 rounded-full bg-[#735c00]"
-              >
-                <span className="absolute left-[22px] top-[2px] h-5 w-5 rounded-full bg-white" />
-              </button>
-            </div>
-          </div>
-
-          <div className="flex gap-4 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 rounded-xl border border-[#7f7663] py-3 font-bold transition hover:bg-[#efeeea]"
-            >
-              Discard
-            </button>
-
-            <button
-              type="submit"
-              className="flex-[2] rounded-xl bg-[#735c00] py-3 font-bold text-white shadow-lg transition hover:scale-[1.01] active:scale-95"
-            >
-              Generate Invite Link
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-function FormInput({
-  label,
-  placeholder,
-  type = "text",
-}: {
-  label: string;
-  placeholder: string;
-  type?: string;
-}) {
-  return (
-    <div className="space-y-2">
-      <label className="text-sm font-bold text-[#4d4635]">{label}</label>
-
-      <input
-        type={type}
-        placeholder={placeholder}
-        className="w-full rounded-xl border border-[#d0c5af] bg-white px-4 py-3 outline-none focus:ring-2 focus:ring-[#d4af37]/40"
-      />
-    </div>
-  );
 }

@@ -26,7 +26,7 @@ const billingItems = [
   {
     description: "Valet Parking Vouchers (200 Units)",
     date: "Oct 12, 2024",
-    category: "Parking",
+    category: "PARKING",
     amount: "Rs 8,000.00",
     style: "bg-green-100 text-green-800",
   },
@@ -65,7 +65,7 @@ const linkedFolios = [
 
 export default function EventLedgerPage() {
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "events"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "EVENTS"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

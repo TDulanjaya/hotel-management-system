@@ -25,7 +25,7 @@ export default function ProtectedRoute({
     }
 
     if (allowedRoles && !allowedRoles.includes(user.role)) {
-      router.push("/access-denied");
+      router.push("/dashboard");
       return;
     }
 

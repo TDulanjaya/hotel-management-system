@@ -58,7 +58,7 @@ function getStatusClass(status: string) {
 
 export default function RoomServicePage() {
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "receptionist", "kitchen"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "RECEPTIONIST", "COOK"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

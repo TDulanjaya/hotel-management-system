@@ -12,7 +12,7 @@ export default function InventoryListRedirectPage() {
   }, [router]);
 
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "inventory"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "INVENTORY"]}>
       <main className="flex min-h-screen items-center justify-center bg-[#fbf9f5] text-[#735c00]">
         <p className="text-lg font-bold">Redirecting to inventory...</p>
       </main>

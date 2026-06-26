@@ -14,7 +14,7 @@ const usageSummary = [
   },
   {
     label: "Top Department",
-    value: "Kitchen",
+    value: "COOK",
     note: "Highest stock usage",
   },
   {
@@ -28,8 +28,8 @@ const usageRows = [
   {
     id: "USE-1001",
     item: "Basmati Rice",
-    category: "Kitchen",
-    department: "Kitchen",
+    category: "COOK",
+    department: "COOK",
     usedQty: "18 kg",
     unitCost: "Rs 4.20",
     totalCost: "Rs 75.60",
@@ -84,7 +84,7 @@ const usageRows = [
 
 const departmentUsage = [
   {
-    label: "Kitchen",
+    label: "COOK",
     value: "Rs 1,180",
     percent: "42%",
   },
@@ -150,7 +150,7 @@ function getStatusClass(status: string) {
 
 export default function InventoryUsageReportPage() {
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

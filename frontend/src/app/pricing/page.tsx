@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { getUser, AuthUser } from "@/utils/auth";
 
 type ChargeItem = {
   id: string;
@@ -13,7 +14,7 @@ type ChargeItem = {
   | "Bites"
   | "Drinks"
   | "Bar"
-  | "Parking"
+  | "PARKING"
   | "Amenity"
   | "Room Service"
   | "Laundry"
@@ -26,96 +27,14 @@ type ChargeItem = {
   status: "Active" | "Inactive";
 };
 
-const defaultChargeItems: ChargeItem[] = [
-  {
-    id: "gold-buffet",
-    name: "Gold Buffet Menu",
-    category: "Menu",
-    description: "Rice, curry, meat, dessert, soft drink",
-    priceType: "perPerson",
-    price: 55,
-    status: "Active",
-  },
-  {
-    id: "platinum-buffet",
-    name: "Platinum Buffet Menu",
-    category: "Menu",
-    description: "Premium 5-star buffet with dessert",
-    priceType: "perPerson",
-    price: 85,
-    status: "Active",
-  },
-  {
-    id: "finger-food",
-    name: "Finger Food Package",
-    category: "Bites",
-    description: "Rolls, cutlets, pastries, canapés",
-    priceType: "perPerson",
-    price: 25,
-    status: "Active",
-  },
-  {
-    id: "soft-drinks",
-    name: "Soft Drinks Package",
-    category: "Drinks",
-    description: "Soft drinks, juice, water bottles",
-    priceType: "perPerson",
-    price: 12,
-    status: "Active",
-  },
-  {
-    id: "limited-bar",
-    name: "Limited Bar Package",
-    category: "Bar",
-    description: "Limited bar service for selected guests",
-    priceType: "perPerson",
-    price: 35,
-    status: "Active",
-  },
-  {
-    id: "parking-car",
-    name: "Car Parking",
-    category: "Parking",
-    description: "Parking charge per vehicle",
-    priceType: "perVehicle",
-    price: 5,
-    status: "Active",
-  },
-  {
-    id: "pool-access",
-    name: "Pool Access",
-    category: "Amenity",
-    description: "Pool access per person",
-    priceType: "perPerson",
-    price: 15,
-    status: "Active",
-  },
-  {
-    id: "av-sound",
-    name: "AV & Sound System",
-    category: "Event Service",
-    description: "LED wall, microphone, sound system",
-    priceType: "fixed",
-    price: 1500,
-    status: "Active",
-  },
-  {
-    id: "premium-decoration",
-    name: "Premium Decoration",
-    category: "Event Service",
-    description: "Stage, flowers, table setup",
-    priceType: "fixed",
-    price: 1200,
-    status: "Active",
-  },
-];
+import { getPricingItems, deletePricingItem as apiDeletePricingItem } from "@/lib/api/pricingApi";
 
 function getCategoryClass(category: string) {
   if (category === "Menu") return "bg-green-100 text-green-700";
   if (category === "Bites") return "bg-yellow-100 text-yellow-700";
   if (category === "Drinks") return "bg-blue-100 text-blue-700";
   if (category === "Bar") return "bg-purple-100 text-purple-700";
-  if (category === "Parking") return "bg-slate-100 text-slate-700";
+  if (category === "PARKING") return "bg-slate-100 text-slate-700";
   if (category === "Amenity") return "bg-pink-100 text-pink-700";
   if (category === "Event Service") return "bg-orange-100 text-orange-700";
 
@@ -135,19 +54,20 @@ export default function PricingPage() {
   const [items, setItems] = useState<ChargeItem[]>([]);
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [searchText, setSearchText] = useState("");
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  const fetchItems = async () => {
+    try {
+      const data = await getPricingItems();
+      setItems(data);
+    } catch (error) {
+      console.error("Failed to fetch pricing items", error);
+    }
+  };
 
   useEffect(() => {
-    const savedItems = localStorage.getItem("hotel_charge_items");
-
-    if (savedItems) {
-      setItems(JSON.parse(savedItems));
-    } else {
-      localStorage.setItem(
-        "hotel_charge_items",
-        JSON.stringify(defaultChargeItems)
-      );
-      setItems(defaultChargeItems);
-    }
+    setUser(getUser());
+    fetchItems();
   }, []);
 
   const categories = useMemo(() => {
@@ -172,30 +92,24 @@ export default function PricingPage() {
     });
   }, [items, categoryFilter, searchText]);
 
-  const deleteItem = (id: string) => {
+  const deleteItem = async (id: string) => {
     const confirmed = confirm("Delete this price item?");
 
     if (!confirmed) {
       return;
     }
 
-    const updatedItems = items.filter((item) => item.id !== id);
-    setItems(updatedItems);
-    localStorage.setItem("hotel_charge_items", JSON.stringify(updatedItems));
+    try {
+      await apiDeletePricingItem(id);
+      setItems((prev) => prev.filter((item) => item.id !== id));
+    } catch (error) {
+      console.error("Failed to delete pricing item", error);
+      alert("Unable to delete pricing item.");
+    }
   };
 
   const resetDefaultItems = () => {
-    const confirmed = confirm("Reset all service prices to default?");
-
-    if (!confirmed) {
-      return;
-    }
-
-    localStorage.setItem(
-      "hotel_charge_items",
-      JSON.stringify(defaultChargeItems)
-    );
-    setItems(defaultChargeItems);
+    fetchItems();
   };
 
   const activeCount = items.filter((item) => item.status === "Active").length;
@@ -203,7 +117,7 @@ export default function PricingPage() {
   const totalValue = items.reduce((total, item) => total + item.price, 0);
 
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "events"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "EVENTS"]}>
       <div className="min-h-screen bg-[#f8f5ef] text-[#181818]">
         <AppSidebar />
 
@@ -353,19 +267,23 @@ export default function PricingPage() {
 
                         <td className="px-6 py-5">
                           <div className="flex justify-end gap-3">
-                            <Link
-                              href={`/pricing/new?id=Rs{item.id}`}
-                              className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
-                            >
-                              Edit
-                            </Link>
+                            {(user?.role === "OWNER" || user?.role === "MANAGER") && (
+                              <Link
+                                href={`/pricing/${item.id}/edit`}
+                                className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
+                              >
+                                Edit
+                              </Link>
+                            )}
 
-                            <button
-                              onClick={() => deleteItem(item.id)}
-                              className="rounded-lg border border-red-200 px-4 py-2 text-sm font-bold text-red-700 transition hover:bg-red-50"
-                            >
-                              Delete
-                            </button>
+                            {(user?.role === "OWNER" || user?.role === "MANAGER") && (
+                              <button
+                                onClick={() => deleteItem(item.id)}
+                                className="rounded-lg border border-red-200 px-4 py-2 text-sm font-bold text-red-700 transition hover:bg-red-50"
+                              >
+                                Delete
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>

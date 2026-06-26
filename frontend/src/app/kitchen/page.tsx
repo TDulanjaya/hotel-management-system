@@ -85,7 +85,7 @@ const kitchenStats = [
 
 export default function KitchenPage() {
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "kitchen"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "COOK"]}>
       <div className="min-h-screen bg-[#f8f5ef] text-[#181818]">
         <AppSidebar />
 

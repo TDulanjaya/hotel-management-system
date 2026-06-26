@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { getUser, AuthUser } from "@/utils/auth";
 
 type Venue = {
   id: string;
@@ -18,7 +19,7 @@ type Venue = {
   tags: string[];
 };
 
-const API_URL = "http://localhost:8080/api/venues";
+import { getVenues, deleteVenue as apiDeleteVenue } from "@/lib/api/venueApi";
 
 const fallbackImage =
   "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=900&q=80";
@@ -45,19 +46,14 @@ export default function VenuesPage() {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   const fetchVenues = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const response = await fetch(API_URL);
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch venues");
-      }
-
-      const data: Venue[] = await response.json();
+      const data = await getVenues();
       setVenues(data);
     } catch (error) {
       console.error("Venue fetch error:", error);
@@ -68,6 +64,7 @@ export default function VenuesPage() {
   };
 
   useEffect(() => {
+    setUser(getUser());
     fetchVenues();
   }, []);
 
@@ -79,13 +76,7 @@ export default function VenuesPage() {
     }
 
     try {
-      const response = await fetch(`${API_URL}/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete venue");
-      }
+      await apiDeleteVenue(id);
 
       setVenues((previousVenues) =>
         previousVenues.filter((venue) => venue.id !== id)
@@ -118,7 +109,7 @@ export default function VenuesPage() {
       : 0;
 
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "events"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "EVENTS"]}>
       <div className="min-h-screen bg-[#f8f5ef] text-[#181818]">
         <AppSidebar />
 
@@ -211,7 +202,17 @@ export default function VenuesPage() {
               </section>
 
               <section className="grid gap-6 xl:grid-cols-2">
-                {venues.map((venue) => (
+                {venues.length === 0 ? (
+                  <div className="col-span-2 rounded-2xl border border-[#d0c5af] bg-white p-10 text-center shadow-sm">
+                    <p className="text-xl font-bold text-[#735c00]">
+                      No venues found
+                    </p>
+                    <p className="mt-2 text-[#4d4635]">
+                      Create a new venue to get started.
+                    </p>
+                  </div>
+                ) : (
+                  venues.map((venue) => (
                   <article
                     key={venue.id}
                     className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
@@ -267,24 +268,29 @@ export default function VenuesPage() {
                         </div>
 
                         <div className="flex gap-3">
-                          <Link
-                            href={`/venues/new?id=${venue.id}`}
-                            className="rounded-xl border border-[#735c00] px-5 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
-                          >
-                            Edit
-                          </Link>
+                          {(user?.role === "OWNER" || user?.role === "MANAGER" || user?.role === "EVENTS") && (
+                            <Link
+                              href={`/venues/${venue.id}/edit`}
+                              className="rounded-xl border border-[#735c00] px-5 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
+                            >
+                              Edit
+                            </Link>
+                          )}
 
-                          <button
-                            onClick={() => deleteVenue(venue.id)}
-                            className="rounded-xl border border-red-200 px-5 py-3 font-bold text-red-700 transition hover:bg-red-50"
-                          >
-                            Delete
-                          </button>
+                          {(user?.role === "OWNER" || user?.role === "MANAGER") && (
+                            <button
+                              onClick={() => deleteVenue(venue.id)}
+                              className="rounded-xl border border-red-200 px-5 py-3 font-bold text-red-700 transition hover:bg-red-50"
+                            >
+                              Delete
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
                   </article>
-                ))}
+                  ))
+                )}
               </section>
             </>
           )}

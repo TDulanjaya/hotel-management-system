@@ -18,34 +18,7 @@ public class EventService {
         this.eventRepository = eventRepository;
     }
 
-    @PostConstruct
-    public void seedData() {
-        if (eventRepository.count() == 0) {
-            EventBooking sampleEvent = EventBooking.builder()
-                    .id("EV-1001")
-                    .eventName("Wedding Reception")
-                    .eventType("Wedding")
-                    .guestCount(150)
-                    .primaryDate("2026-06-25")
-                    .startTime("18:00")
-                    .organizerName("Daniel Smith")
-                    .phone("+94 77 123 4567")
-                    .email("daniel@example.com")
-                    .kitchenNote("Vegetarian menu required")
-                    .specialNote("Need flower decoration")
-                    .status("Confirmed")
-                    .selectedVenue(null)
-                    .selectedPackages(new ArrayList<>())
-                    .venueTotal(2500.00)
-                    .packageTotal(1500.00)
-                    .serviceCharge(400.00)
-                    .grandTotal(4400.00)
-                    .createdAt(System.currentTimeMillis())
-                    .build();
 
-            eventRepository.save(sampleEvent);
-        }
-    }
 
     public List<EventBooking> getAllEvents() {
         return eventRepository.findAll();

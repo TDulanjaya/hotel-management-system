@@ -14,7 +14,7 @@ type ChargeItem = {
   | "Bites"
   | "Drinks"
   | "Bar"
-  | "Parking"
+  | "PARKING"
   | "Amenity"
   | "Room Service"
   | "Laundry"
@@ -32,7 +32,7 @@ const categories: ChargeItem["category"][] = [
   "Bites",
   "Drinks",
   "Bar",
-  "Parking",
+  "PARKING",
   "Amenity",
   "Room Service",
   "Laundry",
@@ -139,7 +139,7 @@ export default function NewPricingItemPage() {
   };
 
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "events"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "EVENTS"]}>
       <div className="min-h-screen bg-[#f8f5ef] text-[#181818]">
         <AppSidebar />
 

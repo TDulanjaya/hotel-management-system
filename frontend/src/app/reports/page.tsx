@@ -30,7 +30,7 @@ const reports = [
   {
     title: "Low Stock",
     href: "/reports/low-stock",
-    category: "Inventory",
+    category: "INVENTORY",
     value: "06",
     note: "Items below minimum stock level.",
     icon: "▧",
@@ -46,7 +46,7 @@ const reports = [
   {
     title: "Event Income",
     href: "/reports/event-income",
-    category: "Events",
+    category: "EVENTS",
     value: "Rs 12,400",
     note: "Event bookings and venue income.",
     icon: "▣",
@@ -62,7 +62,7 @@ const reports = [
   {
     title: "Parking Income",
     href: "/reports/parking-income",
-    category: "Parking",
+    category: "PARKING",
     value: "Rs 780",
     note: "Parking slot usage and income.",
     icon: "P",
@@ -70,7 +70,7 @@ const reports = [
   {
     title: "Inventory Usage",
     href: "/reports/inventory-usage",
-    category: "Inventory",
+    category: "INVENTORY",
     value: "128",
     note: "Stock usage by department.",
     icon: "▥",
@@ -107,7 +107,7 @@ const quickStats = [
 const recentReports = [
   {
     name: "Daily Revenue Report",
-    generatedBy: "Manager",
+    generatedBy: "MANAGER",
     time: "Today, 09:30 AM",
     status: "Ready",
   },
@@ -119,7 +119,7 @@ const recentReports = [
   },
   {
     name: "Audit History Report",
-    generatedBy: "Owner",
+    generatedBy: "OWNER",
     time: "Yesterday, 05:40 PM",
     status: "Reviewed",
   },
@@ -130,7 +130,7 @@ function getCategoryClass(category: string) {
     return "bg-green-100 text-green-700";
   }
 
-  if (category === "Inventory") {
+  if (category === "INVENTORY") {
     return "bg-yellow-100 text-yellow-700";
   }
 
@@ -151,7 +151,7 @@ function getStatusClass(status: string) {
 
 export default function ReportsPage() {
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

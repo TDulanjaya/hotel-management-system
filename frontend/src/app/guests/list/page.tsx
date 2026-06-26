@@ -12,7 +12,7 @@ export default function GuestsListRedirectPage() {
   }, [router]);
 
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "receptionist"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "RECEPTIONIST"]}>
       <main className="flex min-h-screen items-center justify-center bg-[#fbf9f5] text-[#735c00]">
         <p className="text-lg font-bold">Redirecting to guests...</p>
       </main>

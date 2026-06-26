@@ -67,7 +67,7 @@ const revenueCards = [
     color: "text-[#545f73]",
   },
   {
-    title: "Parking",
+    title: "PARKING",
     value: "Rs 15,000",
     icon: ParkingCircle,
     bg: "bg-[#4d4635]/10",
@@ -98,7 +98,7 @@ const auditAlerts = [
 
 export default function OwnerDashboardPage() {
   return (
-    <ProtectedRoute allowedRoles={["owner"]}>
+    <ProtectedRoute allowedRoles={["OWNER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

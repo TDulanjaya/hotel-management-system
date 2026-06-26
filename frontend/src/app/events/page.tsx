@@ -1,57 +1,39 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Link from "next/link";
 
 const days = Array.from({ length: 31 }, (_, index) => index + 1);
 
-const events = [
-  {
-    day: 12,
-    title: "Tech Summit 2024",
-    type: "gold",
-  },
-  {
-    day: 15,
-    title: "Anderson Wedding",
-    type: "blue",
-  },
-  {
-    day: 24,
-    title: "BioMed Expo",
-    type: "blue",
-  },
-];
 
-const upcomingEvents = [
-  {
-    title: "Global Fintech Summit",
-    status: "Confirmed",
-    time: "Oct 24, 09:00",
-    location: "Grand Ballroom",
-    code: "GFIN-24",
-    guests: "450+",
-    accent: "gold",
-  },
-  {
-    title: "Sterling-Holt Nuptials",
-    status: "Active",
-    time: "Ongoing",
-    location: "Terrace Gardens",
-    code: "SHWED24",
-    guests: "120",
-    accent: "blue",
-  },
-];
 
-function getEventForDay(day: number) {
-  return events.find((event) => event.day === day);
-}
+import { getEvents } from "@/lib/api/eventApi";
 
 export default function EventsPage() {
+  const [eventsData, setEventsData] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadEvents() {
+      try {
+        const data = await getEvents();
+        setEventsData(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    loadEvents();
+  }, []);
+
+  function getEventForDay(day: number) {
+    return eventsData.find((event) => {
+      if (!event.primaryDate) return false;
+      return new Date(event.primaryDate).getDate() === day;
+    });
+  }
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "events"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "EVENTS"]}>
       <div className="min-h-screen bg-[#f8f5ef] text-[#181818]">
         <AppSidebar />
 
@@ -191,13 +173,9 @@ export default function EventsPage() {
 
                         {event && (
                           <div
-                            className={`event-chip mt-5 max-w-[90px] rounded-md border-l-4 p-3 text-xs font-bold ${
-                              event.type === "gold"
-                                ? "border-l-[#806300] bg-[#f5eed9] text-[#806300]"
-                                : "border-l-[#3d4b61] bg-[#f1f4fb] text-[#3d4b61]"
-                            }`}
+                            className={`event-chip mt-5 max-w-[90px] rounded-md border-l-4 p-3 text-xs font-bold border-l-[#806300] bg-[#f5eed9] text-[#806300]`}
                           >
-                            {event.title}
+                            {event.eventName}
                           </div>
                         )}
                       </div>
@@ -241,37 +219,43 @@ export default function EventsPage() {
                   </div>
 
                   <div className="space-y-6">
-                    {upcomingEvents.map((event) => (
-                      <article
-                        key={event.code}
-                        className={`event-upcoming-card rounded-2xl border-l-4 bg-[#f2f0ec] p-5 shadow-sm transition hover:-translate-y-2 hover:shadow-xl ${
-                          event.accent === "gold"
-                            ? "border-l-[#806300]"
-                            : "border-l-[#3d4b61]"
-                        }`}
-                      >
-                        <div className="mb-5 flex items-start justify-between">
-                          <span className="rounded-md bg-[#ebe8e2] px-3 py-2 text-xs font-extrabold uppercase tracking-wider text-[#806300]">
-                            {event.status}
-                          </span>
-
-                          <p className="text-[#3f3b35]">{event.time}</p>
-                        </div>
-
-                        <h3 className="text-xl font-extrabold">
-                          {event.title}
-                        </h3>
-
-                        <p className="mt-2 text-[#57534e]">
-                          {event.location}
-                        </p>
-
-                        <div className="mt-5 flex items-center justify-between text-sm font-bold text-[#3f3b35]">
-                          <span>{event.code}</span>
-                          <span>{event.guests} guests</span>
-                        </div>
-                      </article>
-                    ))}
+                    {eventsData.length === 0 ? (
+                      <div className="rounded-xl border border-[#d9cfbd] bg-[#f8f5ef] p-6 text-center">
+                        <p className="font-bold text-[#3f3b35]">No events found</p>
+                      </div>
+                    ) : (
+                      eventsData.slice(0, 5).map((event) => (
+                        <article
+                          key={event.id}
+                          className={`event-upcoming-card rounded-2xl border-l-4 bg-[#f2f0ec] p-5 shadow-sm transition hover:-translate-y-2 hover:shadow-xl ${
+                            event.status === "Confirmed"
+                              ? "border-l-[#806300]"
+                              : "border-l-[#3d4b61]"
+                          }`}
+                        >
+                          <div className="mb-5 flex items-start justify-between">
+                            <span className="rounded-md bg-[#ebe8e2] px-3 py-2 text-xs font-extrabold uppercase tracking-wider text-[#806300]">
+                              {event.status}
+                            </span>
+  
+                            <p className="text-[#3f3b35]">{event.primaryDate} {event.startTime}</p>
+                          </div>
+  
+                          <h3 className="text-xl font-extrabold">
+                            {event.eventName}
+                          </h3>
+  
+                          <p className="mt-2 text-[#57534e]">
+                            {event.selectedVenue?.name || "No Location"}
+                          </p>
+  
+                          <div className="mt-5 flex items-center justify-between text-sm font-bold text-[#3f3b35]">
+                            <span>{event.id}</span>
+                            <span>{event.guestCount} guests</span>
+                          </div>
+                        </article>
+                      ))
+                    )}
                   </div>
                 </section>
               </aside>

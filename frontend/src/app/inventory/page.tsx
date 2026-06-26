@@ -1,80 +1,19 @@
+"use client";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
-const inventoryItems = [
-  {
-    id: "INV-1001",
-    name: "Premium Bath Towels",
-    category: "Housekeeping",
-    stock: 240,
-    minimum: 80,
-    unit: "pcs",
-    supplier: "Luxe Linen Co.",
-    status: "In Stock",
-  },
-  {
-    id: "INV-1002",
-    name: "Basmati Rice",
-    category: "Kitchen",
-    stock: 35,
-    minimum: 50,
-    unit: "kg",
-    supplier: "FreshMart Supplies",
-    status: "Low Stock",
-  },
-  {
-    id: "INV-1003",
-    name: "Mineral Water Bottles",
-    category: "Restaurant",
-    stock: 420,
-    minimum: 150,
-    unit: "bottles",
-    supplier: "AquaPure",
-    status: "In Stock",
-  },
-  {
-    id: "INV-1004",
-    name: "Room Shampoo Set",
-    category: "Amenities",
-    stock: 18,
-    minimum: 60,
-    unit: "sets",
-    supplier: "HotelCare Products",
-    status: "Critical",
-  },
-  {
-    id: "INV-1005",
-    name: "Cleaning Liquid",
-    category: "Housekeeping",
-    stock: 75,
-    minimum: 40,
-    unit: "liters",
-    supplier: "CleanPro",
-    status: "In Stock",
-  },
-];
+import { getInventoryItems, deleteInventoryItem as apiDeleteInventory } from "@/lib/api/inventoryApi";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { getUser, AuthUser } from "@/utils/auth";
 
 const purchaseRequests = [
   {
     id: "PR-001",
     item: "Basmati Rice",
-    requestedBy: "Kitchen",
+    requestedBy: "COOK",
     quantity: "100 kg",
     status: "Pending Approval",
-  },
-  {
-    id: "PR-002",
-    item: "Room Shampoo Set",
-    requestedBy: "Housekeeping",
-    quantity: "250 sets",
-    status: "Urgent",
-  },
-  {
-    id: "PR-003",
-    item: "Premium Coffee Beans",
-    requestedBy: "Restaurant",
-    quantity: "40 kg",
-    status: "Approved",
   },
 ];
 
@@ -108,8 +47,39 @@ function getStockPercent(stock: number, minimum: number) {
 }
 
 export default function InventoryPage() {
+  const [inventoryItems, setInventoryItems] = useState<any[]>([]);
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    setUser(getUser());
+    async function loadInventory() {
+      try {
+        const data = await getInventoryItems();
+        setInventoryItems(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    loadInventory();
+  }, []);
+
+  const deleteInventoryItem = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this inventory item?")) return;
+    try {
+      await apiDeleteInventory(id);
+      setInventoryItems(prev => prev.filter(item => item.id !== id));
+      alert("Inventory item deleted successfully.");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete inventory item.");
+    }
+  };
+
+  const canEdit = user?.role === "OWNER" || user?.role === "MANAGER" || user?.role === "INVENTORY";
+  const canDelete = user?.role === "OWNER" || user?.role === "MANAGER";
+
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "inventory"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "INVENTORY"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 
@@ -131,13 +101,13 @@ export default function InventoryPage() {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <button className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white">
+              <Link href="/inventory/purchase" className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white">
                 + Purchase Request
-              </button>
+              </Link>
 
-              <button className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]">
+              <Link href="/inventory/new" className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]">
                 + Add Item
-              </button>
+              </Link>
             </div>
           </div>
 
@@ -204,58 +174,86 @@ export default function InventoryPage() {
                   </thead>
 
                   <tbody className="divide-y divide-[#d0c5af]">
-                    {inventoryItems.map((item) => (
-                      <tr key={item.id} className="transition hover:bg-[#fbf9f5]">
-                        <td className="px-6 py-5 font-bold">{item.id}</td>
-
-                        <td className="px-6 py-5">
-                          <p className="font-bold">{item.name}</p>
-
-                          <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#f5f3ef]">
-                            <div
-                              className="h-full rounded-full bg-[#735c00]"
-                              style={{
-                                width: getStockPercent(item.stock, item.minimum),
-                              }}
-                            />
-                          </div>
-                        </td>
-
-                        <td className="px-6 py-5">
-                          <span className="rounded-full bg-[#d4af37]/20 px-3 py-1 text-xs font-bold text-[#735c00]">
-                            {item.category}
-                          </span>
-                        </td>
-
-                        <td className="px-6 py-5 font-bold">
-                          {item.stock} {item.unit}
-                        </td>
-
-                        <td className="px-6 py-5 text-[#4d4635]">
-                          {item.minimum} {item.unit}
-                        </td>
-
-                        <td className="px-6 py-5 text-[#4d4635]">
-                          {item.supplier}
-                        </td>
-
-                        <td className="px-6 py-5">
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(
-                              item.status
-                            )}`}
-                          >
-                            {item.status}
-                          </span>
-                        </td>
-
-                        <td className="px-6 py-5 text-right">
-                          <button className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white">
-                            Update
-                          </button>
+                    {inventoryItems.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="px-6 py-10 text-center text-[#4d4635]">
+                          <p className="text-lg font-bold">No inventory items found</p>
                         </td>
                       </tr>
-                    ))}
+                    ) : (
+                      inventoryItems.map((item) => (
+                        <tr key={item.id} className="transition hover:bg-[#fbf9f5]">
+                          <td className="px-6 py-5 font-bold">{item.id?.substring(0,8) || "NEW"}</td>
+  
+                          <td className="px-6 py-5">
+                            <p className="font-bold">{item.itemName}</p>
+  
+                            <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#f5f3ef]">
+                              <div
+                                className="h-full rounded-full bg-[#735c00]"
+                                style={{
+                                  width: getStockPercent(item.quantity, item.reorderLevel),
+                                }}
+                              />
+                            </div>
+                          </td>
+  
+                          <td className="px-6 py-5">
+                            <span className="rounded-full bg-[#d4af37]/20 px-3 py-1 text-xs font-bold text-[#735c00]">
+                              {item.category}
+                            </span>
+                          </td>
+  
+                          <td className="px-6 py-5 font-bold">
+                            {item.quantity} {item.unit}
+                          </td>
+  
+                          <td className="px-6 py-5 text-[#4d4635]">
+                            {item.reorderLevel} {item.unit}
+                          </td>
+  
+                          <td className="px-6 py-5 text-[#4d4635]">
+                            {item.supplierName}
+                          </td>
+  
+                          <td className="px-6 py-5">
+                            <span
+                              className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(
+                                item.status
+                              )}`}
+                            >
+                              {item.status}
+                            </span>
+                          </td>
+  
+                          <td className="px-6 py-5">
+                            <div className="flex justify-end gap-3">
+                              <Link href={`/inventory/purchase?itemId=${item.id}`} className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white">
+                                Purchase
+                              </Link>
+
+                              {canEdit && (
+                                <Link
+                                  href={`/inventory/${item.id}/edit`}
+                                  className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
+                                >
+                                  Edit
+                                </Link>
+                              )}
+
+                              {canDelete && (
+                                <button
+                                  onClick={() => deleteInventoryItem(item.id)}
+                                  className="rounded-lg border border-red-200 px-4 py-2 text-sm font-bold text-red-700 transition hover:bg-red-50"
+                                >
+                                  Delete
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    )}
                   </tbody>
                 </table>
               </div>

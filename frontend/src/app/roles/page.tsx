@@ -3,8 +3,8 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
 const roles = [
   {
-    name: "Owner",
-    key: "owner",
+    name: "OWNER",
+    key: "OWNER",
     users: 1,
     access: "Full access to all modules, reports, users, and audit logs.",
     permissions: [
@@ -17,8 +17,8 @@ const roles = [
     ],
   },
   {
-    name: "Manager",
-    key: "manager",
+    name: "MANAGER",
+    key: "MANAGER",
     users: 2,
     access: "Can manage daily hotel operations, reports, users, and modules.",
     permissions: [
@@ -32,8 +32,8 @@ const roles = [
     ],
   },
   {
-    name: "Receptionist",
-    key: "receptionist",
+    name: "RECEPTIONIST",
+    key: "RECEPTIONIST",
     users: 4,
     access: "Can manage front desk operations, reservations, guests, and payments.",
     permissions: [
@@ -46,21 +46,21 @@ const roles = [
   },
   {
     name: "Kitchen Staff",
-    key: "kitchen",
+    key: "COOK",
     users: 3,
     access: "Can manage kitchen orders and food preparation workflow.",
-    permissions: ["Kitchen", "Restaurant Orders"],
+    permissions: ["COOK", "Restaurant Orders"],
   },
   {
     name: "Inventory Staff",
-    key: "inventory",
+    key: "INVENTORY",
     users: 2,
     access: "Can manage hotel stock, supplies, and inventory usage.",
-    permissions: ["Inventory", "Low Stock"],
+    permissions: ["INVENTORY", "Low Stock"],
   },
   {
-    name: "Waiter",
-    key: "waiter",
+    name: "WAITER",
+    key: "WAITER",
     users: 5,
     access: "Can manage restaurant tables, orders, and restaurant reservations.",
     permissions: [
@@ -72,21 +72,21 @@ const roles = [
   },
   {
     name: "Events Staff",
-    key: "events",
+    key: "EVENTS",
     users: 2,
     access: "Can manage event bookings, event ledgers, and split billing.",
-    permissions: ["Events", "Event List", "New Event", "Master Event Ledger"],
+    permissions: ["EVENTS", "Event List", "New Event", "Master Event Ledger"],
   },
   {
     name: "Parking Staff",
-    key: "parking",
+    key: "PARKING",
     users: 2,
     access: "Can manage parking operations and parking income records.",
-    permissions: ["Parking"],
+    permissions: ["PARKING"],
   },
   {
     name: "Game Staff",
-    key: "game_staff",
+    key: "GAME_STAFF",
     users: 2,
     access: "Can manage games, amenities, rentals, and game sessions.",
     permissions: ["Games", "Games List", "New Game Session", "Game Sessions"],
@@ -95,7 +95,7 @@ const roles = [
 
 export default function RolesPage() {
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 
@@ -204,11 +204,11 @@ export default function RolesPage() {
 
                 <tbody className="divide-y divide-[#d0c5af]">
                   <RoleRow module="Users / Roles / Audit Logs" roles="owner, manager" />
-                  <RoleRow module="Events" roles="owner, manager, events" />
+                  <RoleRow module="EVENTS" roles="owner, manager, events" />
                   <RoleRow module="Games" roles="owner, manager, game_staff" />
                   <RoleRow module="Restaurant" roles="owner, manager, waiter" />
-                  <RoleRow module="Kitchen" roles="owner, manager, kitchen" />
-                  <RoleRow module="Inventory" roles="owner, manager, inventory" />
+                  <RoleRow module="COOK" roles="owner, manager, kitchen" />
+                  <RoleRow module="INVENTORY" roles="owner, manager, inventory" />
                   <RoleRow module="Payments" roles="owner, manager, receptionist" />
                 </tbody>
               </table>

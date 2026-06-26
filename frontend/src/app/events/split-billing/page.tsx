@@ -66,7 +66,7 @@ export default function SplitBillingPage() {
   const guestRules = rules.filter((rule) => rule.route === "Guest Folio");
 
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "events"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "EVENTS"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

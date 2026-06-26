@@ -62,7 +62,7 @@ export default function LoginPage() {
       onMouseMove={handleMouseMove}
       className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#fbf9f5]"
     >
-      {/* Background */}
+      {}
       <div className="absolute inset-0 z-0">
         <img
           src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?q=80&w=2070&auto=format&fit=crop"
@@ -76,9 +76,9 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-gradient-to-tr from-[#fbf9f5] via-[#fbf9f5]/60 to-transparent" />
       </div>
 
-      {/* Main Content */}
+      {}
       <main className="z-10 grid w-full max-w-screen-xl grid-cols-1 items-center gap-12 px-8 lg:grid-cols-2">
-        {/* Left Side */}
+        {}
         <section className="hidden flex-col space-y-6 lg:flex">
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-[#d4af37] text-[#554300]">
@@ -121,7 +121,7 @@ export default function LoginPage() {
           </div>
         </section>
 
-        {/* Login Card */}
+        {}
         <section className="flex justify-center lg:justify-end">
           <div className="login-card glass-effect relative w-full max-w-[480px] rounded-xl border border-[#d0c5af]/30 p-10 shadow-2xl">
             <div className="absolute bottom-12 left-0 top-12 w-1 rounded-r-full bg-[#d4af37]" />
@@ -153,7 +153,7 @@ export default function LoginPage() {
             )}
 
             <form onSubmit={handleLogin} className="space-y-6">
-              {/* Role */}
+              {}
               <div className="space-y-2">
                 <label
                   htmlFor="role"
@@ -170,8 +170,8 @@ export default function LoginPage() {
                     className="h-12 w-full appearance-none rounded-lg border border-[#d0c5af] bg-white px-4 pr-10 text-sm text-[#1b1c1a] transition-all focus:border-[#d4af37] focus:outline-none focus:ring-2 focus:ring-[#d4af37]/20"
                   >
                     <option value="staff">Staff Member</option>
-                    <option value="manager">Property Manager</option>
-                    <option value="owner">Property Owner</option>
+                    <option value="MANAGER">Property Manager</option>
+                    <option value="OWNER">Property Owner</option>
                   </select>
 
                   <ChevronDown
@@ -181,7 +181,7 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Email */}
+              {}
               <div className="space-y-2">
                 <label
                   htmlFor="email"
@@ -208,7 +208,7 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Password */}
+              {}
               <div className="space-y-2">
                 <label
                   htmlFor="password"
@@ -243,7 +243,7 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Remember + Forgot */}
+              {}
               <div className="flex items-center justify-between py-2">
                 <label className="group flex cursor-pointer items-center gap-2">
                   <input
@@ -266,7 +266,7 @@ export default function LoginPage() {
                 </a>
               </div>
 
-              {/* Button */}
+              {}
               <button
                 type="submit"
                 disabled={loginState === "loading"}
@@ -299,7 +299,7 @@ export default function LoginPage() {
               </button>
             </form>
 
-            {/* Footer */}
+            {}
             <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-[#d0c5af]/30 pt-8 sm:flex-row">
               <p className="text-xs font-medium text-[#4d4635]">
                 © 2024 LuxeStay Operations

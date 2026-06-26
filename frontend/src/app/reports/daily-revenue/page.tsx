@@ -47,7 +47,7 @@ const revenueRows = [
   },
   {
     id: "REV-1003",
-    department: "Events",
+    department: "EVENTS",
     source: "Grand Ballroom",
     reference: "Event #EV-0044",
     income: "Rs 12,400.00",
@@ -67,7 +67,7 @@ const revenueRows = [
   },
   {
     id: "REV-1005",
-    department: "Parking",
+    department: "PARKING",
     source: "Parking Slot",
     reference: "Slot A-12",
     income: "Rs 25.00",
@@ -96,7 +96,7 @@ function getStatusClass(status: string) {
 
 export default function DailyRevenueReportPage() {
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 
@@ -186,9 +186,9 @@ export default function DailyRevenueReportPage() {
 
               <div className="mt-6 space-y-4">
                 <BreakdownRow label="Rooms" amount="Rs 23,400" percent="55%" />
-                <BreakdownRow label="Events" amount="Rs 12,400" percent="29%" />
+                <BreakdownRow label="EVENTS" amount="Rs 12,400" percent="29%" />
                 <BreakdownRow label="Food Sales" amount="Rs 6,240" percent="15%" />
-                <BreakdownRow label="Parking" amount="Rs 810" percent="1%" />
+                <BreakdownRow label="PARKING" amount="Rs 810" percent="1%" />
               </div>
             </div>
           </section>

@@ -8,7 +8,7 @@ export default function NewRecipePage() {
   const router = useRouter();
 
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "kitchen"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "COOK"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

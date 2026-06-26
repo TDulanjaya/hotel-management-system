@@ -2,17 +2,17 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getDashboardByRole, saveAuth, UserRole } from "@/utils/auth";
+import { getDashboardByRole, saveAuth } from "@/utils/auth";
+import { login } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState("manager@luxestay.com");
-  const [password, setPassword] = useState("123456");
-  const [role, setRole] = useState<UserRole>("manager");
+  const [email, setEmail] = useState("owner@luxestay.com");
+  const [password, setPassword] = useState("Owner12345");
   const [error, setError] = useState("");
 
-  const handleLogin = (event: FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
 
@@ -21,20 +21,13 @@ export default function LoginPage() {
       return;
     }
 
-    // Temporary frontend-only login.
-    // Later we will replace this with backend API login.
-    const fakeToken = "demo-token";
-
-    const user = {
-      id: "1",
-      name: "Julian Sterling",
-      email,
-      role,
-    };
-
-    saveAuth(fakeToken, user);
-
-    router.push(getDashboardByRole(role));
+    try {
+      const data = await login(email, password);
+      saveAuth(data.token, data.user);
+      router.push(getDashboardByRole(data.user.role));
+    } catch (err: any) {
+      setError(err.message || "Failed to login");
+    }
   };
 
   return (
@@ -78,27 +71,7 @@ export default function LoginPage() {
             />
           </div>
 
-          <div>
-            <label className="text-sm font-bold text-[#4d4635]">
-              Login as Role
-            </label>
 
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as UserRole)}
-              className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#d4af37]/40"
-            >
-              <option value="owner">Owner</option>
-              <option value="manager">Manager</option>
-              <option value="receptionist">Receptionist</option>
-              <option value="kitchen">Kitchen</option>
-              <option value="inventory">Inventory</option>
-              <option value="waiter">Waiter</option>
-              <option value="events">Events Staff</option>
-              <option value="parking">Parking</option>
-              <option value="game_staff">Game Staff</option>
-            </select>
-          </div>
         </div>
 
         <button

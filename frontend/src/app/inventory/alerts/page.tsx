@@ -48,7 +48,7 @@ const inventoryAlerts = [
   {
     id: "ALT-1003",
     item: "Basmati Rice",
-    category: "Kitchen",
+    category: "COOK",
     currentStock: "35 kg",
     minimumStock: "50 kg",
     supplier: "FreshMart Supplies",
@@ -68,7 +68,7 @@ const inventoryAlerts = [
   {
     id: "ALT-1005",
     item: "Fresh Milk",
-    category: "Kitchen",
+    category: "COOK",
     currentStock: "16 liters",
     minimumStock: "20 liters",
     supplier: "Daily Dairy",
@@ -79,7 +79,7 @@ const inventoryAlerts = [
 
 const departmentAlerts = [
   {
-    label: "Kitchen",
+    label: "COOK",
     value: "3 alerts",
     percent: "60%",
   },
@@ -114,7 +114,7 @@ function getAlertClass(type: string) {
 
 export default function InventoryAlertsPage() {
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "inventory"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "INVENTORY"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

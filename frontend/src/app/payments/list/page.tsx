@@ -17,7 +17,7 @@ const payments = [
     id: "PAY-1002",
     guest: "Corporate Gala - TechVibe",
     reference: "Event #EV-0044",
-    module: "Events",
+    module: "EVENTS",
     method: "Bank Transfer",
     date: "Oct 24, 2024",
     time: "11:05 AM",
@@ -73,7 +73,7 @@ function getStatusClass(status: string) {
 
 export default function PaymentsListPage() {
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "receptionist"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "RECEPTIONIST"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

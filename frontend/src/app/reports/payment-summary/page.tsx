@@ -60,7 +60,7 @@ const paymentRows = [
     id: "PAY-1002",
     guest: "Corporate Gala - TechVibe",
     reference: "Event #EV-0044",
-    module: "Events",
+    module: "EVENTS",
     method: "Bank Transfer",
     amount: "Rs 12,400.00",
     date: "Oct 24, 2024",
@@ -139,7 +139,7 @@ function getStatusClass(status: string) {
 
 export default function PaymentSummaryReportPage() {
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

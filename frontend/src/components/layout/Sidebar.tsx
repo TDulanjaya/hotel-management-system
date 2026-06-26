@@ -1,46 +1,43 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { logout } from "@/utils/auth";
+import { logout, getUser, AuthUser, UserRole } from "@/utils/auth";
 
-const menuItems = [
-  { name: "Dashboard", href: "/dashboard", icon: "▦" },
+type MenuItem = {
+  name: string;
+  href: string;
+  icon: string;
+  allowedRoles: UserRole[];
+};
 
-  { name: "Rooms", href: "/rooms", icon: "▰" },
-  { name: "Reservations", href: "/reservations", icon: "▣" },
-  { name: "Guests", href: "/guests", icon: "♙" },
-  { name: "Folio / Billing", href: "/folio", icon: "▤" },
+const menuItems: MenuItem[] = [
+  { name: "Dashboard", href: "/dashboard", icon: "▦", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST", "EVENTS", "INVENTORY", "PARKING", "WAITER", "ROOM_SERVICE", "COOK", "GAME_STAFF"] },
+  { name: "Users", href: "/users", icon: "♙", allowedRoles: ["OWNER", "MANAGER"] },
+  { name: "Venues", href: "/venues", icon: "▥", allowedRoles: ["OWNER", "MANAGER", "EVENTS"] },
+  { name: "Service Pricing", href: "/pricing", icon: "₨", allowedRoles: ["OWNER", "MANAGER"] },
+  { name: "Events", href: "/events", icon: "▣", allowedRoles: ["OWNER", "MANAGER", "EVENTS"] },
+  { name: "Rooms", href: "/rooms", icon: "▰", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"] },
+  { name: "Inventory", href: "/inventory", icon: "▧", allowedRoles: ["OWNER", "MANAGER", "INVENTORY"] },
+  { name: "Parking", href: "/parking", icon: "P", allowedRoles: ["OWNER", "MANAGER", "PARKING"] },
+  { name: "Reports", href: "/reports", icon: "▨", allowedRoles: ["OWNER", "MANAGER"] },
+  { name: "Settings", href: "/settings", icon: "⚙", allowedRoles: ["OWNER"] },
 
-  { name: "Restaurant", href: "/restaurant", icon: "▥" },
-  { name: "Room Service", href: "/room-service", icon: "⌂" },
-  { name: "Kitchen", href: "/kitchen", icon: "▥" },
-  { name: "Inventory", href: "/inventory", icon: "▧" },
-  { name: "Parking", href: "/parking", icon: "P" },
-
-  { name: "Events", href: "/events", icon: "▣" },
-  { name: "Event List", href: "/events/list", icon: "▤" },
-  { name: "New Event", href: "/events/new", icon: "+" },
-  { name: "Event Ledger", href: "/events/ledger", icon: "▥" },
-  { name: "Split Billing", href: "/events/split-billing", icon: "$" },
-
-  { name: "Games & Amenities", href: "/games", icon: "◇" },
-  { name: "Venues", href: "/venues", icon: "▥" },
-
-  { name: "Service Pricing", href: "/pricing", icon: "₨" },
-
-  { name: "Payments", href: "/payments", icon: "Rs" },
-  { name: "Reports", href: "/reports", icon: "▨" },
-  { name: "Audit Logs", href: "/audit-logs", icon: "☷" },
-
-  { name: "Users", href: "/users", icon: "♙" },
-  { name: "Roles", href: "/roles", icon: "⚙" },
-  { name: "Settings", href: "/settings", icon: "⚙" },
+  { name: "Restaurant Orders", href: "/restaurant/orders", icon: "▥", allowedRoles: ["WAITER"] },
+  { name: "Room Service", href: "/room-service", icon: "⌂", allowedRoles: ["ROOM_SERVICE"] },
+  { name: "Kitchen Orders", href: "/kitchen/orders", icon: "▥", allowedRoles: ["COOK"] },
+  { name: "Games", href: "/games", icon: "◇", allowedRoles: ["GAME_STAFF"] },
 ];
 
 export default function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -58,7 +55,7 @@ export default function AppSidebar() {
       </div>
 
       <nav className="sidebar-scroll flex-1 space-y-2 overflow-y-auto px-5 pb-5">
-        {menuItems.map((item) => {
+        {menuItems.filter(item => user && item.allowedRoles.includes(user.role)).map((item) => {
           const active =
             pathname === item.href || pathname.startsWith(item.href + "/");
 
@@ -66,11 +63,10 @@ export default function AppSidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className={`lux-sidebar-link flex items-center gap-5 rounded-xl px-5 py-4 text-lg transition ${
-                active
+              className={`lux-sidebar-link flex items-center gap-5 rounded-xl px-5 py-4 text-lg transition ${active
                   ? "border-l-4 border-[#d8b328] bg-[#263248] text-[#f2c426]"
                   : "text-[#a6adba] hover:bg-[#263248] hover:text-[#f2c426]"
-              }`}
+                }`}
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center text-2xl font-bold">
                 {item.icon}
@@ -90,12 +86,14 @@ export default function AppSidebar() {
           Support
         </button>
 
-        <Link
-          href="/pricing/new"
-          className="block w-full rounded-xl bg-[#d8b328] px-5 py-4 text-center text-lg font-bold text-[#4c3a00] transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl"
-        >
-          Add Price Item
-        </Link>
+        {user && ["OWNER", "MANAGER"].includes(user.role) && (
+          <Link
+            href="/pricing/new"
+            className="block w-full rounded-xl bg-[#d8b328] px-5 py-4 text-center text-lg font-bold text-[#4c3a00] transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl"
+          >
+            Add Price Item
+          </Link>
+        )}
 
         <button
           onClick={handleLogout}

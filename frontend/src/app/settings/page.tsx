@@ -7,15 +7,15 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { AuthUser, getUser, logout } from "@/utils/auth";
 
 const allowedRoles = [
-  "owner",
-  "manager",
-  "receptionist",
-  "kitchen",
-  "inventory",
-  "waiter",
-  "events",
-  "parking",
-  "game_staff",
+  "OWNER",
+  "MANAGER",
+  "RECEPTIONIST",
+  "COOK",
+  "INVENTORY",
+  "WAITER",
+  "EVENTS",
+  "PARKING",
+  "GAME_STAFF",
 ] as const;
 
 const activityLogs = [

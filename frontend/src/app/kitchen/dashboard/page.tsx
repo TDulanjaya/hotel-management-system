@@ -12,7 +12,7 @@ export default function KitchenDashboardRedirectPage() {
   }, [router]);
 
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "kitchen"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "COOK"]}>
       <main className="flex min-h-screen items-center justify-center bg-[#fbf9f5] text-[#735c00]">
         <p className="text-lg font-bold">Redirecting to kitchen...</p>
       </main>
