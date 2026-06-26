@@ -1,39 +1,38 @@
-import { authenticatedFetch } from '@/lib/api/authApi';
+import { authenticatedFetch } from "./authApi";
 
-export async function getAll() {
-  const res = await authenticatedFetch(`/api/orderss`);
-  if (!res.ok) throw new Error(`Failed to fetch orderss`);
-  return res.json();
+export async function getOrders() {
+  const response = await authenticatedFetch("/api/orders");
+  if (!response.ok) throw new Error("Failed to fetch orders");
+  return response.json();
 }
 
-export async function getById(id: string) {
-  const res = await authenticatedFetch(`/api/orderss/${id}`);
-  if (!res.ok) throw new Error(`Failed to fetch orderss`);
-  return res.json();
+export async function getOrderById(id: string) {
+  const response = await authenticatedFetch(`/api/orders/${id}`);
+  if (!response.ok) throw new Error("Failed to fetch order");
+  return response.json();
 }
 
-export async function create(data: any) {
-  const res = await authenticatedFetch(`/api/orderss`, {
-    method: 'POST',
-    body: JSON.stringify(data)
+export async function createOrder(data: any) {
+  const response = await authenticatedFetch("/api/orders", {
+    method: "POST",
+    body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`Failed to create orderss`);
-  return res.json();
+  if (!response.ok) throw new Error("Failed to create order");
+  return response.json();
 }
 
-export async function update(id: string, data: any) {
-  const res = await authenticatedFetch(`/api/orderss/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data)
+export async function updateOrder(id: string, data: any) {
+  const response = await authenticatedFetch(`/api/orders/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`Failed to update orderss`);
-  return res.json();
+  if (!response.ok) throw new Error("Failed to update order");
+  return response.json();
 }
 
-export async function remove(id: string) {
-  const res = await authenticatedFetch(`/api/orderss/${id}`, {
-    method: 'DELETE'
+export async function deleteOrder(id: string) {
+  const response = await authenticatedFetch(`/api/orders/${id}`, {
+    method: "DELETE",
   });
-  if (!res.ok) throw new Error(`Failed to delete orderss`);
-  return res.json();
+  if (!response.ok) throw new Error("Failed to delete order");
 }

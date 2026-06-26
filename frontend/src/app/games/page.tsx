@@ -13,61 +13,8 @@ import {
   XCircle,
   Plus,
 } from "lucide-react";
-
-const initialAmenities = [
-  {
-    id: 1,
-    title: "Grand Billiards I",
-    subtitle: "Professional Grade",
-    status: "OCCUPIED",
-    ribbon: "occupied",
-    guest: "Alexander Van Der Bilt",
-    room: "Suite 402",
-    timerSeconds: 6135,
-    items: ["Premium Cues (2)", "Aramith Ball Set", "Chalk Block"],
-    missing: [],
-    actions: ["Adjust Time", "End Rental"],
-  },
-  {
-    id: 2,
-    title: "VIP Gaming Suite",
-    subtitle: "PlayStation 5 Console",
-    status: "OVERDUE",
-    ribbon: "warning",
-    guest: "Marcus Thorne",
-    room: "Room 215",
-    timerSeconds: 4522,
-    items: ["DualSense Controllers (2)"],
-    missing: ["Pulse 3D Headset"],
-    actions: ["End & Audit"],
-  },
-  {
-    id: 3,
-    title: "Skyline Cinema",
-    subtitle: "4K Laser Projection",
-    status: "AVAILABLE",
-    ribbon: "available",
-    guest: "",
-    room: "",
-    timerSeconds: 0,
-    items: ["Universal Remote", "Popcorn Service", "Blanket Set"],
-    missing: [],
-    actions: ["Start Rental"],
-  },
-  {
-    id: 4,
-    title: "Table Tennis Center",
-    subtitle: "Butterfly Professional",
-    status: "AVAILABLE",
-    ribbon: "available",
-    guest: "",
-    room: "",
-    timerSeconds: 0,
-    items: ["Paddles Ready", "Balls Ready", "Net Checked"],
-    missing: [],
-    actions: ["Start Rental"],
-  },
-];
+import { getGameSessions, updateGameSession } from "@/lib/api/gameApi";
+import { getUser, AuthUser } from "@/utils/auth";
 
 function formatTime(seconds: number) {
   const h = Math.floor(seconds / 3600).toString().padStart(2, "0");
@@ -90,28 +37,44 @@ function badgeClass(status: string) {
 }
 
 export default function GamesPage() {
-  const [amenities, setAmenities] = useState(initialAmenities);
-  const [runningSeconds, setRunningSeconds] = useState(6135);
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [user, setUser] = useState<AuthUser | null>(null);
+
+  const loadSessions = async () => {
+    try {
+      const data = await getGameSessions();
+      setSessions(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setRunningSeconds((prev) => prev + 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
+    setUser(getUser());
+    loadSessions();
   }, []);
 
-  const handleAction = (id: number, action: string) => {
+  const handleAction = async (session: any, action: string) => {
     if (action === "End Rental" || action === "End & Audit") {
       const confirmEnd = window.confirm(
         "Confirm end of rental? This will finalize the charge calculation."
       );
 
       if (confirmEnd) {
-        setAmenities((prev) => prev.filter((item) => item.id !== id));
+        try {
+          await updateGameSession(session.id, { ...session, status: "COMPLETED" });
+          loadSessions();
+        } catch (err) {
+          console.error(err);
+          alert("Failed to end rental.");
+        }
       }
     }
   };
+
+  const availableCount = sessions.filter((s) => s.status === "AVAILABLE").length;
+  const occupiedCount = sessions.filter((s) => s.status === "ACTIVE").length;
+  const overdueCount = sessions.filter((s) => s.status === "OVERDUE").length;
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "GAME_STAFF"]}>
@@ -138,12 +101,12 @@ export default function GamesPage() {
 
               <div className="flex items-center gap-3 border-l border-[#d0c5af] pl-6">
                 <div className="hidden text-right md:block">
-                  <p className="text-sm font-bold">Julian Sterling</p>
-                  <p className="text-xs text-[#4d4635]">Floor Manager</p>
+                  <p className="text-sm font-bold">{user?.name || "Guest"}</p>
+                  <p className="text-xs uppercase tracking-wider text-[#4d4635]">{user?.role || "Staff"}</p>
                 </div>
 
                 <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#d4af37] bg-[#131b2e] font-bold text-[#ffe088]">
-                  JS
+                  {user?.name ? user.name.substring(0, 2).toUpperCase() : "US"}
                 </div>
               </div>
             </div>
@@ -176,38 +139,49 @@ export default function GamesPage() {
             </div>
 
             <div className="mb-8 grid gap-6 md:grid-cols-3">
-              <StatCard label="Available" value="8" color="text-green-700" />
-              <StatCard label="Occupied" value="4" color="text-[#735c00]" />
-              <StatCard label="Overdue" value="1" color="text-[#ba1a1a]" />
+              <StatCard label="Available" value={String(availableCount)} color="text-green-700" />
+              <StatCard label="Occupied" value={String(occupiedCount)} color="text-[#735c00]" />
+              <StatCard label="Overdue" value={String(overdueCount)} color="text-[#ba1a1a]" />
             </div>
 
             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-              {amenities.map((amenity) => (
+              {sessions.length === 0 ? (
+                <div className="col-span-full rounded-2xl border border-[#d0c5af] bg-white p-10 text-center shadow-sm">
+                  <p className="text-xl font-bold text-[#735c00]">No sessions found</p>
+                  <p className="mt-2 text-[#4d4635]">Create a new game session to get started.</p>
+                </div>
+              ) : sessions.map((session) => {
+                const ribbon = session.status === "ACTIVE" ? "occupied" : session.status === "OVERDUE" ? "warning" : "available";
+                const actions = session.status === "ACTIVE" || session.status === "OVERDUE" ? ["End Rental"] : ["Start Rental"];
+                const items = session.equipmentChecked ? ["Equipment Checked"] : ["Equipment Unchecked"];
+                const missing: string[] = [];
+
+                return (
                 <article
-                  key={amenity.id}
+                  key={session.id}
                   className={`overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${ribbonClass(
-                    amenity.ribbon
+                    ribbon
                   )}`}
                 >
                   <div className="p-6">
                     <div className="mb-4 flex items-start justify-between gap-3">
                       <div>
-                        <h2 className="text-xl font-bold">{amenity.title}</h2>
+                        <h2 className="text-xl font-bold">{session.gameName}</h2>
                         <p className="text-xs font-bold uppercase tracking-wide text-[#735c00]">
-                          {amenity.subtitle}
+                          {session.gameType}
                         </p>
                       </div>
 
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-bold ${badgeClass(
-                          amenity.status
+                          session.status
                         )}`}
                       >
-                        {amenity.status}
+                        {session.status}
                       </span>
                     </div>
 
-                    {amenity.status !== "AVAILABLE" ? (
+                    {session.status !== "AVAILABLE" ? (
                       <>
                         <div className="mb-5 flex items-center gap-3 rounded-xl bg-[#f5f3ef] p-4">
                           <User size={22} className="text-[#735c00]" />
@@ -217,7 +191,7 @@ export default function GamesPage() {
                               Guest / Room
                             </p>
                             <p className="text-sm font-bold">
-                              {amenity.guest} ({amenity.room})
+                              {session.guestName || 'N/A'} ({session.roomNumber || 'N/A'})
                             </p>
                           </div>
                         </div>
@@ -227,14 +201,12 @@ export default function GamesPage() {
 
                           <div>
                             <p className="text-xs text-white/60">
-                              {amenity.status === "OVERDUE"
+                              {session.status === "OVERDUE"
                                 ? "Time Overdue"
                                 : "Rental Timer"}
                             </p>
                             <p className="text-2xl font-bold">
-                              {amenity.id === 1
-                                ? formatTime(runningSeconds)
-                                : formatTime(amenity.timerSeconds)}
+                              {session.duration || "Active"}
                             </p>
                           </div>
                         </div>
@@ -256,7 +228,7 @@ export default function GamesPage() {
                         Equipment Kit
                       </p>
 
-                      {amenity.items.map((item) => (
+                      {items.map((item) => (
                         <div
                           key={item}
                           className="flex items-center gap-2 text-sm"
@@ -266,7 +238,7 @@ export default function GamesPage() {
                         </div>
                       ))}
 
-                      {amenity.missing.map((item) => (
+                      {missing.map((item) => (
                         <div
                           key={item}
                           className="flex items-center gap-2 text-sm text-[#ba1a1a]"
@@ -280,10 +252,10 @@ export default function GamesPage() {
 
                   <div className="border-t border-[#d0c5af] bg-[#f5f3ef] p-4">
                     <div className="flex flex-wrap gap-3">
-                      {amenity.actions.map((action) => (
+                      {actions.map((action) => (
                         <button
                           key={action}
-                          onClick={() => handleAction(amenity.id, action)}
+                          onClick={() => handleAction(session, action)}
                           className={`flex-1 rounded-xl px-4 py-3 text-sm font-bold transition ${
                             action.includes("End")
                               ? "bg-[#ba1a1a] text-white hover:bg-[#93000a]"
@@ -296,7 +268,7 @@ export default function GamesPage() {
                     </div>
                   </div>
                 </article>
-              ))}
+              );})}
             </div>
 
             <section className="mt-8 rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">

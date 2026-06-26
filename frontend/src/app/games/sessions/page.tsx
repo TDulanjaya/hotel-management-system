@@ -1,45 +1,16 @@
+"use client";
+
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-
-const sessions = [
-  {
-    id: "SES-3001",
-    guest: "Alexander Van Der Bilt",
-    room: "Suite 402",
-    game: "Grand Billiards I",
-    startTime: "10:30 AM",
-    duration: "02:15:20",
-    status: "Active",
-    amount: "Rs 42.00",
-  },
-  {
-    id: "SES-3002",
-    guest: "Marcus Thorne",
-    room: "Room 215",
-    game: "VIP Gaming Suite",
-    startTime: "09:10 AM",
-    duration: "03:05:42",
-    status: "Overdue",
-    amount: "Rs 75.00",
-  },
-  {
-    id: "SES-3003",
-    guest: "Sarah Redford",
-    room: "Room 305",
-    game: "Skyline Cinema",
-    startTime: "Yesterday",
-    duration: "02:00:00",
-    status: "Completed",
-    amount: "Rs 80.00",
-  },
-];
+import { useEffect, useState } from "react";
+import { getGameSessions } from "@/lib/api/gameApi";
 
 function getStatusClass(status: string) {
-  if (status === "Active") {
+  if (status === "ACTIVE") {
     return "bg-green-100 text-green-700";
   }
 
-  if (status === "Overdue") {
+  if (status === "OVERDUE") {
     return "bg-red-100 text-red-700";
   }
 
@@ -47,6 +18,27 @@ function getStatusClass(status: string) {
 }
 
 export default function GameSessionsPage() {
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadSessions = async () => {
+      try {
+        const data = await getGameSessions();
+        setSessions(data);
+      } catch (err) {
+        console.error("Failed to load sessions:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadSessions();
+  }, []);
+
+  const activeCount = sessions.filter(s => s.status === "ACTIVE").length;
+  const overdueCount = sessions.filter(s => s.status === "OVERDUE").length;
+  const completedCount = sessions.filter(s => s.status === "COMPLETED").length;
+
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "GAME_STAFF"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
@@ -77,9 +69,9 @@ export default function GameSessionsPage() {
           </div>
 
           <div className="mb-8 grid gap-6 md:grid-cols-3">
-            <StatCard label="Active Sessions" value="1" color="text-green-700" />
-            <StatCard label="Overdue Sessions" value="1" color="text-red-700" />
-            <StatCard label="Completed Today" value="1" color="text-blue-700" />
+            <StatCard label="Active Sessions" value={String(activeCount)} color="text-green-700" />
+            <StatCard label="Overdue Sessions" value={String(overdueCount)} color="text-red-700" />
+            <StatCard label="Completed Today" value={String(completedCount)} color="text-blue-700" />
           </div>
 
           <section className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">
@@ -107,46 +99,61 @@ export default function GameSessionsPage() {
                 </thead>
 
                 <tbody className="divide-y divide-[#d0c5af]">
-                  {sessions.map((session) => (
-                    <tr
-                      key={session.id}
-                      className="transition hover:bg-[#fbf9f5]"
-                    >
-                      <td className="px-6 py-5 font-bold">{session.id}</td>
-
-                      <td className="px-6 py-5 font-semibold">
-                        {session.guest}
-                      </td>
-
-                      <td className="px-6 py-5 text-[#4d4635]">
-                        {session.room}
-                      </td>
-
-                      <td className="px-6 py-5">{session.game}</td>
-
-                      <td className="px-6 py-5 text-[#4d4635]">
-                        {session.startTime}
-                      </td>
-
-                      <td className="px-6 py-5 font-bold">
-                        {session.duration}
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(
-                            session.status
-                          )}`}
-                        >
-                          {session.status}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-5 text-right font-bold">
-                        {session.amount}
+                  {loading ? (
+                    <tr>
+                      <td colSpan={8} className="px-6 py-12 text-center text-[#4d4635]">
+                        <p className="text-lg font-bold">Loading sessions...</p>
                       </td>
                     </tr>
-                  ))}
+                  ) : sessions.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="px-6 py-12 text-center text-[#4d4635]">
+                        <p className="text-lg font-bold">No sessions found</p>
+                        <p className="mt-1 text-sm">Create a new game session to get started.</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    sessions.map((session) => (
+                      <tr
+                        key={session.id}
+                        className="transition hover:bg-[#fbf9f5]"
+                      >
+                        <td className="px-6 py-5 font-bold">{session.id.substring(session.id.length - 6).toUpperCase()}</td>
+
+                        <td className="px-6 py-5 font-semibold">
+                          {session.guestName || "N/A"}
+                        </td>
+
+                        <td className="px-6 py-5 text-[#4d4635]">
+                          {session.roomNumber || "N/A"}
+                        </td>
+
+                        <td className="px-6 py-5">{session.gameName}</td>
+
+                        <td className="px-6 py-5 text-[#4d4635]">
+                          {session.startTime ? new Date(session.startTime).toLocaleTimeString() : "N/A"}
+                        </td>
+
+                        <td className="px-6 py-5 font-bold">
+                          {session.duration}
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(
+                              session.status
+                            )}`}
+                          >
+                            {session.status}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-5 text-right font-bold">
+                          Rs {session.totalAmount}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

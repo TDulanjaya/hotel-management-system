@@ -1,526 +1,156 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import {
-  Search,
-  Bell,
-  Download,
-  CreditCard,
-  Plus,
-  TrendingUp,
-  Banknote,
-  Landmark,
-  Receipt,
-  Undo2,
-  X,
-} from "lucide-react";
+import SlidePanel from "@/components/ui/SlidePanel";
+import { getPayments, createPayment, updatePayment, deletePayment } from "@/lib/api/paymentsApi";
+import { useAuthContext } from "@/context/AuthContext";
 
-const summaryCards = [
-  {
-    title: "Total Daily Collection",
-    value: "Rs 42,850.00",
-    note: "Yesterday: Rs 38,200",
-    icon: TrendingUp,
-    type: "completed",
-  },
-  {
-    title: "Pending Payments",
-    value: "Rs 18,420.50",
-    note: "14 outstanding folios",
-    icon: Receipt,
-    type: "pending",
-  },
-  {
-    title: "Settlement Rate",
-    value: "94.2%",
-    note: "Strong daily settlement",
-    icon: Landmark,
-    type: "normal",
-  },
-  {
-    title: "Refund Requests",
-    value: "Rs 2,100.00",
-    note: "3 require approval",
-    icon: Undo2,
-    type: "failed",
-  },
-];
+export default function PageComponent() {
+  const { user } = useAuthContext();
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [editItem, setEditItem] = useState<any>(null);
+  
+  const [formData, setFormData] = useState({ guestName: "", roomNumber: "", referenceType: "Reservation", referenceId: "", amount: 0, method: "Cash", status: "PENDING", notes: "" });
 
-const chartBars = [
-  { day: "Mon", height: "60%", value: "Rs 5.2k" },
-  { day: "Tue", height: "45%", value: "Rs 4.1k" },
-  { day: "Wed", height: "85%", value: "Rs 7.6k" },
-  { day: "Thu", height: "70%", value: "Rs 6.8k" },
-  { day: "Fri", height: "100%", value: "Rs 8.4k", active: true },
-  { day: "Sat", height: "55%", value: "Rs 4.9k" },
-  { day: "Sun", height: "30%", value: "Rs 2.7k" },
-];
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const data = await getPayments();
+      setItems(data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-const payments = [
-  {
-    guest: "Elena Rodriguez",
-    reference: "Res #LX-9902 • Room 402",
-    method: "Visa **** 4421",
-    methodType: "card",
-    date: "Oct 24, 2024",
-    time: "14:20 PM",
-    amount: "Rs 1,250.00",
-    status: "Completed",
-  },
-  {
-    guest: "Corporate Gala - TechVibe",
-    reference: "Event #EV-0044 • Grand Ballroom",
-    method: "Bank Transfer",
-    methodType: "bank",
-    date: "Oct 24, 2024",
-    time: "11:05 AM",
-    amount: "Rs 12,400.00",
-    status: "Pending",
-  },
-  {
-    guest: "Marcus Thorne",
-    reference: "Res #LX-9871 • Suite 01",
-    method: "Amex **** 1002",
-    methodType: "card",
-    date: "Oct 24, 2024",
-    time: "09:12 AM",
-    amount: "Rs 3,800.00",
-    status: "Failed",
-  },
-  {
-    guest: "Sophia Chen",
-    reference: "Res #LX-9905 • Room 205",
-    method: "Cash",
-    methodType: "cash",
-    date: "Oct 24, 2024",
-    time: "08:45 AM",
-    amount: "Rs 450.00",
-    status: "Completed",
-  },
-];
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-function getStatusClass(status: string) {
-  if (status === "Completed") {
-    return "bg-green-100 text-green-700";
-  }
+  const handleOpenNew = () => {
+    setEditItem(null);
+    setFormData({ guestName: "", roomNumber: "", referenceType: "Reservation", referenceId: "", amount: 0, method: "Cash", status: "PENDING", notes: "" });
+    setPanelOpen(true);
+  };
 
-  if (status === "Pending") {
-    return "bg-yellow-100 text-yellow-700";
-  }
+  const handleOpenEdit = (item: any) => {
+    setEditItem(item);
+    const mapped: any = {};
+    const defaultState: any = { guestName: "", roomNumber: "", referenceType: "Reservation", referenceId: "", amount: 0, method: "Cash", status: "PENDING", notes: "" };
+    const keys = Object.keys(defaultState);
+    keys.forEach(k => {
+      mapped[k] = item[k] !== undefined && item[k] !== null ? item[k] : defaultState[k];
+    });
+    setFormData(mapped);
+    setPanelOpen(true);
+  };
 
-  return "bg-red-100 text-red-700";
-}
+  const handleDelete = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this?")) {
+      try {
+        await deletePayment(id);
+        fetchData();
+      } catch (err: any) {
+        alert("Failed to delete");
+      }
+    }
+  };
 
-function getCardBorder(type: string) {
-  if (type === "completed") return "border-l-4 border-l-green-500";
-  if (type === "pending") return "border-l-4 border-l-yellow-500";
-  if (type === "failed") return "border-l-4 border-l-red-500";
-  return "border-l-4 border-l-[#d4af37]";
-}
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editItem) {
+        await updatePayment(editItem.id, formData);
+      } else {
+        await createPayment(formData);
+      }
+      setPanelOpen(false);
+      fetchData();
+    } catch (err: any) {
+      alert("Failed to save");
+    }
+  };
 
-function getMethodIcon(type: string) {
-  if (type === "cash") return Banknote;
-  if (type === "bank") return Landmark;
-  return CreditCard;
-}
-
-export default function PaymentsPage() {
-  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [refundModalOpen, setRefundModalOpen] = useState(false);
+  const canEdit = user?.role === "OWNER" || user?.role === "MANAGER" || user?.role === "RECEPTIONIST";
+  const canDelete = user?.role === "OWNER" || user?.role === "MANAGER";
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "RECEPTIONIST"]}>
-      <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
+      <div className="flex min-h-screen bg-[#f8f5ef]">
         <AppSidebar />
+        <main className="flex-1 p-8 lg:ml-[280px]">
+          <div className="mb-8 flex items-center justify-between">
+            <h1 className="text-3xl font-extrabold text-[#181818]">Payments</h1>
+            <button onClick={handleOpenNew} className="rounded-xl bg-[#806300] px-6 py-2 text-white font-bold hover:bg-[#6b5400]">+ Add</button>
+          </div>
 
-        <main className="min-h-screen lg:ml-[280px]">
-          <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[#d0c5af] bg-[#fbf9f5] px-8 shadow-sm">
-            <div className="relative w-full max-w-[420px]">
-              <Search
-                size={20}
-                className="absolute left-3 top-1/2 -translate-y-1/2 text-[#4d4635]"
-              />
-
-              <input
-                type="text"
-                placeholder="Search transactions, folios, or guest names..."
-                className="w-full rounded-full border border-[#d0c5af] bg-[#f5f3ef] py-2 pl-10 pr-4 text-sm outline-none transition focus:border-[#735c00] focus:ring-2 focus:ring-[#d4af37]/30"
-              />
+          {loading ? (
+            <div className="flex h-64 items-center justify-center text-lg text-[#806300]">Loading...</div>
+          ) : error ? (
+            <div className="text-red-600">{error}</div>
+          ) : items.length === 0 ? (
+            <div className="flex h-64 flex-col items-center justify-center rounded-xl bg-white shadow-sm border border-[#d9cfbd]">
+              <p className="mb-4 text-xl font-semibold text-gray-500">No records found</p>
+              <button onClick={handleOpenNew} className="rounded-xl bg-[#806300] px-6 py-2 text-white font-bold hover:bg-[#6b5400]">+ Add</button>
             </div>
+          ) : (
+            <div className="overflow-x-auto rounded-xl bg-white shadow-sm border border-[#d9cfbd]">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-[#f5eed9] text-[#4c4032]">
+                  <tr>
+                    <th className="p-4 font-bold">Guest</th><th className="p-4 font-bold">Room</th><th className="p-4 font-bold">Type</th><th className="p-4 font-bold">Ref ID</th><th className="p-4 font-bold">Amount</th><th className="p-4 font-bold">Method</th><th className="p-4 font-bold">Status</th><th className="p-4 font-bold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#d9cfbd]">
+                  {items.map((item: any) => (
+                    <tr key={item.id} className="hover:bg-slate-50">
+                      
+                      <td className="p-4 font-semibold">{item.guestName}</td>
+                      <td className="p-4">{item.roomNumber}</td>
+                      <td className="p-4">{item.referenceType}</td>
+                      <td className="p-4">{item.referenceId}</td>
+                      <td className="p-4">{item.amount}</td>
+                      <td className="p-4">{item.method}</td>
+                      <td className="p-4">{item.status}</td>
 
-            <div className="flex items-center gap-6">
-              <button className="relative text-[#4d4635] transition hover:text-[#735c00]">
-                <Bell size={22} />
-                <span className="absolute right-0 top-0 h-2 w-2 rounded-full bg-red-600" />
-              </button>
-
-              <div className="hidden h-8 w-px bg-[#d0c5af] md:block" />
-
-              <div className="hidden text-right md:block">
-                <p className="text-sm font-bold leading-none">
-                  Julian Sterling
-                </p>
-                <p className="mt-1 text-xs text-[#4d4635]">
-                  Finance Director
-                </p>
-              </div>
-
-              <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-[#d0c5af] bg-[#131b2e] font-bold text-[#ffe088]">
-                JS
-              </div>
-            </div>
-          </header>
-
-          <section className="mx-auto max-w-[1600px] px-8 pb-12 pt-10">
-            <div className="mb-10 flex flex-col justify-between gap-6 xl:flex-row xl:items-end">
-              <div>
-                <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#735c00]">
-                  Finance Operations
-                </p>
-
-                <h1 className="mt-3 text-4xl font-extrabold text-[#735c00]">
-                  Payments Dashboard
-                </h1>
-
-                <p className="mt-3 text-[#4d4635]">
-                  Track payments, refunds, settlements, and guest folio
-                  transactions.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <button className="flex items-center gap-2 rounded-xl border border-[#d0c5af] bg-white px-5 py-3 text-sm font-bold transition hover:bg-[#efeeea]">
-                  <Download size={18} />
-                  Export
-                </button>
-
-                <button
-                  onClick={() => setRefundModalOpen(true)}
-                  className="flex items-center gap-2 rounded-xl border border-red-300 bg-white px-5 py-3 text-sm font-bold text-red-700 transition hover:bg-red-50"
-                >
-                  <Undo2 size={18} />
-                  Refund
-                </button>
-
-                <button
-                  onClick={() => setPaymentModalOpen(true)}
-                  className="flex items-center gap-2 rounded-xl bg-[#735c00] px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:bg-[#d4af37] hover:text-[#241a00]"
-                >
-                  <Plus size={18} />
-                  New Payment
-                </button>
-              </div>
-            </div>
-
-            <section className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-              {summaryCards.map((card) => {
-                const Icon = card.icon;
-
-                return (
-                  <article
-                    key={card.title}
-                    className={`rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg ${getCardBorder(
-                      card.type
-                    )}`}
-                  >
-                    <div className="mb-5 flex items-start justify-between">
-                      <div>
-                        <p className="text-sm font-bold text-[#4d4635]">
-                          {card.title}
-                        </p>
-
-                        <h2 className="mt-2 text-3xl font-extrabold">
-                          {card.value}
-                        </h2>
-                      </div>
-
-                      <div className="rounded-xl bg-[#f5f3ef] p-3 text-[#735c00]">
-                        <Icon size={24} />
-                      </div>
-                    </div>
-
-                    <p className="text-sm text-[#4d4635]">{card.note}</p>
-                  </article>
-                );
-              })}
-            </section>
-
-            <section className="mb-8 grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
-              <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-                <div className="mb-6 flex items-center justify-between">
-                  <div>
-                    <h2 className="text-2xl font-bold">Weekly Collection</h2>
-                    <p className="mt-1 text-sm text-[#4d4635]">
-                      Daily payment income overview.
-                    </p>
-                  </div>
-
-                  <span className="rounded-full bg-[#d4af37]/20 px-4 py-2 text-sm font-bold text-[#735c00]">
-                    This Week
-                  </span>
-                </div>
-
-                <div className="flex h-[280px] items-end gap-4">
-                  {chartBars.map((bar) => (
-                    <div
-                      key={bar.day}
-                      className="flex flex-1 flex-col items-center gap-3"
-                    >
-                      <div className="flex h-[220px] w-full items-end rounded-full bg-[#f5f3ef] px-2">
-                        <div
-                          className={`w-full rounded-full transition ${
-                            bar.active ? "bg-[#735c00]" : "bg-[#d4af37]"
-                          }`}
-                          style={{ height: bar.height }}
-                        />
-                      </div>
-
-                      <p className="text-xs font-bold text-[#4d4635]">
-                        {bar.day}
-                      </p>
-
-                      <p className="text-xs text-[#4d4635]">{bar.value}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-                <h2 className="text-2xl font-bold">Payment Methods</h2>
-
-                <div className="mt-6 space-y-4">
-                  <MethodRow label="Card Payments" value="Rs 23,200" percent="54%" />
-                  <MethodRow label="Bank Transfers" value="Rs 14,600" percent="34%" />
-                  <MethodRow label="Cash Payments" value="Rs 5,050" percent="12%" />
-                </div>
-              </div>
-            </section>
-
-            <section className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">
-              <div className="flex flex-col justify-between gap-4 border-b border-[#d0c5af] p-6 md:flex-row md:items-center">
-                <div>
-                  <h2 className="text-2xl font-bold">Recent Transactions</h2>
-                  <p className="mt-1 text-sm text-[#4d4635]">
-                    Latest guest, event, and folio payment records.
-                  </p>
-                </div>
-
-                <a
-                  href="/payments/list"
-                  className="rounded-xl border border-[#735c00] px-5 py-3 text-center text-sm font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
-                >
-                  View All
-                </a>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[1000px] text-left">
-                  <thead>
-                    <tr className="border-b border-[#d0c5af] bg-[#f5f3ef] text-xs uppercase tracking-widest text-[#4d4635]">
-                      <th className="px-6 py-4">Guest / Event</th>
-                      <th className="px-6 py-4">Reference</th>
-                      <th className="px-6 py-4">Method</th>
-                      <th className="px-6 py-4">Date</th>
-                      <th className="px-6 py-4">Status</th>
-                      <th className="px-6 py-4 text-right">Amount</th>
+                      <td className="p-4 flex gap-2">
+                        {canEdit && (
+                          <button onClick={() => handleOpenEdit(item)} className="text-blue-600 font-semibold hover:underline">Edit</button>
+                        )}
+                        {canDelete && (
+                          <button onClick={() => handleDelete(item.id)} className="text-red-600 font-semibold hover:underline">Delete</button>
+                        )}
+                      </td>
                     </tr>
-                  </thead>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
-                  <tbody className="divide-y divide-[#d0c5af]">
-                    {payments.map((payment) => {
-                      const MethodIcon = getMethodIcon(payment.methodType);
+          <SlidePanel open={panelOpen} onClose={() => setPanelOpen(false)} title={editItem ? "Edit" : "Add"}>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              
+              <div><label className="block text-sm font-bold">Guest Name *</label><input required className="w-full rounded border p-2" value={formData.guestName} onChange={e => setFormData({...formData, guestName: e.target.value})} /></div>
+              <div><label className="block text-sm font-bold">Room Number</label><input className="w-full rounded border p-2" value={formData.roomNumber} onChange={e => setFormData({...formData, roomNumber: e.target.value})} /></div>
+              <div><label className="block text-sm font-bold">Reference Type</label><select className="w-full rounded border p-2" value={formData.referenceType} onChange={e => setFormData({...formData, referenceType: e.target.value})}><option>Reservation</option><option>Restaurant</option><option>Parking</option><option>Room Service</option></select></div>
+              <div><label className="block text-sm font-bold">Reference ID</label><input className="w-full rounded border p-2" value={formData.referenceId} onChange={e => setFormData({...formData, referenceId: e.target.value})} /></div>
+              <div><label className="block text-sm font-bold">Amount *</label><input required type="number" className="w-full rounded border p-2" value={formData.amount} onChange={e => setFormData({...formData, amount: parseFloat(e.target.value) || 0})} /></div>
+              <div><label className="block text-sm font-bold">Method</label><select className="w-full rounded border p-2" value={formData.method} onChange={e => setFormData({...formData, method: e.target.value})}><option>Cash</option><option>Card</option><option>Bank Transfer</option><option>Charge to Room</option></select></div>
+              <div><label className="block text-sm font-bold">Status</label><select className="w-full rounded border p-2" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}><option>PENDING</option><option>PAID</option><option>REFUNDED</option></select></div>
+              <div><label className="block text-sm font-bold">Notes</label><textarea className="w-full rounded border p-2" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} /></div>
 
-                      return (
-                        <tr
-                          key={`${payment.guest}-${payment.amount}`}
-                          className="transition hover:bg-[#fbf9f5]"
-                        >
-                          <td className="px-6 py-5 font-bold">
-                            {payment.guest}
-                          </td>
-
-                          <td className="px-6 py-5 text-[#4d4635]">
-                            {payment.reference}
-                          </td>
-
-                          <td className="px-6 py-5">
-                            <div className="flex items-center gap-3">
-                              <span className="rounded-lg bg-[#f5f3ef] p-2 text-[#735c00]">
-                                <MethodIcon size={18} />
-                              </span>
-                              <span className="font-semibold">
-                                {payment.method}
-                              </span>
-                            </div>
-                          </td>
-
-                          <td className="px-6 py-5 text-[#4d4635]">
-                            {payment.date}
-                            <br />
-                            <span className="text-xs">{payment.time}</span>
-                          </td>
-
-                          <td className="px-6 py-5">
-                            <span
-                              className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(
-                                payment.status
-                              )}`}
-                            >
-                              {payment.status}
-                            </span>
-                          </td>
-
-                          <td className="px-6 py-5 text-right font-bold">
-                            {payment.amount}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </section>
-          </section>
+              <button type="submit" className="w-full rounded bg-[#806300] py-3 text-white font-bold hover:bg-[#6b5400]">Save</button>
+            </form>
+          </SlidePanel>
         </main>
-
-        {paymentModalOpen && (
-          <PaymentModal onClose={() => setPaymentModalOpen(false)} />
-        )}
-
-        {refundModalOpen && (
-          <RefundModal onClose={() => setRefundModalOpen(false)} />
-        )}
       </div>
     </ProtectedRoute>
-  );
-}
-
-function MethodRow({
-  label,
-  value,
-  percent,
-}: {
-  label: string;
-  value: string;
-  percent: string;
-}) {
-  return (
-    <div className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-4">
-      <div className="flex items-center justify-between">
-        <p className="font-bold">{label}</p>
-        <p className="font-bold text-[#735c00]">{value}</p>
-      </div>
-
-      <div className="mt-3 h-2 overflow-hidden rounded-full bg-white">
-        <div
-          className="h-full rounded-full bg-[#735c00]"
-          style={{ width: percent }}
-        />
-      </div>
-
-      <p className="mt-2 text-sm text-[#4d4635]">{percent}</p>
-    </div>
-  );
-}
-
-function PaymentModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
-      <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-[#735c00]">New Payment</h2>
-
-          <button onClick={onClose} className="rounded-lg p-2 hover:bg-[#f5f3ef]">
-            <X size={22} />
-          </button>
-        </div>
-
-        <div className="grid gap-5">
-          <InputBox label="Guest / Event Name" placeholder="Enter guest or event name" />
-          <InputBox label="Reference" placeholder="Reservation ID, Folio ID, or Event ID" />
-          <InputBox label="Amount" placeholder="Rs 0.00" />
-
-          <div>
-            <label className="text-sm font-bold text-[#4d4635]">
-              Payment Method
-            </label>
-            <select className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none">
-              <option>Card</option>
-              <option>Cash</option>
-              <option>Bank Transfer</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="mt-8 flex gap-4">
-          <button
-            onClick={onClose}
-            className="flex-1 rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00]"
-          >
-            Cancel
-          </button>
-
-          <button
-            onClick={onClose}
-            className="flex-1 rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white hover:bg-[#d4af37] hover:text-[#241a00]"
-          >
-            Save Payment
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function RefundModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-6">
-      <div className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-2xl">
-        <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-red-700">Refund Request</h2>
-
-          <button onClick={onClose} className="rounded-lg p-2 hover:bg-[#f5f3ef]">
-            <X size={22} />
-          </button>
-        </div>
-
-        <div className="grid gap-5">
-          <InputBox label="Transaction ID" placeholder="Enter transaction ID" />
-          <InputBox label="Refund Amount" placeholder="Rs 0.00" />
-          <InputBox label="Reason" placeholder="Enter refund reason" />
-        </div>
-
-        <div className="mt-8 flex gap-4">
-          <button
-            onClick={onClose}
-            className="flex-1 rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00]"
-          >
-            Cancel
-          </button>
-
-          <button
-            onClick={onClose}
-            className="flex-1 rounded-xl bg-red-700 px-6 py-3 font-bold text-white hover:bg-red-800"
-          >
-            Request Refund
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function InputBox({ label, placeholder }: { label: string; placeholder: string }) {
-  return (
-    <div>
-      <label className="text-sm font-bold text-[#4d4635]">{label}</label>
-      <input
-        type="text"
-        placeholder={placeholder}
-        className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-      />
-    </div>
   );
 }

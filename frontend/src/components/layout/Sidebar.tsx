@@ -14,21 +14,27 @@ type MenuItem = {
 };
 
 const menuItems: MenuItem[] = [
-  { name: "Dashboard", href: "/dashboard", icon: "▦", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"] },
-  { name: "Users", href: "/users", icon: "♙", allowedRoles: ["OWNER", "MANAGER"] },
-  { name: "Venues", href: "/venues", icon: "▥", allowedRoles: ["OWNER", "MANAGER", "EVENTS"] },
-  { name: "Service Pricing", href: "/pricing", icon: "₨", allowedRoles: ["OWNER", "MANAGER"] },
-  { name: "Events", href: "/events", icon: "▣", allowedRoles: ["OWNER", "MANAGER", "EVENTS"] },
-  { name: "Rooms", href: "/rooms", icon: "▰", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"] },
-  { name: "Inventory", href: "/inventory", icon: "▧", allowedRoles: ["OWNER", "MANAGER", "INVENTORY"] },
-  { name: "Parking", href: "/parking", icon: "P", allowedRoles: ["OWNER", "MANAGER", "PARKING"] },
-  { name: "Reports", href: "/reports", icon: "▨", allowedRoles: ["OWNER", "MANAGER"] },
-  { name: "Settings", href: "/settings", icon: "⚙", allowedRoles: ["OWNER"] },
-
-  { name: "Restaurant Orders", href: "/restaurant/orders", icon: "▥", allowedRoles: ["WAITER"] },
-  { name: "Room Service", href: "/room-service", icon: "⌂", allowedRoles: ["ROOM_SERVICE"] },
-  { name: "Kitchen Orders", href: "/kitchen/orders", icon: "▥", allowedRoles: ["COOK"] },
-  { name: "Games", href: "/games", icon: "◇", allowedRoles: ["GAME_STAFF"] },
+  { name: "Dashboard",         href: "/dashboard",          icon: "▦", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"] },
+  { name: "Users",             href: "/users",              icon: "♙", allowedRoles: ["OWNER", "MANAGER"] },
+  { name: "Guests",            href: "/guests",             icon: "♟", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"] },
+  { name: "Reservations",      href: "/reservations",       icon: "▤", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"] },
+  { name: "Rooms",             href: "/rooms",              icon: "▰", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"] },
+  { name: "Checkout",          href: "/checkout",           icon: "✓", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"] },
+  { name: "Folio",             href: "/folio",              icon: "▤", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"] },
+  { name: "Payments",          href: "/payments",           icon: "₨", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"] },
+  { name: "Events",            href: "/events",             icon: "▣", allowedRoles: ["OWNER", "MANAGER", "EVENTS"] },
+  { name: "Venues",            href: "/venues",             icon: "▥", allowedRoles: ["OWNER", "MANAGER", "EVENTS"] },
+  { name: "Inventory",         href: "/inventory",          icon: "▧", allowedRoles: ["OWNER", "MANAGER", "INVENTORY"] },
+  { name: "Parking",           href: "/parking",            icon: "P", allowedRoles: ["OWNER", "MANAGER", "PARKING"] },
+  { name: "Restaurant",        href: "/restaurant",         icon: "R", allowedRoles: ["OWNER", "MANAGER", "WAITER"] },
+  { name: "Kitchen",           href: "/kitchen",            icon: "K", allowedRoles: ["OWNER", "MANAGER", "COOK"] },
+  { name: "Recipes",           href: "/recipes",            icon: "▤", allowedRoles: ["OWNER", "MANAGER", "COOK"] },
+  { name: "Room Service",      href: "/room-service",       icon: "⌂", allowedRoles: ["OWNER", "MANAGER", "ROOM_SERVICE"] },
+  { name: "Games",             href: "/games",              icon: "◇", allowedRoles: ["OWNER", "MANAGER", "GAME_STAFF"] },
+  { name: "Service Pricing",   href: "/pricing",            icon: "₨", allowedRoles: ["OWNER", "MANAGER"] },
+  { name: "Reports",           href: "/reports",            icon: "▨", allowedRoles: ["OWNER", "MANAGER"] },
+  { name: "Audit Logs",        href: "/audit-logs",         icon: "A", allowedRoles: ["OWNER", "MANAGER"] },
+  { name: "Settings",          href: "/settings",           icon: "⚙", allowedRoles: ["OWNER"] },
 ];
 
 export default function AppSidebar() {

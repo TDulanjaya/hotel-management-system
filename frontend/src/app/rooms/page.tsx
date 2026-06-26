@@ -7,12 +7,7 @@ import { Bed } from "lucide-react";
 
 const roomTypesList = ["All Rooms", "Suite", "Deluxe", "Standard"];
 
-const statusFilters = [
-  { label: "Available", count: 14, color: "green" },
-  { label: "Cleaning", count: 4, color: "yellow" },
-  { label: "Occupied", count: 22, color: "red" },
-  { label: "Maintenance", count: 2, color: "gray" },
-];
+
 
 import { getRooms, deleteRoom as apiDeleteRoom, createRoom } from "@/lib/api/roomApi";
 import { useEffect, useState } from "react";
@@ -59,6 +54,24 @@ export default function RoomsPage() {
   const [rooms, setRooms] = useState<any[]>([]);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+
+  const statusFilters = [
+    { label: "Available",   count: rooms.filter(r => r.status === "AVAILABLE").length,   color: "green"  },
+    { label: "Cleaning",    count: rooms.filter(r => r.status === "CLEANING").length,    color: "yellow" },
+    { label: "Occupied",    count: rooms.filter(r => r.status === "OCCUPIED").length,    color: "red"    },
+    { label: "Maintenance", count: rooms.filter(r => r.status === "MAINTENANCE").length, color: "gray"   },
+  ];
+
+  const displayedRooms = selectedStatus
+    ? rooms.filter(r => {
+        if (selectedStatus === "Available")   return r.status === "AVAILABLE";
+        if (selectedStatus === "Cleaning")    return r.status === "CLEANING";
+        if (selectedStatus === "Occupied")    return r.status === "OCCUPIED";
+        if (selectedStatus === "Maintenance") return r.status === "MAINTENANCE";
+        return true;
+      })
+    : rooms;
 
   // Form states
   const [loading, setLoading] = useState(false);
@@ -217,7 +230,8 @@ export default function RoomsPage() {
                 return (
                   <button
                     key={filter.label}
-                    className={`flex items-center gap-3 rounded-full border px-5 py-3 text-lg transition hover:-translate-y-1 hover:shadow-md ${styles.filter}`}
+                    onClick={() => setSelectedStatus(selectedStatus === filter.label ? null : filter.label)}
+                    className={`flex items-center gap-3 rounded-full border px-5 py-3 text-lg transition hover:-translate-y-1 hover:shadow-md ${styles.filter} ${selectedStatus === filter.label ? "ring-2 ring-current font-extrabold" : ""}`}
                   >
                     <span
                       className={`h-2.5 w-2.5 rounded-full ${styles.dot}`}
@@ -229,13 +243,13 @@ export default function RoomsPage() {
             </div>
 
             <div className="grid gap-7 md:grid-cols-2 xl:grid-cols-4">
-              {rooms.length === 0 ? (
+              {displayedRooms.length === 0 ? (
                 <div className="col-span-full rounded-2xl border border-[#d9cfbd] bg-white p-10 text-center shadow-sm">
                   <p className="text-xl font-bold text-[#735c00]">No rooms found</p>
                   <p className="mt-2 text-[#4d4635]">Add a new room to get started.</p>
                 </div>
               ) : (
-                rooms.map((room, index) => {
+                displayedRooms.map((room, index) => {
                   let color = "green";
                   if (room.status === "OCCUPIED") color = "red";
                   if (room.status === "CLEANING") color = "yellow";

@@ -187,7 +187,7 @@ export default function UsersPage() {
               </div>
             </div>
 
-            <StatsGrid userCount={users.length} />
+            <StatsGrid users={users} />
             <UsersTable users={users} setUsers={setUsers} />
             <PermissionsMatrix />
           </section>
@@ -346,23 +346,27 @@ function TopBar() {
 }
 
 
-function StatsGrid({ userCount }: { userCount: number }) {
+function StatsGrid({ users }: { users: UserItem[] }) {
+  const totalRoles = new Set(users.map(u => u.role)).size;
+  const systemUsers = users.length;
+  const protectedModules = 14;
+
   const dynamicStats = [
     {
       title: "Total Staff",
-      value: String(userCount),
+      value: String(systemUsers),
       icon: Users,
       color: "text-[#735c00]",
     },
     {
       title: "Active Roles",
-      value: "9",
+      value: String(totalRoles),
       icon: ShieldCheck,
       color: "text-[#565e74]",
     },
     {
-      title: "Security Flags",
-      value: "0",
+      title: "Protected Modules",
+      value: String(protectedModules),
       icon: ShieldAlert,
       color: "text-[#ba1a1a]",
     },
@@ -553,6 +557,9 @@ function UsersTable({
 }
 
 function PermissionsMatrix() {
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState("OWNER");
+  
   const roles = [
     "OWNER",
     "MANAGER",
@@ -565,35 +572,29 @@ function PermissionsMatrix() {
     "GAME_STAFF",
   ];
 
-  const permissionRows: {
-    module: string;
-    permissions: PermissionType[];
-  }[] = [
-    {
-      module: "Room Reservations",
-      permissions: [
-        "check", "check", "check", "none", "none", "none", "check", "none", "none",
-      ],
-    },
-    {
-      module: "Billing & Folios",
-      permissions: [
-        "check", "check", "view", "none", "none", "none", "none", "none", "none",
-      ],
-    },
-    {
-      module: "Inventory Control",
-      permissions: [
-        "check", "check", "none", "none", "view", "check", "none", "none", "none",
-      ],
-    },
-    {
-      module: "System Settings",
-      permissions: [
-        "check", "view", "none", "none", "none", "none", "none", "none", "none",
-      ],
-    },
+  const permissionRows: { module: string; permissions: PermissionType[] }[] = [
+    { module: "Room Reservations",  permissions: ["check","check","check","none","none","none","none","none","none"] },
+    { module: "Billing & Folios",   permissions: ["check","check","view","none","none","none","none","none","none"] },
+    { module: "Users & Roles",      permissions: ["check","check","none","none","none","none","none","none","none"] },
+    { module: "Reports",            permissions: ["check","check","none","none","none","none","none","none","none"] },
+    { module: "Audit Logs",         permissions: ["check","check","none","none","none","none","none","none","none"] },
+    { module: "System Settings",    permissions: ["check","view","none","none","none","none","none","none","none"] },
+    { module: "Events & Venues",    permissions: ["check","check","none","none","none","none","check","none","none"] },
+    { module: "Inventory Control",  permissions: ["check","check","none","none","view","check","none","none","none"] },
+    { module: "Parking",            permissions: ["check","check","none","none","none","none","none","check","none"] },
+    { module: "Restaurant Orders",  permissions: ["check","check","none","check","none","none","none","none","none"] },
+    { module: "Kitchen Orders",     permissions: ["check","check","none","none","check","none","none","none","none"] },
+    { module: "Room Service",       permissions: ["check","check","none","none","none","none","none","none","none"] },
+    { module: "Games & Amenities",  permissions: ["check","check","none","none","none","none","none","none","check"] },
+    { module: "Service Pricing",    permissions: ["check","check","none","none","none","none","none","none","none"] },
   ];
+
+  const handleSavePermissions = (e: React.FormEvent) => {
+    e.preventDefault();
+    alert("Permissions updated (UI only — backend integration pending)");
+    setPanelOpen(false);
+  };
+
   return (
     <section className="space-y-6">
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
@@ -605,7 +606,7 @@ function PermissionsMatrix() {
           </p>
         </div>
 
-        <button className="rounded-xl border border-[#735c00] px-6 py-2 font-bold text-[#735c00] transition hover:bg-[#735c00]/5">
+        <button onClick={() => setPanelOpen(true)} className="rounded-xl border border-[#735c00] px-6 py-2 font-bold text-[#735c00] transition hover:bg-[#735c00]/5">
           Edit All Roles
         </button>
       </div>
@@ -648,6 +649,57 @@ function PermissionsMatrix() {
           </table>
         </div>
       </div>
+
+      <SlidePanel
+        open={panelOpen}
+        onClose={() => setPanelOpen(false)}
+        title="Edit Role Permissions"
+        subtitle="Modify access levels for system modules."
+        icon={<Shield className="h-5 w-5" />}
+      >
+        <form onSubmit={handleSavePermissions} className="space-y-6">
+          <div>
+            <label className="block text-sm font-bold text-[#4d4635]">Select Role</label>
+            <select
+              value={selectedRole}
+              onChange={(e) => setSelectedRole(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+            >
+              {roles.map(r => <option key={r} value={r}>{r}</option>)}
+            </select>
+          </div>
+
+          <div className="space-y-4">
+            <h3 className="font-bold text-[#4d4635]">Module Access</h3>
+            {permissionRows.map((row) => (
+              <div key={row.module} className="flex items-center justify-between border-b border-[#d0c5af]/50 pb-3">
+                <span className="text-sm font-semibold">{row.module}</span>
+                <select className="rounded-lg border border-[#d0c5af] bg-[#f5f3ef] p-2 text-sm outline-none">
+                  <option value="check">Full Access</option>
+                  <option value="view">View Only</option>
+                  <option value="none">No Access</option>
+                </select>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex gap-4 pt-4">
+            <button
+              type="button"
+              onClick={() => setPanelOpen(false)}
+              className="flex-1 rounded-xl border border-[#d0c5af] px-8 py-4 font-bold text-[#4d4635] transition hover:bg-[#ece9e2]"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="flex-1 rounded-xl bg-[#735c00] px-8 py-4 font-bold text-white transition hover:bg-[#d4af37]"
+            >
+              Save Changes
+            </button>
+          </div>
+        </form>
+      </SlidePanel>
     </section>
   );
 }

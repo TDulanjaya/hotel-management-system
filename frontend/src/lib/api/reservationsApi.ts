@@ -1,39 +1,38 @@
-import { authenticatedFetch } from '@/lib/api/authApi';
+import { authenticatedFetch } from "./authApi";
 
-export async function getAll() {
-  const res = await authenticatedFetch(`/api/reservationss`);
-  if (!res.ok) throw new Error(`Failed to fetch reservationss`);
-  return res.json();
+export async function getReservations() {
+  const response = await authenticatedFetch("/api/reservations");
+  if (!response.ok) throw new Error("Failed to fetch reservations");
+  return response.json();
 }
 
-export async function getById(id: string) {
-  const res = await authenticatedFetch(`/api/reservationss/${id}`);
-  if (!res.ok) throw new Error(`Failed to fetch reservationss`);
-  return res.json();
+export async function getReservationById(id: string) {
+  const response = await authenticatedFetch(`/api/reservations/${id}`);
+  if (!response.ok) throw new Error("Failed to fetch reservation");
+  return response.json();
 }
 
-export async function create(data: any) {
-  const res = await authenticatedFetch(`/api/reservationss`, {
-    method: 'POST',
-    body: JSON.stringify(data)
+export async function createReservation(data: any) {
+  const response = await authenticatedFetch("/api/reservations", {
+    method: "POST",
+    body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`Failed to create reservationss`);
-  return res.json();
+  if (!response.ok) throw new Error("Failed to create reservation");
+  return response.json();
 }
 
-export async function update(id: string, data: any) {
-  const res = await authenticatedFetch(`/api/reservationss/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data)
+export async function updateReservation(id: string, data: any) {
+  const response = await authenticatedFetch(`/api/reservations/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`Failed to update reservationss`);
-  return res.json();
+  if (!response.ok) throw new Error("Failed to update reservation");
+  return response.json();
 }
 
-export async function remove(id: string) {
-  const res = await authenticatedFetch(`/api/reservationss/${id}`, {
-    method: 'DELETE'
+export async function deleteReservation(id: string) {
+  const response = await authenticatedFetch(`/api/reservations/${id}`, {
+    method: "DELETE",
   });
-  if (!res.ok) throw new Error(`Failed to delete reservationss`);
-  return res.json();
+  if (!response.ok) throw new Error("Failed to delete reservation");
 }

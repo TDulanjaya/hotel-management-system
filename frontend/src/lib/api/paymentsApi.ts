@@ -1,39 +1,38 @@
-import { authenticatedFetch } from '@/lib/api/authApi';
+import { authenticatedFetch } from "./authApi";
 
-export async function getAll() {
-  const res = await authenticatedFetch(`/api/paymentss`);
-  if (!res.ok) throw new Error(`Failed to fetch paymentss`);
-  return res.json();
+export async function getPayments() {
+  const response = await authenticatedFetch("/api/payments");
+  if (!response.ok) throw new Error("Failed to fetch payments");
+  return response.json();
 }
 
-export async function getById(id: string) {
-  const res = await authenticatedFetch(`/api/paymentss/${id}`);
-  if (!res.ok) throw new Error(`Failed to fetch paymentss`);
-  return res.json();
+export async function getPaymentById(id: string) {
+  const response = await authenticatedFetch(`/api/payments/${id}`);
+  if (!response.ok) throw new Error("Failed to fetch payment");
+  return response.json();
 }
 
-export async function create(data: any) {
-  const res = await authenticatedFetch(`/api/paymentss`, {
-    method: 'POST',
-    body: JSON.stringify(data)
+export async function createPayment(data: any) {
+  const response = await authenticatedFetch("/api/payments", {
+    method: "POST",
+    body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`Failed to create paymentss`);
-  return res.json();
+  if (!response.ok) throw new Error("Failed to create payment");
+  return response.json();
 }
 
-export async function update(id: string, data: any) {
-  const res = await authenticatedFetch(`/api/paymentss/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data)
+export async function updatePayment(id: string, data: any) {
+  const response = await authenticatedFetch(`/api/payments/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`Failed to update paymentss`);
-  return res.json();
+  if (!response.ok) throw new Error("Failed to update payment");
+  return response.json();
 }
 
-export async function remove(id: string) {
-  const res = await authenticatedFetch(`/api/paymentss/${id}`, {
-    method: 'DELETE'
+export async function deletePayment(id: string) {
+  const response = await authenticatedFetch(`/api/payments/${id}`, {
+    method: "DELETE",
   });
-  if (!res.ok) throw new Error(`Failed to delete paymentss`);
-  return res.json();
+  if (!response.ok) throw new Error("Failed to delete payment");
 }

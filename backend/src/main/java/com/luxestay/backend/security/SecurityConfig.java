@@ -78,10 +78,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/rooms/**").hasAnyRole("OWNER", "MANAGER", "RECEPTIONIST")
                 .requestMatchers(HttpMethod.PUT, "/api/rooms/**").hasAnyRole("OWNER", "MANAGER", "RECEPTIONIST")
                 .requestMatchers(HttpMethod.DELETE, "/api/rooms/**").hasAnyRole("OWNER", "MANAGER")
-                // Added for RECEPTIONIST based on user rules "Guests if page exists", "Payments if page exists"
+                // Guests, Reservations, Checkout, Folio, Payments - RECEPTIONIST access
                 .requestMatchers("/api/guests/**").hasAnyRole("OWNER", "MANAGER", "RECEPTIONIST")
                 .requestMatchers("/api/payments/**").hasAnyRole("OWNER", "MANAGER", "RECEPTIONIST")
                 .requestMatchers("/api/reservations/**").hasAnyRole("OWNER", "MANAGER", "RECEPTIONIST")
+                .requestMatchers("/api/folios/**").hasAnyRole("OWNER", "MANAGER", "RECEPTIONIST")
                 
                 // OWNER + MANAGER + INVENTORY
                 .requestMatchers(HttpMethod.GET, "/api/inventory/**").hasAnyRole("OWNER", "MANAGER", "INVENTORY")
@@ -95,19 +96,20 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.PUT, "/api/parking/**").hasAnyRole("OWNER", "MANAGER", "PARKING")
                 .requestMatchers(HttpMethod.DELETE, "/api/parking/**").hasAnyRole("OWNER", "MANAGER", "PARKING")
                 
-                // OWNER + MANAGER + WAITER
-                .requestMatchers(HttpMethod.GET, "/api/restaurant/orders/**").hasAnyRole("OWNER", "MANAGER", "WAITER")
-                .requestMatchers(HttpMethod.POST, "/api/restaurant/orders/**").hasAnyRole("OWNER", "MANAGER", "WAITER")
-                .requestMatchers(HttpMethod.PUT, "/api/restaurant/orders/**").hasAnyRole("OWNER", "MANAGER", "WAITER")
+                // OWNER + MANAGER + GAME_STAFF
+                .requestMatchers("/api/games/**").hasAnyRole("OWNER", "MANAGER", "GAME_STAFF")
                 
-                // OWNER + MANAGER + ROOM_SERVICE
-                .requestMatchers(HttpMethod.GET, "/api/room-service/**").hasAnyRole("OWNER", "MANAGER", "ROOM_SERVICE")
-                .requestMatchers(HttpMethod.POST, "/api/room-service/**").hasAnyRole("OWNER", "MANAGER", "ROOM_SERVICE")
-                .requestMatchers(HttpMethod.PUT, "/api/room-service/**").hasAnyRole("OWNER", "MANAGER", "ROOM_SERVICE")
+                // Restaurant orders - WAITER access
+                .requestMatchers("/api/restaurant/orders/**").hasAnyRole("OWNER", "MANAGER", "WAITER")
                 
-                // OWNER + MANAGER + COOK
-                .requestMatchers(HttpMethod.GET, "/api/kitchen/orders/**").hasAnyRole("OWNER", "MANAGER", "COOK")
-                .requestMatchers(HttpMethod.PUT, "/api/kitchen/orders/**").hasAnyRole("OWNER", "MANAGER", "COOK")
+                // Room service - ROOM_SERVICE access
+                .requestMatchers("/api/room-service/**").hasAnyRole("OWNER", "MANAGER", "ROOM_SERVICE")
+                
+                // Kitchen orders - COOK access
+                .requestMatchers("/api/kitchen/orders/**").hasAnyRole("OWNER", "MANAGER", "COOK")
+                
+                // Recipes - COOK access
+                .requestMatchers("/api/recipes/**").hasAnyRole("OWNER", "MANAGER", "COOK")
                 
                 // OWNER + MANAGER + GAME_STAFF
                 .requestMatchers(HttpMethod.GET, "/api/games/**").hasAnyRole("OWNER", "MANAGER", "GAME_STAFF")

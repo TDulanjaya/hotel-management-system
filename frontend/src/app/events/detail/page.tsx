@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useSearchParams } from "next/navigation";
 
 
@@ -102,7 +102,7 @@ export default function EventDetailsPage() {
                   </h1>
 
                   <p className="mt-2 text-[#4d4635]">
-                    {event.eventType} · {event.selectedVenue.name}
+                    {event.eventType} - {event.selectedVenue.name}
                   </p>
                 </div>
 
@@ -139,8 +139,8 @@ export default function EventDetailsPage() {
                             {event.selectedVenue.name}
                           </h2>
                           <p className="mt-2 text-[#4d4635]">
-                            {event.selectedVenue.type} ·{" "}
-                            {event.selectedVenue.size} · Max{" "}
+                            {event.selectedVenue.type} -{" "}
+                            {event.selectedVenue.size} - Max{" "}
                             {event.selectedVenue.capacity} guests
                           </p>
                         </div>
@@ -177,7 +177,7 @@ export default function EventDetailsPage() {
                       />
                       <InfoCard
                         label="Date / Time"
-                        value={`${event.primaryDate} · ${event.startTime}`}
+                        value={`${event.primaryDate} - ${event.startTime}`}
                       />
                       <InfoCard
                         label="Organizer"
@@ -250,7 +250,7 @@ export default function EventDetailsPage() {
                   </h2>
 
                   <p className="mt-2 text-sm text-slate-300">
-                    {event.selectedVenue.name} · {event.primaryDate}
+                    {event.selectedVenue.name} - {event.primaryDate}
                   </p>
 
                   <div className="mt-8 space-y-5 border-b border-white/10 pb-6">

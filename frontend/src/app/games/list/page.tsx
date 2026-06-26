@@ -1,47 +1,16 @@
+"use client";
+
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-
-const games = [
-  {
-    id: "GM-001",
-    name: "Grand Billiards I",
-    type: "Billiards",
-    location: "Recreation Floor",
-    status: "Occupied",
-    hourlyRate: "Rs 18.00",
-  },
-  {
-    id: "GM-002",
-    name: "VIP Gaming Suite",
-    type: "Console Gaming",
-    location: "Level 03",
-    status: "Overdue",
-    hourlyRate: "Rs 25.00",
-  },
-  {
-    id: "GM-003",
-    name: "Skyline Cinema",
-    type: "Private Cinema",
-    location: "Rooftop Zone",
-    status: "Available",
-    hourlyRate: "Rs 40.00",
-  },
-  {
-    id: "GM-004",
-    name: "Table Tennis Center",
-    type: "Indoor Sport",
-    location: "Recreation Floor",
-    status: "Available",
-    hourlyRate: "Rs 12.00",
-  },
-];
+import { useEffect, useState } from "react";
+import { getGameSessions } from "@/lib/api/gameApi";
 
 function getStatusClass(status: string) {
-  if (status === "Available") {
+  if (status === "AVAILABLE") {
     return "bg-green-100 text-green-700";
   }
 
-  if (status === "Occupied") {
+  if (status === "ACTIVE") {
     return "bg-yellow-100 text-yellow-700";
   }
 
@@ -49,6 +18,23 @@ function getStatusClass(status: string) {
 }
 
 export default function GamesListPage() {
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadSessions = async () => {
+      try {
+        const data = await getGameSessions();
+        setSessions(data);
+      } catch (err) {
+        console.error("Failed to load sessions:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadSessions();
+  }, []);
+
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "GAME_STAFF"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
@@ -102,33 +88,48 @@ export default function GamesListPage() {
                 </thead>
 
                 <tbody className="divide-y divide-[#d0c5af]">
-                  {games.map((game) => (
-                    <tr key={game.id} className="transition hover:bg-[#fbf9f5]">
-                      <td className="px-6 py-5 font-bold">{game.id}</td>
-
-                      <td className="px-6 py-5 font-semibold">{game.name}</td>
-
-                      <td className="px-6 py-5 text-[#4d4635]">
-                        {game.type}
-                      </td>
-
-                      <td className="px-6 py-5">{game.location}</td>
-
-                      <td className="px-6 py-5">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(
-                            game.status
-                          )}`}
-                        >
-                          {game.status}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-5 text-right font-bold">
-                        {game.hourlyRate}
+                  {loading ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center text-[#4d4635]">
+                        <p className="text-lg font-bold">Loading games...</p>
                       </td>
                     </tr>
-                  ))}
+                  ) : sessions.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center text-[#4d4635]">
+                        <p className="text-lg font-bold">No games found</p>
+                        <p className="mt-1 text-sm">Create a new game session to get started.</p>
+                      </td>
+                    </tr>
+                  ) : (
+                    sessions.map((game) => (
+                      <tr key={game.id} className="transition hover:bg-[#fbf9f5]">
+                        <td className="px-6 py-5 font-bold">{game.id.substring(game.id.length - 6).toUpperCase()}</td>
+
+                        <td className="px-6 py-5 font-semibold">{game.gameName}</td>
+
+                        <td className="px-6 py-5 text-[#4d4635]">
+                          {game.gameType}
+                        </td>
+
+                        <td className="px-6 py-5">{game.location}</td>
+
+                        <td className="px-6 py-5">
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(
+                              game.status
+                            )}`}
+                          >
+                            {game.status}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-5 text-right font-bold">
+                          Rs {game.hourlyRate}
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

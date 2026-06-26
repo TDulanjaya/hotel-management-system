@@ -1,248 +1,159 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import SlidePanel from "@/components/ui/SlidePanel";
+import { getKitchenOrders, createKitchenOrder, updateKitchenOrder, deleteKitchenOrder } from "@/lib/api/kitchenApi";
+import { useAuthContext } from "@/context/AuthContext";
 
-const kitchenOrders = [
-  {
-    id: "KIT-1001",
-    orderRef: "ORD-501",
-    source: "Restaurant",
-    location: "Table 12",
-    items: "Wagyu Beef Burger, Truffle Fries",
-    priority: "High",
-    status: "Preparing",
-    time: "12:20 PM",
-  },
-  {
-    id: "KIT-1002",
-    orderRef: "RS-1001",
-    source: "Room Service",
-    location: "Room 402",
-    items: "Club Sandwich, Orange Juice",
-    priority: "Medium",
-    status: "Ready",
-    time: "12:30 PM",
-  },
-  {
-    id: "KIT-1003",
-    orderRef: "ORD-502",
-    source: "Restaurant",
-    location: "Table 07",
-    items: "Chicken Alfredo, Garden Salad",
-    priority: "Medium",
-    status: "Pending",
-    time: "12:45 PM",
-  },
-  {
-    id: "KIT-1004",
-    orderRef: "EV-0044",
-    source: "Event Catering",
-    location: "Grand Ballroom",
-    items: "Canapés Tray, Sparkling Water",
-    priority: "High",
-    status: "Preparing",
-    time: "01:00 PM",
-  },
-];
+export default function PageComponent() {
+  const { user } = useAuthContext();
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [editItem, setEditItem] = useState<any>(null);
+  
+  const [formData, setFormData] = useState({ orderSource: "Restaurant", tableOrRoom: "", guestName: "", items: "", priority: "NORMAL", status: "QUEUED", notes: "" });
 
-const orderStats = [
-  {
-    label: "Total Orders",
-    value: "24",
-  },
-  {
-    label: "Pending",
-    value: "08",
-  },
-  {
-    label: "Preparing",
-    value: "10",
-  },
-  {
-    label: "Ready",
-    value: "06",
-  },
-];
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const data = await getKitchenOrders();
+      setItems(data);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-function getStatusClass(status: string) {
-  if (status === "Ready") {
-    return "bg-green-100 text-green-700";
-  }
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  if (status === "Preparing") {
-    return "bg-blue-100 text-blue-700";
-  }
+  const handleOpenNew = () => {
+    setEditItem(null);
+    setFormData({ orderSource: "Restaurant", tableOrRoom: "", guestName: "", items: "", priority: "NORMAL", status: "QUEUED", notes: "" });
+    setPanelOpen(true);
+  };
 
-  return "bg-yellow-100 text-yellow-700";
-}
+  const handleOpenEdit = (item: any) => {
+    setEditItem(item);
+    const mapped: any = {};
+    const defaultState: any = { orderSource: "Restaurant", tableOrRoom: "", guestName: "", items: "", priority: "NORMAL", status: "QUEUED", notes: "" };
+    const keys = Object.keys(defaultState);
+    keys.forEach(k => {
+      mapped[k] = item[k] !== undefined && item[k] !== null ? item[k] : defaultState[k];
+    });
+    setFormData(mapped);
+    setPanelOpen(true);
+  };
 
-function getPriorityClass(priority: string) {
-  if (priority === "High") {
-    return "bg-red-100 text-red-700";
-  }
+  const handleDelete = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this?")) {
+      try {
+        await deleteKitchenOrder(id);
+        fetchData();
+      } catch (err: any) {
+        alert("Failed to delete");
+      }
+    }
+  };
 
-  return "bg-yellow-100 text-yellow-700";
-}
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (editItem) {
+        await updateKitchenOrder(editItem.id, formData);
+      } else {
+        await createKitchenOrder(formData);
+      }
+      setPanelOpen(false);
+      fetchData();
+    } catch (err: any) {
+      alert("Failed to save");
+    }
+  };
 
-export default function KitchenOrdersPage() {
+  const canEdit = user?.role === "OWNER" || user?.role === "MANAGER" || user?.role === "COOK";
+  const canDelete = user?.role === "OWNER" || user?.role === "MANAGER";
+
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "COOK"]}>
-      <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
+      <div className="flex min-h-screen bg-[#f8f5ef]">
         <AppSidebar />
-
-        <main className="px-8 py-10 lg:ml-[280px]">
-          <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#735c00]">
-                Kitchen Management
-              </p>
-
-              <h1 className="mt-3 text-4xl font-bold text-[#735c00]">
-                Kitchen Orders
-              </h1>
-
-              <p className="mt-2 text-[#4d4635]">
-                View restaurant, room service, and event catering orders sent to
-                the kitchen.
-              </p>
-            </div>
-
-            <a
-              href="/kitchen"
-              className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
-            >
-              Back to Kitchen
-            </a>
+        <main className="flex-1 p-8 lg:ml-[280px]">
+          <div className="mb-8 flex items-center justify-between">
+            <h1 className="text-3xl font-extrabold text-[#181818]">Kitchen Orders</h1>
+            <button onClick={handleOpenNew} className="rounded-xl bg-[#806300] px-6 py-2 text-white font-bold hover:bg-[#6b5400]">+ Add</button>
           </div>
 
-          <section className="mb-8 grid gap-6 md:grid-cols-4">
-            {orderStats.map((item) => (
-              <StatCard key={item.label} label={item.label} value={item.value} />
-            ))}
-          </section>
-
-          <section className="mb-8 rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-            <div className="grid gap-4 md:grid-cols-4">
-              <input
-                type="text"
-                placeholder="Search order..."
-                className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-              />
-
-              <select className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                <option>All Sources</option>
-                <option>Restaurant</option>
-                <option>Room Service</option>
-                <option>Event Catering</option>
-              </select>
-
-              <select className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                <option>All Status</option>
-                <option>Pending</option>
-                <option>Preparing</option>
-                <option>Ready</option>
-              </select>
-
-              <button className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]">
-                Filter
-              </button>
+          {loading ? (
+            <div className="flex h-64 items-center justify-center text-lg text-[#806300]">Loading...</div>
+          ) : error ? (
+            <div className="text-red-600">{error}</div>
+          ) : items.length === 0 ? (
+            <div className="flex h-64 flex-col items-center justify-center rounded-xl bg-white shadow-sm border border-[#d9cfbd]">
+              <p className="mb-4 text-xl font-semibold text-gray-500">No records found</p>
+              <button onClick={handleOpenNew} className="rounded-xl bg-[#806300] px-6 py-2 text-white font-bold hover:bg-[#6b5400]">+ Add</button>
             </div>
-          </section>
-
-          <section className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">
-            <div className="border-b border-[#d0c5af] p-6">
-              <h2 className="text-2xl font-bold">Active Kitchen Orders</h2>
-
-              <p className="mt-1 text-sm text-[#4d4635]">
-                Orders waiting, preparing, or ready for serving.
-              </p>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1050px] text-left">
-                <thead>
-                  <tr className="border-b border-[#d0c5af] bg-[#f5f3ef] text-xs uppercase tracking-widest text-[#4d4635]">
-                    <th className="px-6 py-4">Kitchen ID</th>
-                    <th className="px-6 py-4">Order Ref</th>
-                    <th className="px-6 py-4">Source</th>
-                    <th className="px-6 py-4">Location</th>
-                    <th className="px-6 py-4">Items</th>
-                    <th className="px-6 py-4">Priority</th>
-                    <th className="px-6 py-4">Time</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4 text-right">Action</th>
+          ) : (
+            <div className="overflow-x-auto rounded-xl bg-white shadow-sm border border-[#d9cfbd]">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-[#f5eed9] text-[#4c4032]">
+                  <tr>
+                    <th className="p-4 font-bold">Order Source</th><th className="p-4 font-bold">Table/Room</th><th className="p-4 font-bold">Guest</th><th className="p-4 font-bold">Items</th><th className="p-4 font-bold">Priority</th><th className="p-4 font-bold">Status</th><th className="p-4 font-bold">Received At</th><th className="p-4 font-bold">Actions</th>
                   </tr>
                 </thead>
+                <tbody className="divide-y divide-[#d9cfbd]">
+                  {items.map((item: any) => (
+                    <tr key={item.id} className="hover:bg-slate-50">
+                      
+                      <td className="p-4 font-semibold">{item.orderSource}</td>
+                      <td className="p-4">{item.tableOrRoom}</td>
+                      <td className="p-4">{item.guestName}</td>
+                      <td className="p-4">{item.items}</td>
+                      <td className="p-4">{item.priority}</td>
+                      <td className="p-4"><button onClick={() => {
+                        const statuses = ["QUEUED", "PREPARING", "READY", "SERVED"];
+                        const next = statuses[(statuses.indexOf(item.status) + 1) % statuses.length];
+                        updateKitchenOrder(item.id, { ...item, status: next }).then(() => fetchData());
+                      }} className="rounded bg-gray-100 px-2 py-1 text-xs font-bold">{item.status || "QUEUED"}</button></td>
+                      <td className="p-4">{item.receivedAt ? new Date(item.receivedAt).toLocaleString() : ''}</td>
 
-                <tbody className="divide-y divide-[#d0c5af]">
-                  {kitchenOrders.map((order) => (
-                    <tr key={order.id} className="transition hover:bg-[#fbf9f5]">
-                      <td className="px-6 py-5 font-bold">{order.id}</td>
-
-                      <td className="px-6 py-5 text-[#4d4635]">
-                        {order.orderRef}
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <span className="rounded-full bg-[#d4af37]/20 px-3 py-1 text-xs font-bold text-[#735c00]">
-                          {order.source}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-5 font-semibold">
-                        {order.location}
-                      </td>
-
-                      <td className="px-6 py-5 text-[#4d4635]">
-                        {order.items}
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${getPriorityClass(
-                            order.priority
-                          )}`}
-                        >
-                          {order.priority}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-5">{order.time}</td>
-
-                      <td className="px-6 py-5">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(
-                            order.status
-                          )}`}
-                        >
-                          {order.status}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-5 text-right">
-                        <button className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white">
-                          Update
-                        </button>
+                      <td className="p-4 flex gap-2">
+                        {canEdit && (
+                          <button onClick={() => handleOpenEdit(item)} className="text-blue-600 font-semibold hover:underline">Edit</button>
+                        )}
+                        {canDelete && (
+                          <button onClick={() => handleDelete(item.id)} className="text-red-600 font-semibold hover:underline">Delete</button>
+                        )}
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
-          </section>
+          )}
+
+          <SlidePanel open={panelOpen} onClose={() => setPanelOpen(false)} title={editItem ? "Edit" : "Add"}>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              
+              <div><label className="block text-sm font-bold">Order Source</label><select className="w-full rounded border p-2" value={formData.orderSource} onChange={e => setFormData({...formData, orderSource: e.target.value})}><option>Restaurant</option><option>Room Service</option></select></div>
+              <div><label className="block text-sm font-bold">Table/Room</label><input className="w-full rounded border p-2" value={formData.tableOrRoom} onChange={e => setFormData({...formData, tableOrRoom: e.target.value})} /></div>
+              <div><label className="block text-sm font-bold">Guest Name</label><input className="w-full rounded border p-2" value={formData.guestName} onChange={e => setFormData({...formData, guestName: e.target.value})} /></div>
+              <div><label className="block text-sm font-bold">Items *</label><textarea required className="w-full rounded border p-2" value={formData.items} onChange={e => setFormData({...formData, items: e.target.value})} /></div>
+              <div><label className="block text-sm font-bold">Priority</label><select className="w-full rounded border p-2" value={formData.priority} onChange={e => setFormData({...formData, priority: e.target.value})}><option>NORMAL</option><option>HIGH</option><option>URGENT</option></select></div>
+              <div><label className="block text-sm font-bold">Status</label><select className="w-full rounded border p-2" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}><option>QUEUED</option><option>PREPARING</option><option>READY</option><option>SERVED</option></select></div>
+              <div><label className="block text-sm font-bold">Notes</label><textarea className="w-full rounded border p-2" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} /></div>
+
+              <button type="submit" className="w-full rounded bg-[#806300] py-3 text-white font-bold hover:bg-[#6b5400]">Save</button>
+            </form>
+          </SlidePanel>
         </main>
       </div>
     </ProtectedRoute>
-  );
-}
-
-function StatCard({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-      <p className="text-sm font-bold uppercase tracking-widest text-[#4d4635]">
-        {label}
-      </p>
-
-      <p className="mt-2 text-3xl font-extrabold text-[#735c00]">{value}</p>
-    </div>
   );
 }
