@@ -2,56 +2,58 @@ package com.luxestay.backend.service;
 
 import com.luxestay.backend.dto.EventRequest;
 import com.luxestay.backend.model.EventBooking;
+import com.luxestay.backend.repository.EventBookingRepository;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class EventService {
 
-    private final Map<String, EventBooking> events = new LinkedHashMap<>();
+    private final EventBookingRepository eventRepository;
 
-    public EventService() {
-        EventBooking sampleEvent = EventBooking.builder()
-                .id("EV-1001")
-                .eventName("Wedding Reception")
-                .eventType("Wedding")
-                .guestCount(150)
-                .primaryDate("2026-06-25")
-                .startTime("18:00")
-                .organizerName("Daniel Smith")
-                .phone("+94 77 123 4567")
-                .email("daniel@example.com")
-                .kitchenNote("Vegetarian menu required")
-                .specialNote("Need flower decoration")
-                .status("Confirmed")
-                .selectedVenue(null)
-                .selectedPackages(new ArrayList<>())
-                .venueTotal(2500.00)
-                .packageTotal(1500.00)
-                .serviceCharge(400.00)
-                .grandTotal(4400.00)
-                .createdAt(System.currentTimeMillis())
-                .build();
+    public EventService(EventBookingRepository eventRepository) {
+        this.eventRepository = eventRepository;
+    }
 
-        events.put(sampleEvent.getId(), sampleEvent);
+    @PostConstruct
+    public void seedData() {
+        if (eventRepository.count() == 0) {
+            EventBooking sampleEvent = EventBooking.builder()
+                    .id("EV-1001")
+                    .eventName("Wedding Reception")
+                    .eventType("Wedding")
+                    .guestCount(150)
+                    .primaryDate("2026-06-25")
+                    .startTime("18:00")
+                    .organizerName("Daniel Smith")
+                    .phone("+94 77 123 4567")
+                    .email("daniel@example.com")
+                    .kitchenNote("Vegetarian menu required")
+                    .specialNote("Need flower decoration")
+                    .status("Confirmed")
+                    .selectedVenue(null)
+                    .selectedPackages(new ArrayList<>())
+                    .venueTotal(2500.00)
+                    .packageTotal(1500.00)
+                    .serviceCharge(400.00)
+                    .grandTotal(4400.00)
+                    .createdAt(System.currentTimeMillis())
+                    .build();
+
+            eventRepository.save(sampleEvent);
+        }
     }
 
     public List<EventBooking> getAllEvents() {
-        return new ArrayList<>(events.values());
+        return eventRepository.findAll();
     }
 
     public EventBooking getEventById(String id) {
-        EventBooking event = events.get(id);
-
-        if (event == null) {
-            throw new RuntimeException("Event not found with id: " + id);
-        }
-
-        return event;
+        return eventRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Event not found with id: " + id));
     }
 
     public EventBooking createEvent(EventRequest request) {
@@ -79,8 +81,7 @@ public class EventService {
                 .createdAt(System.currentTimeMillis())
                 .build();
 
-        events.put(id, event);
-        return event;
+        return eventRepository.save(event);
     }
 
     public EventBooking updateEvent(String id, EventRequest request) {
@@ -104,11 +105,13 @@ public class EventService {
         existingEvent.setServiceCharge(request.getServiceCharge());
         existingEvent.setGrandTotal(request.getGrandTotal());
 
-        events.put(id, existingEvent);
-        return existingEvent;
+        return eventRepository.save(existingEvent);
     }
 
     public void deleteEvent(String id) {
-        events.remove(id);
+        if (!eventRepository.existsById(id)) {
+            throw new RuntimeException("Event not found with id: " + id);
+        }
+        eventRepository.deleteById(id);
     }
 }

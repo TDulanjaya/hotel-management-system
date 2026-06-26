@@ -2,61 +2,62 @@ package com.luxestay.backend.service;
 
 import com.luxestay.backend.dto.VenueRequest;
 import com.luxestay.backend.model.Venue;
+import com.luxestay.backend.repository.VenueRepository;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class VenueService {
 
-    private final Map<String, Venue> venues = new LinkedHashMap<>();
+    private final VenueRepository venueRepository;
 
-    public VenueService() {
-        Venue grandBallroom = Venue.builder()
-                .id("VEN-1001")
-                .name("Grand Ballroom")
-                .type("Banquet Hall")
-                .capacity(250)
-                .size("5000 sqft")
-                .location("Ground Floor")
-                .status("Available")
-                .price(2500.00)
-                .image("")
-                .tags(List.of("Wedding", "Corporate", "Luxury"))
-                .build();
+    public VenueService(VenueRepository venueRepository) {
+        this.venueRepository = venueRepository;
+    }
 
-        Venue rooftop = Venue.builder()
-                .id("VEN-1002")
-                .name("Rooftop Lounge")
-                .type("Rooftop")
-                .capacity(80)
-                .size("2000 sqft")
-                .location("Top Floor")
-                .status("Available")
-                .price(1200.00)
-                .image("")
-                .tags(List.of("Party", "Dinner", "Private Event"))
-                .build();
+    @PostConstruct
+    public void seedData() {
+        if (venueRepository.count() == 0) {
+            Venue grandBallroom = Venue.builder()
+                    .id("VEN-1001")
+                    .name("Grand Ballroom")
+                    .type("Banquet Hall")
+                    .capacity(250)
+                    .size("5000 sqft")
+                    .location("Ground Floor")
+                    .status("Available")
+                    .price(2500.00)
+                    .image("")
+                    .tags(List.of("Wedding", "Corporate", "Luxury"))
+                    .build();
 
-        venues.put(grandBallroom.getId(), grandBallroom);
-        venues.put(rooftop.getId(), rooftop);
+            Venue rooftop = Venue.builder()
+                    .id("VEN-1002")
+                    .name("Rooftop Lounge")
+                    .type("Rooftop")
+                    .capacity(80)
+                    .size("2000 sqft")
+                    .location("Top Floor")
+                    .status("Available")
+                    .price(1200.00)
+                    .image("")
+                    .tags(List.of("Party", "Dinner", "Private Event"))
+                    .build();
+
+            venueRepository.save(grandBallroom);
+            venueRepository.save(rooftop);
+        }
     }
 
     public List<Venue> getAllVenues() {
-        return new ArrayList<>(venues.values());
+        return venueRepository.findAll();
     }
 
     public Venue getVenueById(String id) {
-        Venue venue = venues.get(id);
-
-        if (venue == null) {
-            throw new RuntimeException("Venue not found with id: " + id);
-        }
-
-        return venue;
+        return venueRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Venue not found with id: " + id));
     }
 
     public Venue createVenue(VenueRequest request) {
@@ -75,8 +76,7 @@ public class VenueService {
                 .tags(request.getTags())
                 .build();
 
-        venues.put(id, venue);
-        return venue;
+        return venueRepository.save(venue);
     }
 
     public Venue updateVenue(String id, VenueRequest request) {
@@ -92,11 +92,13 @@ public class VenueService {
         existingVenue.setImage(request.getImage());
         existingVenue.setTags(request.getTags());
 
-        venues.put(id, existingVenue);
-        return existingVenue;
+        return venueRepository.save(existingVenue);
     }
 
     public void deleteVenue(String id) {
-        venues.remove(id);
+        if (!venueRepository.existsById(id)) {
+            throw new RuntimeException("Venue not found with id: " + id);
+        }
+        venueRepository.deleteById(id);
     }
 }

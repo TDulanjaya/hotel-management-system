@@ -2,62 +2,60 @@ package com.luxestay.backend.service;
 
 import com.luxestay.backend.dto.PricingItemRequest;
 import com.luxestay.backend.model.PricingItem;
+import com.luxestay.backend.repository.PricingItemRepository;
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class PricingService {
 
-    private final Map<String, PricingItem> pricingItems = new LinkedHashMap<>();
+    private final PricingItemRepository pricingItemRepository;
 
-    public PricingService() {
-        PricingItem roomPrice = PricingItem.builder()
-                .id("PR-1001")
-                .name("Deluxe Room")
-                .category("Room")
-                .description("Deluxe room price per night")
-                .priceType("Per Night")
-                .price(250.00)
-                .status("Active")
-                .build();
+    public PricingService(PricingItemRepository pricingItemRepository) {
+        this.pricingItemRepository = pricingItemRepository;
+    }
 
-        PricingItem parkingPrice = PricingItem.builder()
-                .id("PR-1002")
-                .name("Parking")
-                .category("Parking")
-                .description("Parking price per hour")
-                .priceType("Per Hour")
-                .price(5.00)
-                .status("Active")
-                .build();
+    @PostConstruct
+    public void seedData() {
+        if (pricingItemRepository.count() == 0) {
+            PricingItem roomPrice = PricingItem.builder()
+                    .id("PR-1001")
+                    .name("Deluxe Room")
+                    .category("Room")
+                    .description("Deluxe room price per night")
+                    .priceType("Per Night")
+                    .price(250.00)
+                    .status("Active")
+                    .build();
 
-        pricingItems.put(roomPrice.getId(), roomPrice);
-        pricingItems.put(parkingPrice.getId(), parkingPrice);
+            PricingItem parkingPrice = PricingItem.builder()
+                    .id("PR-1002")
+                    .name("Parking")
+                    .category("Parking")
+                    .description("Parking price per hour")
+                    .priceType("Per Hour")
+                    .price(5.00)
+                    .status("Active")
+                    .build();
+
+            pricingItemRepository.save(roomPrice);
+            pricingItemRepository.save(parkingPrice);
+        }
     }
 
     public List<PricingItem> getAllPricingItems() {
-        return new ArrayList<>(pricingItems.values());
+        return pricingItemRepository.findAll();
     }
 
     public PricingItem getPricingItemById(String id) {
-        PricingItem item = pricingItems.get(id);
-
-        if (item == null) {
-            throw new RuntimeException("Pricing item not found with id: " + id);
-        }
-
-        return item;
+        return pricingItemRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pricing item not found with id: " + id));
     }
 
     public List<PricingItem> getPricingItemsByCategory(String category) {
-        return pricingItems.values()
-                .stream()
-                .filter(item -> item.getCategory() != null && item.getCategory().equalsIgnoreCase(category))
-                .toList();
+        return pricingItemRepository.findByCategoryIgnoreCase(category);
     }
 
     public PricingItem createPricingItem(PricingItemRequest request) {
@@ -73,8 +71,7 @@ public class PricingService {
                 .status(request.getStatus() != null ? request.getStatus() : "Active")
                 .build();
 
-        pricingItems.put(id, item);
-        return item;
+        return pricingItemRepository.save(item);
     }
 
     public PricingItem updatePricingItem(String id, PricingItemRequest request) {
@@ -87,11 +84,13 @@ public class PricingService {
         existingItem.setPrice(request.getPrice());
         existingItem.setStatus(request.getStatus());
 
-        pricingItems.put(id, existingItem);
-        return existingItem;
+        return pricingItemRepository.save(existingItem);
     }
 
     public void deletePricingItem(String id) {
-        pricingItems.remove(id);
+        if (!pricingItemRepository.existsById(id)) {
+            throw new RuntimeException("Pricing item not found with id: " + id);
+        }
+        pricingItemRepository.deleteById(id);
     }
 }
