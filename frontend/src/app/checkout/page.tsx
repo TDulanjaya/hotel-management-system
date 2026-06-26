@@ -204,7 +204,7 @@ export default function CheckoutPage() {
 
                       <td className="px-6 py-5 text-right">
                         <button
-                          onClick={() => router.push(`/checkout/${checkout.id}`)}
+                          onClick={() => router.push(`/checkout/detail?id=${checkout.id}`)}
                           className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
                         >
                           View

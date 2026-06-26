@@ -436,7 +436,7 @@ function UsersTable({
                       {!(currentUser?.role === "MANAGER" && (user.role === "OWNER" || user.role === "MANAGER")) && (
                         <>
                           {canEdit && (
-                            <Link href={`/users/${user.id}/edit`} className="rounded-lg p-2 text-[#4d4635] hover:bg-[#efeeea]">
+                            <Link href={`/users/edit?id=${user.id}`} className="rounded-lg p-2 text-[#4d4635] hover:bg-[#efeeea]">
                               <Pencil size={18} />
                             </Link>
                           )}

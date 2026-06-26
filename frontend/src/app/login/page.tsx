@@ -3,7 +3,7 @@
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getDashboardByRole, saveAuth } from "@/utils/auth";
-import { login } from "@/lib/api";
+import { login } from "@/lib/api/authApi";
 
 export default function LoginPage() {
   const router = useRouter();

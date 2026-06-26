@@ -57,13 +57,13 @@ export function getDashboardByRole(role: UserRole) {
     OWNER: "/dashboard",
     MANAGER: "/dashboard",
     RECEPTIONIST: "/rooms",
-    COOK: "/kitchen-orders",
-    INVENTORY: "/inventory",
-    WAITER: "/restaurant-orders",
-    EVENTS: "/events",
-    PARKING: "/parking",
-    GAME_STAFF: "/games",
-    ROOM_SERVICE: "/room-service",
+    COOK: "/dashboard/cook",
+    INVENTORY: "/dashboard/inventory",
+    WAITER: "/dashboard/waiter",
+    EVENTS: "/dashboard/events",
+    PARKING: "/dashboard/parking",
+    GAME_STAFF: "/dashboard/game-staff",
+    ROOM_SERVICE: "/dashboard/room-service",
   };
 
   return roleRoutes[role] || "/dashboard";

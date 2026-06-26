@@ -269,7 +269,7 @@ export default function PricingPage() {
                           <div className="flex justify-end gap-3">
                             {(user?.role === "OWNER" || user?.role === "MANAGER") && (
                               <Link
-                                href={`/pricing/${item.id}/edit`}
+                                href={`/pricing/edit?id=${item.id}`}
                                 className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
                               >
                                 Edit

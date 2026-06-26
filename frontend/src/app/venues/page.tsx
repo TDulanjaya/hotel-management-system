@@ -270,7 +270,7 @@ export default function VenuesPage() {
                         <div className="flex gap-3">
                           {(user?.role === "OWNER" || user?.role === "MANAGER" || user?.role === "EVENTS") && (
                             <Link
-                              href={`/venues/${venue.id}/edit`}
+                              href={`/venues/edit?id=${venue.id}`}
                               className="rounded-xl border border-[#735c00] px-5 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
                             >
                               Edit

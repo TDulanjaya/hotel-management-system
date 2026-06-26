@@ -234,7 +234,7 @@ export default function InventoryPage() {
 
                               {canEdit && (
                                 <Link
-                                  href={`/inventory/${item.id}/edit`}
+                                  href={`/inventory/edit?id=${item.id}`}
                                   className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
                                 >
                                   Edit

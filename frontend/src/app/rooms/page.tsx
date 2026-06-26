@@ -256,7 +256,7 @@ export default function RoomsPage() {
   
                         {canEdit && (
                           <Link
-                            href={`/rooms/${room.id}/edit`}
+                            href={`/rooms/edit?id=${room.id}`}
                             className="rounded-xl border border-[#806300] bg-white px-2 py-3 text-center text-sm font-bold text-[#806300] transition hover:-translate-y-1 hover:shadow-lg"
                           >
                             Edit

@@ -1,4 +1,4 @@
-import { authenticatedFetch } from "../api";
+import { authenticatedFetch } from "./authApi";
 
 export async function getVenues() {
   const response = await authenticatedFetch("/api/venues");
