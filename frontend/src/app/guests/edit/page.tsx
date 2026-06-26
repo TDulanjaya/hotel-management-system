@@ -16,7 +16,7 @@ export default function EditGuestPage() {
   const guestId = id as string;
 
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "receptionist"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "RECEPTIONIST"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 

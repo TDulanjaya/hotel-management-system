@@ -1,8 +1,10 @@
 "use client";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import SlidePanel from "@/components/ui/SlidePanel";
+import { Package } from "lucide-react";
 
-import { getInventoryItems, deleteInventoryItem as apiDeleteInventory } from "@/lib/api/inventoryApi";
+import { getInventoryItems, deleteInventoryItem as apiDeleteInventory, createInventoryItem } from "@/lib/api/inventoryApi";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getUser, AuthUser } from "@/utils/auth";
@@ -49,17 +51,33 @@ function getStockPercent(stock: number, minimum: number) {
 export default function InventoryPage() {
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [panelOpen, setPanelOpen] = useState(false);
+
+  // Form states
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [formData, setFormData] = useState({
+    itemName: "",
+    category: "Kitchen",
+    quantity: 0,
+    unit: "pcs",
+    reorderLevel: 10,
+    supplierName: "",
+    purchasePrice: 0,
+    status: "In Stock"
+  });
+
+  const loadInventory = async () => {
+    try {
+      const data = await getInventoryItems();
+      setInventoryItems(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     setUser(getUser());
-    async function loadInventory() {
-      try {
-        const data = await getInventoryItems();
-        setInventoryItems(data);
-      } catch (err) {
-        console.error(err);
-      }
-    }
     loadInventory();
   }, []);
 
@@ -72,6 +90,35 @@ export default function InventoryPage() {
     } catch (err) {
       console.error(err);
       alert("Failed to delete inventory item.");
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      await createInventoryItem({
+        ...formData,
+        quantity: Number(formData.quantity),
+        reorderLevel: Number(formData.reorderLevel),
+        purchasePrice: Number(formData.purchasePrice),
+      });
+      setPanelOpen(false);
+      loadInventory();
+      // Reset form
+      setFormData({
+        itemName: "", category: "Kitchen", quantity: 0, unit: "pcs", reorderLevel: 10,
+        supplierName: "", purchasePrice: 0, status: "In Stock"
+      });
+    } catch (err: any) {
+      setError(err.message || "Failed to add inventory item");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -105,9 +152,12 @@ export default function InventoryPage() {
                 + Purchase Request
               </Link>
 
-              <Link href="/inventory/new" className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]">
+              <button 
+                onClick={() => setPanelOpen(true)}
+                className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
+              >
                 + Add Item
-              </Link>
+              </button>
             </div>
           </div>
 
@@ -323,6 +373,80 @@ export default function InventoryPage() {
             </aside>
           </section>
         </main>
+
+        <SlidePanel 
+          open={panelOpen} 
+          onClose={() => setPanelOpen(false)} 
+          title="Add New Inventory Item" 
+          subtitle="Add stock, supplies, or amenities to your inventory."
+          icon={<Package className="h-5 w-5" />}
+        >
+          {error && <div className="mb-4 text-red-600 font-bold">{error}</div>}
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-bold text-[#4d4635]">Item Name</label>
+              <input required type="text" name="itemName" value={formData.itemName} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-[#4d4635]">Category</label>
+                <select name="category" value={formData.category} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3">
+                  <option value="Kitchen">Kitchen</option>
+                  <option value="Housekeeping">Housekeeping</option>
+                  <option value="Restaurant">Restaurant</option>
+                  <option value="Amenities">Amenities</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-[#4d4635]">Unit Type</label>
+                <input required type="text" name="unit" placeholder="e.g. pcs, kg, liters" value={formData.unit} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-[#4d4635]">Initial Quantity</label>
+                <input required type="number" name="quantity" value={formData.quantity} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-[#4d4635]">Reorder Level</label>
+                <input required type="number" name="reorderLevel" value={formData.reorderLevel} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-[#4d4635]">Purchase Price (Initial)</label>
+                <input required type="number" name="purchasePrice" value={formData.purchasePrice} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-[#4d4635]">Supplier Name</label>
+                <input required type="text" name="supplierName" value={formData.supplierName} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-[#4d4635]">Status</label>
+              <select name="status" value={formData.status} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3">
+                <option value="In Stock">In Stock</option>
+                <option value="Low Stock">Low Stock</option>
+                <option value="Critical">Critical</option>
+              </select>
+            </div>
+
+            <div className="flex gap-4 pt-4">
+              <button type="button" onClick={() => setPanelOpen(false)} className="flex-1 rounded-xl border border-[#d0c5af] px-8 py-4 font-bold text-[#4d4635] transition hover:bg-[#ece9e2]">
+                Cancel
+              </button>
+              <button type="submit" disabled={loading} className="flex-1 rounded-xl bg-[#735c00] px-8 py-4 font-bold text-white transition hover:bg-[#d4af37]">
+                {loading ? "Saving..." : "Save Item"}
+              </button>
+            </div>
+          </form>
+        </SlidePanel>
+
       </div>
     </ProtectedRoute>
   );

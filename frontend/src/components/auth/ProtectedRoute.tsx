@@ -2,7 +2,7 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getUser, getToken, UserRole } from "@/utils/auth";
+import { getUser, getToken, UserRole, getDashboardByRole } from "@/utils/auth";
 
 export default function ProtectedRoute({
   children,
@@ -25,7 +25,7 @@ export default function ProtectedRoute({
     }
 
     if (allowedRoles && !allowedRoles.includes(user.role)) {
-      router.push("/dashboard");
+      router.push(getDashboardByRole(user.role));
       return;
     }
 

@@ -2,8 +2,10 @@
 
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import SlidePanel from "@/components/ui/SlidePanel";
+import { Bed } from "lucide-react";
 
-const roomTypes = ["All Rooms", "Suite", "Deluxe", "Standard"];
+const roomTypesList = ["All Rooms", "Suite", "Deluxe", "Standard"];
 
 const statusFilters = [
   { label: "Available", count: 14, color: "green" },
@@ -12,7 +14,7 @@ const statusFilters = [
   { label: "Maintenance", count: 2, color: "gray" },
 ];
 
-import { getRooms, deleteRoom as apiDeleteRoom } from "@/lib/api/roomApi";
+import { getRooms, deleteRoom as apiDeleteRoom, createRoom } from "@/lib/api/roomApi";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getUser, AuthUser } from "@/utils/auth";
@@ -56,17 +58,33 @@ function getStatusStyles(color: string) {
 export default function RoomsPage() {
   const [rooms, setRooms] = useState<any[]>([]);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [panelOpen, setPanelOpen] = useState(false);
+
+  // Form states
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [formData, setFormData] = useState({
+    roomNumber: "",
+    roomType: "Standard",
+    floor: "Floor 1",
+    capacity: 2,
+    pricePerNight: 0,
+    status: "AVAILABLE",
+    description: "",
+    image: ""
+  });
+
+  const loadRooms = async () => {
+    try {
+      const data = await getRooms();
+      setRooms(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     setUser(getUser());
-    async function loadRooms() {
-      try {
-        const data = await getRooms();
-        setRooms(data);
-      } catch (err) {
-        console.error(err);
-      }
-    }
     loadRooms();
   }, []);
 
@@ -79,6 +97,34 @@ export default function RoomsPage() {
     } catch (err) {
       console.error(err);
       alert("Failed to delete room.");
+    }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      await createRoom({
+        ...formData,
+        capacity: Number(formData.capacity),
+        pricePerNight: Number(formData.pricePerNight),
+      });
+      setPanelOpen(false);
+      loadRooms();
+      // Reset form
+      setFormData({
+        roomNumber: "", roomType: "Standard", floor: "Floor 1", capacity: 2, pricePerNight: 0,
+        status: "AVAILABLE", description: "", image: ""
+      });
+    } catch (err: any) {
+      setError(err.message || "Failed to add room");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -115,8 +161,6 @@ export default function RoomsPage() {
                 ♧
               </button>
 
-
-
               <div className="flex h-11 w-11 items-center justify-center rounded-full border-4 border-[#d8b328] bg-white shadow">
                 🧑
               </div>
@@ -139,14 +183,17 @@ export default function RoomsPage() {
                 </p>
               </div>
 
-              <Link href="/rooms/new" className="rounded-2xl bg-[#d8b328] px-8 py-4 text-lg font-semibold text-[#4c3a00] shadow-lg transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl">
+              <button 
+                onClick={() => setPanelOpen(true)}
+                className="rounded-2xl bg-[#d8b328] px-8 py-4 text-lg font-semibold text-[#4c3a00] shadow-lg transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl"
+              >
                 ⊕ Add Room
-              </Link>
+              </button>
             </div>
 
             <div className="room-fade delay-100 mb-5 flex flex-wrap items-center gap-5">
               <div className="flex overflow-hidden rounded-xl bg-[#ebe8e2] p-1">
-                {roomTypes.map((type, index) => (
+                {roomTypesList.map((type, index) => (
                   <button
                     key={type}
                     className={`px-8 py-3 text-lg transition ${
@@ -279,6 +326,81 @@ export default function RoomsPage() {
             </div>
           </section>
         </main>
+
+        <SlidePanel 
+          open={panelOpen} 
+          onClose={() => setPanelOpen(false)} 
+          title="Add New Room" 
+          subtitle="Configure a new room to add to the hotel inventory"
+          icon={<Bed className="h-5 w-5" />}
+        >
+          {error && <div className="mb-4 text-red-600 font-bold">{error}</div>}
+          
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-[#4d4635]">Room Number</label>
+                <input required type="text" name="roomNumber" value={formData.roomNumber} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-[#4d4635]">Room Type</label>
+                <select name="roomType" value={formData.roomType} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3">
+                  <option value="Standard">Standard</option>
+                  <option value="Deluxe">Deluxe</option>
+                  <option value="Suite">Suite</option>
+                  <option value="Presidential Suite">Presidential Suite</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-[#4d4635]">Floor</label>
+                <input required type="text" name="floor" value={formData.floor} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-[#4d4635]">Capacity (Guests)</label>
+                <input required type="number" name="capacity" value={formData.capacity} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-bold text-[#4d4635]">Price Per Night</label>
+                <input required type="number" name="pricePerNight" value={formData.pricePerNight} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-[#4d4635]">Status</label>
+                <select name="status" value={formData.status} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3">
+                  <option value="AVAILABLE">AVAILABLE</option>
+                  <option value="OCCUPIED">OCCUPIED</option>
+                  <option value="CLEANING">CLEANING</option>
+                  <option value="MAINTENANCE">MAINTENANCE</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-[#4d4635]">Image URL (Optional)</label>
+              <input type="text" name="image" value={formData.image} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-[#4d4635]">Description / Note</label>
+              <textarea name="description" value={formData.description} onChange={handleChange} rows={3} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+            </div>
+
+            <div className="flex gap-4 pt-4">
+              <button type="button" onClick={() => setPanelOpen(false)} className="flex-1 rounded-xl border border-[#d0c5af] px-8 py-4 font-bold text-[#4d4635] transition hover:bg-[#ece9e2]">
+                Cancel
+              </button>
+              <button type="submit" disabled={loading} className="flex-1 rounded-xl bg-[#735c00] px-8 py-4 font-bold text-white transition hover:bg-[#d4af37]">
+                {loading ? "Saving..." : "Save Room"}
+              </button>
+            </div>
+          </form>
+        </SlidePanel>
+
       </div>
     </ProtectedRoute>
   );

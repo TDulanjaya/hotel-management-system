@@ -1,90 +1,39 @@
 "use client";
-
-import { useEffect, useState } from "react";
-import { X } from "lucide-react";
-
-interface SlidePanelProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  children: React.ReactNode;
-}
+import { useEffect } from "react";
 
 export default function SlidePanel({
-  isOpen,
-  onClose,
-  title,
-  children,
-}: SlidePanelProps) {
-  const [isMounted, setIsMounted] = useState(false);
-
+  open, onClose, title, subtitle, icon, children
+}: {
+  open: boolean; onClose: () => void;
+  title: string; subtitle?: string;
+  icon?: React.ReactNode; children: React.ReactNode;
+}) {
   useEffect(() => {
-    setIsMounted(true);
-  }, []);
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
 
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape);
-      // Prevent scrolling on the main body when panel is open
-      document.body.style.overflow = "hidden";
-    }
-
-    return () => {
-      document.removeEventListener("keydown", handleEscape);
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen, onClose]);
-
-  // Prevent hydration mismatch by only rendering on client
-  if (!isMounted) return null;
+  if (!open) return null;
 
   return (
-    <div
-      className={`fixed inset-0 z-50 flex justify-end transition-all duration-300 ${
-        isOpen ? "pointer-events-auto visible" : "pointer-events-none invisible"
-      }`}
-    >
-      {/* Backdrop */}
-      <div
-        className={`absolute inset-0 bg-[#101827]/60 backdrop-blur-sm transition-opacity duration-300 ease-in-out ${
-          isOpen ? "opacity-100" : "opacity-0"
-        }`}
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Slide Panel */}
-      <div
-        className={`relative flex h-full w-full flex-col bg-[#f7f4ee] shadow-2xl transition-transform duration-300 ease-in-out md:w-[480px] ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="slide-panel-title"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#d8b328]/30 bg-white px-6 py-5 shadow-sm">
-          <h2 id="slide-panel-title" className="text-xl font-extrabold text-[#101827]">
-            {title}
-          </h2>
-          <button
-            onClick={onClose}
-            className="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-[#d8b328] focus:outline-none focus:ring-2 focus:ring-[#d8b328]"
-            aria-label="Close panel"
-          >
-            <X size={20} strokeWidth={2.5} />
+    <>
+      <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-y-0 right-0 z-[201] w-full max-w-2xl overflow-y-auto bg-[#fbf9f5] shadow-2xl animate-slideInPanel">
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-[#d0c5af] bg-[#fbf9f5] px-6 py-4">
+          <div className="flex items-center gap-3">
+            {icon && <div className="rounded-xl bg-[#d4af37]/15 p-2 text-[#735c00]">{icon}</div>}
+            <div>
+              <h2 className="text-lg font-bold text-[#1b1c1a]">{title}</h2>
+              {subtitle && <p className="text-xs text-[#7f7663]">{subtitle}</p>}
+            </div>
+          </div>
+          <button onClick={onClose} className="rounded-xl border border-[#d0c5af] p-2 text-[#7f7663] transition hover:bg-[#ece9e2] hover:text-[#1b1c1a]">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="h-5 w-5 stroke-2"><path d="M18 6 6 18M6 6l12 12" /></svg>
           </button>
         </div>
-
-        {/* Content Body */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {children}
-        </div>
+        <div className="p-6">{children}</div>
       </div>
-    </div>
+      <style>{`@keyframes slideInPanel { from { transform: translateX(100%); } to { transform: translateX(0); } } .animate-slideInPanel { animation: slideInPanel 0.3s ease-out; }`}</style>
+    </>
   );
 }

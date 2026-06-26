@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { logout, getUser, AuthUser, UserRole } from "@/utils/auth";
+import { logout, getUser, AuthUser, UserRole, getDashboardByRole } from "@/utils/auth";
 import { Menu, X } from "lucide-react";
 
 type MenuItem = {
@@ -94,13 +94,16 @@ export default function AppSidebar() {
 
         <nav className="sidebar-scroll flex-1 space-y-2 overflow-y-auto px-5 pb-5">
           {menuItems.filter(item => user && item.allowedRoles.includes(user.role)).map((item) => {
+            const isDashboard = item.name === "Dashboard";
+            const currentHref = isDashboard && user ? getDashboardByRole(user.role) : item.href;
+            
             const active =
-              pathname === item.href || pathname.startsWith(item.href + "/");
+              pathname === currentHref || pathname.startsWith(currentHref + "/");
 
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={currentHref}
                 className={`lux-sidebar-link flex items-center gap-5 rounded-xl px-5 py-4 text-lg transition-all hover:translate-x-1 ${
                   active
                     ? "border-l-4 border-[#d8b328] bg-[#263248] text-[#f2c426]"
@@ -127,7 +130,7 @@ export default function AppSidebar() {
 
           {user && ["OWNER", "MANAGER"].includes(user.role) && (
             <Link
-              href="/pricing/new"
+              href="/pricing?openPanel=true"
               className="block w-full rounded-xl bg-[#d8b328] px-5 py-4 text-center text-lg font-bold text-[#4c3a00] transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl"
             >
               Add Price Item

@@ -7,6 +7,8 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { getUser, AuthUser } from "@/utils/auth";
 
 import { getEvents, deleteEvent as apiDeleteEvent } from "@/lib/api/eventApi";
+import NewEventPanel from "@/components/events/NewEventPanel";
+import { useSearchParams } from "next/navigation";
 
 type SavedEvent = {
   id: string;
@@ -53,22 +55,30 @@ function getStatusClass(status: string) {
   return "bg-yellow-100 text-yellow-700";
 }
 
-export default function EventsListPage() {
+import { Suspense } from "react";
+
+function EventsListPageContent() {
   const [events, setEvents] = useState<SavedEvent[]>([]);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const searchParams = useSearchParams();
+  const [panelOpen, setPanelOpen] = useState(false);
+
+  const loadEvents = async () => {
+    try {
+      const data = await getEvents();
+      setEvents(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
     setUser(getUser());
-    async function loadEvents() {
-      try {
-        const data = await getEvents();
-        setEvents(data);
-      } catch (err) {
-        console.error(err);
-      }
-    }
     loadEvents();
-  }, []);
+    if (searchParams.get("openPanel") === "true") {
+      setPanelOpen(true);
+    }
+  }, [searchParams]);
 
   const deleteEvent = async (id: string) => {
     if (!confirm("Are you sure you want to delete this record?")) return;
@@ -116,12 +126,12 @@ export default function EventsListPage() {
                 Events Dashboard
               </Link>
 
-              <Link
-                href="/events/new"
+              <button
+                onClick={() => setPanelOpen(true)}
                 className="rounded-xl bg-[#735c00] px-6 py-3 text-center font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
               >
                 + New Event
-              </Link>
+              </button>
             </div>
           </div>
 
@@ -144,12 +154,12 @@ export default function EventsListPage() {
                   first.
                 </p>
 
-                <Link
-                  href="/events/new"
+                <button
+                  onClick={() => setPanelOpen(true)}
                   className="mt-6 inline-block rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
                 >
                   Create First Event
-                </Link>
+                </button>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -258,8 +268,21 @@ export default function EventsListPage() {
               </div>
             )}
           </section>
+          <NewEventPanel 
+          open={panelOpen} 
+          onClose={() => setPanelOpen(false)} 
+          onSuccess={loadEvents} 
+        />
         </main>
       </div>
     </ProtectedRoute>
+  );
+}
+
+export default function EventsListPage() {
+  return (
+    <Suspense fallback={<div className="p-8">Loading events list...</div>}>
+      <EventsListPageContent />
+    </Suspense>
   );
 }

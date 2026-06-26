@@ -1,10 +1,10 @@
-import axios from 'axios';
+import axios, { InternalAxiosRequestConfig } from 'axios';
 
 const axiosInstance = axios.create({
   baseURL: 'http://localhost:8080',
 });
 
-axiosInstance.interceptors.request.use((config) => {
+axiosInstance.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('token');
     if (token) {

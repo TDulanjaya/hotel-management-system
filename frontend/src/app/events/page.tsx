@@ -10,21 +10,31 @@ const days = Array.from({ length: 31 }, (_, index) => index + 1);
 
 
 import { getEvents } from "@/lib/api/eventApi";
+import NewEventPanel from "@/components/events/NewEventPanel";
+import { useSearchParams } from "next/navigation";
 
-export default function EventsPage() {
+import { Suspense } from "react";
+
+function EventsPageContent() {
   const [eventsData, setEventsData] = useState<any[]>([]);
+  const searchParams = useSearchParams();
+  const [panelOpen, setPanelOpen] = useState(false);
+
+  const loadEvents = async () => {
+    try {
+      const data = await getEvents();
+      setEventsData(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
-    async function loadEvents() {
-      try {
-        const data = await getEvents();
-        setEventsData(data);
-      } catch (err) {
-        console.error(err);
-      }
-    }
     loadEvents();
-  }, []);
+    if (searchParams.get("openPanel") === "true") {
+      setPanelOpen(true);
+    }
+  }, [searchParams]);
 
   function getEventForDay(day: number) {
     return eventsData.find((event) => {
@@ -97,12 +107,12 @@ export default function EventsPage() {
                   ☷ Event List
                 </Link>
 
-                <Link
-                  href="/events/new"
+                <button
+                  onClick={() => setPanelOpen(true)}
                   className="rounded-xl bg-[#d8b328] px-9 py-4 text-lg font-bold text-[#4c3a00] transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl"
                 >
                   ⊕ Create Event
-                </Link>
+                </button>
               </div>
             </div>
 
@@ -261,8 +271,21 @@ export default function EventsPage() {
               </aside>
             </div>
           </section>
+          <NewEventPanel 
+          open={panelOpen} 
+          onClose={() => setPanelOpen(false)} 
+          onSuccess={loadEvents} 
+        />
         </main>
       </div>
     </ProtectedRoute>
+  );
+}
+
+export default function EventsPage() {
+  return (
+    <Suspense fallback={<div className="p-8">Loading events...</div>}>
+      <EventsPageContent />
+    </Suspense>
   );
 }

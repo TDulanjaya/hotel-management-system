@@ -68,7 +68,7 @@ export default function EventDetailsPage() {
   }, [eventId]);
 
   return (
-    <ProtectedRoute allowedRoles={["owner", "manager", "events"]}>
+    <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "EVENTS"]}>
       <div className="min-h-screen bg-[#f8f5ef] text-[#181818]">
         <AppSidebar />
 

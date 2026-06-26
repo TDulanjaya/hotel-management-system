@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import SlidePanel from "@/components/ui/SlidePanel";
 import {
   Search,
   Bell,
@@ -25,7 +26,7 @@ import {
   Shield,
   Trash2,
 } from "lucide-react";
-import { getUsers, deleteUser as apiDeleteUser } from "@/lib/api/userApi";
+import { getUsers, deleteUser as apiDeleteUser, createUser } from "@/lib/api/userApi";
 import { getUser, AuthUser } from "@/utils/auth";
 
 type UserItem = {
@@ -36,110 +37,25 @@ type UserItem = {
   active: boolean;
 };
 
-const stats = [
-  {
-    title: "Total Staff",
-    value: "124",
-    note: "+2 this week",
-    icon: Users,
-    color: "text-[#735c00]",
-  },
-  {
-    title: "Active Roles",
-    value: "9",
-    icon: ShieldCheck,
-    color: "text-[#565e74]",
-  },
-  {
-    title: "Security Flags",
-    value: "3",
-    icon: ShieldAlert,
-    color: "text-[#ba1a1a]",
-    pulse: true,
-  },
-  {
-    title: "MFA Adoption",
-    value: "94%",
-    icon: KeyRound,
-    color: "text-[#735c00]",
-  },
-];
-
-
-
-const roles = [
+const allRoles = [
   "OWNER",
   "MANAGER",
   "RECEPTIONIST",
   "WAITER",
+  "ROOM_SERVICE",
   "COOK",
   "INVENTORY",
   "EVENTS",
   "PARKING",
-  "Game Staff",
+  "GAME_STAFF",
 ];
 
-const permissionRows: {
-  module: string;
-  permissions: PermissionType[];
-}[] = [
-  {
-    module: "Room Reservations",
-    permissions: [
-      "check",
-      "check",
-      "check",
-      "none",
-      "none",
-      "none",
-      "check",
-      "none",
-      "none",
-    ],
-  },
-  {
-    module: "Billing & Folios",
-    permissions: [
-      "check",
-      "check",
-      "view",
-      "none",
-      "none",
-      "none",
-      "none",
-      "none",
-      "none",
-    ],
-  },
-  {
-    module: "Inventory Control",
-    permissions: [
-      "check",
-      "check",
-      "none",
-      "none",
-      "view",
-      "check",
-      "none",
-      "none",
-      "none",
-    ],
-  },
-  {
-    module: "System Settings",
-    permissions: [
-      "check",
-      "view",
-      "none",
-      "none",
-      "none",
-      "none",
-      "none",
-      "none",
-      "none",
-    ],
-  },
-];
+function getAvailableRoles(creatorRole: string) {
+  if (creatorRole === "OWNER") {
+    return allRoles;
+  }
+  return allRoles.filter((role) => role !== "OWNER" && role !== "MANAGER");
+}
 
 function getRoleColor(role: string) {
   if (role === "OWNER" || role === "MANAGER") return "bg-[#735c00]/10 text-[#735c00] border-[#735c00]/20";
@@ -153,18 +69,89 @@ function getInitials(name: string) {
 
 export default function UsersPage() {
   const [users, setUsers] = useState<UserItem[]>([]);
+  const [panelOpen, setPanelOpen] = useState(false);
+
+  // Form states
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [creatorRole, setCreatorRole] = useState("MANAGER");
+  const [availableRoles, setAvailableRoles] = useState<string[]>([]);
+  
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    role: "",
+  });
+
+  const loadUsers = async () => {
+    try {
+      const data = await getUsers();
+      setUsers(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
-    async function loadUsers() {
-      try {
-        const data = await getUsers();
-        setUsers(data);
-      } catch (err) {
-        console.error(err);
-      }
-    }
     loadUsers();
+    try {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        const user = JSON.parse(userStr);
+        setCreatorRole(user.role || "MANAGER");
+      }
+    } catch {
+    }
   }, []);
+
+  useEffect(() => {
+    const roles = getAvailableRoles(creatorRole);
+    setAvailableRoles(roles);
+    
+    if (roles.length > 0 && !formData.role) {
+      setFormData((prev) => ({ ...prev, role: roles[0] }));
+    }
+  }, [creatorRole]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    if (!formData.name || !formData.email || !formData.password || !formData.role) {
+      setError("All fields are required");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      await createUser({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: formData.role,
+      });
+      setPanelOpen(false);
+      loadUsers();
+      setFormData({
+        name: "",
+        email: "",
+        password: "",
+        role: availableRoles[0] || "",
+      });
+    } catch (err: any) {
+      setError(err.message || "Failed to create user");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER"]}>
@@ -175,13 +162,143 @@ export default function UsersPage() {
           <TopBar />
 
           <section className="mx-auto max-w-[1600px] space-y-10 p-8">
-            <PageHeader />
+            <div className="flex flex-col justify-between gap-6 xl:flex-row xl:items-end">
+              <div>
+                <h1 className="text-4xl font-bold">Users & Roles</h1>
+                <p className="mt-2 max-w-2xl text-[#4d4635]">
+                  Manage personnel access across your luxury property. Assign granular
+                  permissions to ensure operational security and efficiency.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-4">
+                <button className="flex items-center gap-2 rounded-xl border border-[#7f7663] px-6 py-3 text-sm font-bold transition hover:bg-[#efeeea]">
+                  <Download size={18} />
+                  Export Audit Log
+                </button>
+
+                <button
+                  onClick={() => setPanelOpen(true)}
+                  className="flex items-center gap-2 rounded-xl bg-[#735c00] px-8 py-3 text-sm font-bold text-white shadow-lg transition hover:scale-[1.02] active:scale-95"
+                >
+                  <UserPlus size={18} />
+                  Add New User
+                </button>
+              </div>
+            </div>
 
             <StatsGrid userCount={users.length} />
             <UsersTable users={users} setUsers={setUsers} />
             <PermissionsMatrix />
           </section>
         </main>
+
+        <SlidePanel 
+          open={panelOpen} 
+          onClose={() => setPanelOpen(false)} 
+          title="Add New User" 
+          subtitle="Create a new staff account. Password will be hashed by the backend."
+          icon={<UserPlus className="h-5 w-5" />}
+        >
+          {error && (
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+              {error}
+            </div>
+          )}
+
+          {creatorRole === "MANAGER" && (
+            <div className="mb-6 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+              <strong>Note:</strong> As a Manager, you cannot create Owner or
+              Manager accounts.
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label className="block text-sm font-bold text-[#4d4635]">
+                Full Name
+              </label>
+              <input
+                required
+                type="text"
+                name="name"
+                placeholder="e.g. John Doe"
+                value={formData.name}
+                onChange={handleChange}
+                className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-[#4d4635]">
+                Email Address
+              </label>
+              <input
+                required
+                type="email"
+                name="email"
+                placeholder="e.g. john@luxestay.com"
+                value={formData.email}
+                onChange={handleChange}
+                className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-[#4d4635]">
+                Password
+              </label>
+              <input
+                required
+                type="password"
+                name="password"
+                placeholder="Set a strong password"
+                value={formData.password}
+                onChange={handleChange}
+                className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+              />
+              <p className="mt-1 text-xs text-[#6d6251]">
+                Password is sent once to the backend and hashed with BCrypt.
+                It will never be displayed.
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-bold text-[#4d4635]">
+                Role
+              </label>
+              <select
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+              >
+                {availableRoles.map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex gap-4 pt-4">
+              <button
+                type="button"
+                onClick={() => setPanelOpen(false)}
+                className="flex-1 rounded-xl border border-[#d0c5af] px-8 py-4 font-bold text-[#4d4635] transition hover:bg-[#ece9e2]"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 rounded-xl bg-[#735c00] px-8 py-4 font-bold text-white transition hover:bg-[#d4af37]"
+              >
+                {loading ? "Creating..." : "Create User"}
+              </button>
+            </div>
+          </form>
+        </SlidePanel>
       </div>
     </ProtectedRoute>
   );
@@ -228,35 +345,6 @@ function TopBar() {
   );
 }
 
-function PageHeader() {
-  return (
-    <div className="flex flex-col justify-between gap-6 xl:flex-row xl:items-end">
-      <div>
-        <h1 className="text-4xl font-bold">Users & Roles</h1>
-
-        <p className="mt-2 max-w-2xl text-[#4d4635]">
-          Manage personnel access across your luxury property. Assign granular
-          permissions to ensure operational security and efficiency.
-        </p>
-      </div>
-
-      <div className="flex flex-wrap gap-4">
-        <button className="flex items-center gap-2 rounded-xl border border-[#7f7663] px-6 py-3 text-sm font-bold transition hover:bg-[#efeeea]">
-          <Download size={18} />
-          Export Audit Log
-        </button>
-
-        <Link
-          href="/users/new"
-          className="flex items-center gap-2 rounded-xl bg-[#735c00] px-8 py-3 text-sm font-bold text-white shadow-lg transition hover:scale-[1.02] active:scale-95"
-        >
-          <UserPlus size={18} />
-          Add New User
-        </Link>
-      </div>
-    </div>
-  );
-}
 
 function StatsGrid({ userCount }: { userCount: number }) {
   const dynamicStats = [
@@ -476,8 +564,6 @@ function PermissionsMatrix() {
     "PARKING",
     "GAME_STAFF",
   ];
-
-
 
   const permissionRows: {
     module: string;

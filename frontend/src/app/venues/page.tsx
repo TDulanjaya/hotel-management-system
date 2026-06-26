@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, FormEvent } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { getUser, AuthUser } from "@/utils/auth";
+import SlidePanel from "@/components/ui/SlidePanel";
+import ImageUpload from "@/components/ui/ImageUpload";
+import { MapPin } from "lucide-react";
 
 type Venue = {
   id: string;
@@ -19,10 +22,11 @@ type Venue = {
   tags: string[];
 };
 
-import { getVenues, deleteVenue as apiDeleteVenue } from "@/lib/api/venueApi";
+import { getVenues, deleteVenue as apiDeleteVenue, createVenue } from "@/lib/api/venueApi";
 
 const fallbackImage =
   "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=900&q=80";
+const defaultImage = fallbackImage;
 
 function getStatusClass(status: string) {
   const normalizedStatus = status?.toLowerCase();
@@ -47,12 +51,25 @@ export default function VenuesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [user, setUser] = useState<AuthUser | null>(null);
+  
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [formLoading, setFormLoading] = useState(false);
+  const [formError, setFormError] = useState("");
+
+  const [venueName, setVenueName] = useState("");
+  const [venueType, setVenueType] = useState("Indoor");
+  const [capacity, setCapacity] = useState(100);
+  const [size, setSize] = useState("");
+  const [location, setLocation] = useState("");
+  const [status, setStatus] = useState("Available");
+  const [price, setPrice] = useState(1000);
+  const [image, setImage] = useState(defaultImage);
+  const [tagsText, setTagsText] = useState("");
 
   const fetchVenues = async () => {
     try {
       setLoading(true);
       setError("");
-
       const data = await getVenues();
       setVenues(data);
     } catch (error) {
@@ -70,14 +87,10 @@ export default function VenuesPage() {
 
   const deleteVenue = async (id: string) => {
     const confirmed = confirm("Are you sure you want to delete this venue?");
-
-    if (!confirmed) {
-      return;
-    }
+    if (!confirmed) return;
 
     try {
       await apiDeleteVenue(id);
-
       setVenues((previousVenues) =>
         previousVenues.filter((venue) => venue.id !== id)
       );
@@ -107,6 +120,53 @@ export default function VenuesPage() {
             venues.length
         )
       : 0;
+
+  const tags = useMemo(
+    () =>
+      tagsText
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+    [tagsText]
+  );
+
+  const handleCreateVenue = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setFormLoading(true);
+    setFormError("");
+
+    const venueData = {
+      name: venueName,
+      type: venueType,
+      capacity,
+      size,
+      location,
+      status,
+      price,
+      image,
+      tags,
+    };
+
+    try {
+      await createVenue(venueData);
+      setPanelOpen(false);
+      fetchVenues();
+      setVenueName("");
+      setVenueType("Indoor");
+      setCapacity(100);
+      setSize("");
+      setLocation("");
+      setStatus("Available");
+      setPrice(1000);
+      setImage(defaultImage);
+      setTagsText("");
+    } catch (err: any) {
+      console.error(err);
+      setFormError(err.message || "Failed to create venue");
+    } finally {
+      setFormLoading(false);
+    }
+  };
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "EVENTS"]}>
@@ -138,12 +198,12 @@ export default function VenuesPage() {
                 Refresh Data
               </button>
 
-              <Link
-                href="/venues/new"
+              <button
+                onClick={() => setPanelOpen(true)}
                 className="rounded-xl bg-[#d8b328] px-7 py-4 text-lg font-bold text-[#4c3a00] transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl"
               >
                 + Add Venue
-              </Link>
+              </button>
             </div>
           </div>
 
@@ -295,6 +355,171 @@ export default function VenuesPage() {
             </>
           )}
         </main>
+
+        <SlidePanel 
+          open={panelOpen} 
+          onClose={() => setPanelOpen(false)} 
+          title="Add New Venue" 
+          subtitle="Add or update hall price, photo, capacity, status, and venue details."
+          icon={<MapPin className="h-5 w-5" />}
+        >
+          {formError && (
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+              {formError}
+            </div>
+          )}
+
+          <form onSubmit={handleCreateVenue} className="space-y-6">
+            <div className="grid gap-5 md:grid-cols-2">
+              <div className="md:col-span-2">
+                <label className="text-sm font-bold text-[#4d4635]">
+                  Venue / Hall Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={venueName}
+                  onChange={(event) => setVenueName(event.target.value)}
+                  placeholder="Grand Ballroom"
+                  className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-[#4d4635]">
+                  Venue Type
+                </label>
+                <select
+                  value={venueType}
+                  onChange={(event) => setVenueType(event.target.value)}
+                  className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                >
+                  <option>Indoor</option>
+                  <option>Outdoor</option>
+                  <option>Garden</option>
+                  <option>Rooftop</option>
+                  <option>Conference</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-[#4d4635]">
+                  Status
+                </label>
+                <select
+                  value={status}
+                  onChange={(event) => setStatus(event.target.value)}
+                  className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                >
+                  <option>Available</option>
+                  <option>Booked</option>
+                  <option>Maintenance</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-[#4d4635]">
+                  Capacity
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  required
+                  value={capacity}
+                  onChange={(event) =>
+                    setCapacity(Number(event.target.value))
+                  }
+                  className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-[#4d4635]">
+                  Price
+                </label>
+                <input
+                  type="number"
+                  min={0}
+                  required
+                  value={price}
+                  onChange={(event) => setPrice(Number(event.target.value))}
+                  className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-[#4d4635]">
+                  Size
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={size}
+                  onChange={(event) => setSize(event.target.value)}
+                  placeholder="5,000 sq ft"
+                  className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-[#4d4635]">
+                  Location
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={location}
+                  onChange={(event) => setLocation(event.target.value)}
+                  placeholder="Level 2"
+                  className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="mb-2 block text-sm font-bold text-[#4d4635]">
+                  Venue Photo
+                </label>
+                <ImageUpload 
+                  value={image === defaultImage ? null : image}
+                  onChange={(base64) => setImage(base64 || defaultImage)}
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="text-sm font-bold text-[#4d4635]">
+                  Tags
+                </label>
+                <input
+                  type="text"
+                  value={tagsText}
+                  onChange={(event) => setTagsText(event.target.value)}
+                  placeholder="Stage Access, Smart Lighting, Wedding Setup"
+                  className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                />
+                <p className="mt-2 text-xs text-[#4d4635]">
+                  Separate tags using commas.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex gap-4 pt-4">
+              <button
+                type="button"
+                onClick={() => setPanelOpen(false)}
+                className="flex-1 rounded-xl border border-[#d0c5af] px-8 py-4 font-bold text-[#4d4635] transition hover:bg-[#ece9e2]"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={formLoading}
+                className="flex-1 rounded-xl bg-[#d8b328] px-8 py-4 font-bold text-[#4c3a00] transition hover:bg-[#f2c426]"
+              >
+                {formLoading ? "Creating..." : "Save Venue"}
+              </button>
+            </div>
+          </form>
+        </SlidePanel>
       </div>
     </ProtectedRoute>
   );
