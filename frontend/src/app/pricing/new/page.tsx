@@ -143,7 +143,7 @@ export default function NewPricingItemPage() {
       <div className="min-h-screen bg-[#f8f5ef] text-[#181818]">
         <AppSidebar />
 
-        <main className="px-8 py-10 lg:ml-[280px]">
+        <main className="page-slide-in px-8 py-10 lg:ml-[280px]">
           <div className="mb-8 flex flex-col justify-between gap-5 xl:flex-row xl:items-end">
             <div>
               <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#806300]">

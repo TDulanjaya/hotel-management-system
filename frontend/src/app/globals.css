@@ -1800,3 +1800,18 @@ select {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
   border-color: #735c00;
 }
+.page-slide-in {
+  animation: pageSlideIn 0.35s ease-out forwards;
+}
+
+@keyframes pageSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(45px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

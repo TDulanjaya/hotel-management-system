@@ -51,7 +51,7 @@ export default function NewEventPage() {
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "EVENTS"]}>
       <div className="min-h-screen bg-[#f8f5ef] text-[#181818]">
         <AppSidebar />
-        <main className="px-8 py-10 lg:ml-[280px]">
+        <main className="page-slide-in px-8 py-10 lg:ml-[280px]">
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-[#735c00]">Create New Event</h1>
           </div>

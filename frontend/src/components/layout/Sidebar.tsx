@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { logout, getUser, AuthUser, UserRole } from "@/utils/auth";
+import { Menu, X } from "lucide-react";
 
 type MenuItem = {
   name: string;
@@ -34,10 +35,16 @@ export default function AppSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     setUser(getUser());
   }, []);
+
+  // Auto-close sidebar on mobile when navigating to a new page
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
 
   const handleLogout = () => {
     logout();
@@ -45,63 +52,96 @@ export default function AppSidebar() {
   };
 
   return (
-    <aside className="fixed left-0 top-0 z-40 hidden h-screen w-[280px] bg-[#101827] text-white shadow-2xl lg:flex lg:flex-col">
-      <div className="px-8 py-10">
-        <h1 className="text-4xl font-extrabold tracking-tight text-[#d8b328]">
-          LuxeStay
-        </h1>
+    <>
+      {/* Mobile Hamburger Button */}
+      <button 
+        onClick={() => setIsOpen(true)}
+        className="fixed left-5 top-4 z-30 flex h-10 w-10 items-center justify-center rounded-lg bg-[#101827] text-[#d8b328] shadow-lg transition-transform hover:scale-105 lg:hidden"
+        aria-label="Open Menu"
+      >
+        <Menu size={24} />
+      </button>
 
-        <p className="mt-2 text-lg text-[#677386]">Elite Operations</p>
-      </div>
+      {/* Backdrop for Mobile */}
+      <div 
+        className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
+          isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+        onClick={() => setIsOpen(false)}
+      />
 
-      <nav className="sidebar-scroll flex-1 space-y-2 overflow-y-auto px-5 pb-5">
-        {menuItems.filter(item => user && item.allowedRoles.includes(user.role)).map((item) => {
-          const active =
-            pathname === item.href || pathname.startsWith(item.href + "/");
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`lux-sidebar-link flex items-center gap-5 rounded-xl px-5 py-4 text-lg transition ${active
-                  ? "border-l-4 border-[#d8b328] bg-[#263248] text-[#f2c426]"
-                  : "text-[#a6adba] hover:bg-[#263248] hover:text-[#f2c426]"
-                }`}
-            >
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center text-2xl font-bold">
-                {item.icon}
-              </span>
-
-              <span className="leading-tight">{item.name}</span>
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="border-t border-white/10 p-6">
-        <button className="mb-4 flex w-full items-center gap-4 rounded-xl px-4 py-3 text-lg text-slate-300 transition hover:bg-white/10 hover:text-white">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30">
-            ?
-          </span>
-          Support
-        </button>
-
-        {user && ["OWNER", "MANAGER"].includes(user.role) && (
-          <Link
-            href="/pricing/new"
-            className="block w-full rounded-xl bg-[#d8b328] px-5 py-4 text-center text-lg font-bold text-[#4c3a00] transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl"
+      {/* Sidebar Content */}
+      <aside 
+        className={`fixed left-0 top-0 z-50 flex h-screen w-[280px] flex-col bg-[#101827] text-white shadow-2xl transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex items-center justify-between px-8 py-10">
+          <div>
+            <h1 className="text-4xl font-extrabold tracking-tight text-[#d8b328]">
+              LuxeStay
+            </h1>
+            <p className="mt-2 text-lg text-[#677386]">Elite Operations</p>
+          </div>
+          
+          <button 
+            onClick={() => setIsOpen(false)}
+            className="rounded-lg p-2 text-slate-400 transition hover:bg-white/10 hover:text-white lg:hidden"
           >
-            Add Price Item
-          </Link>
-        )}
+            <X size={24} />
+          </button>
+        </div>
 
-        <button
-          onClick={handleLogout}
-          className="mt-3 w-full rounded-xl border border-white/20 px-5 py-3 text-sm font-bold text-slate-300 transition hover:bg-white/10 hover:text-white"
-        >
-          Logout
-        </button>
-      </div>
-    </aside>
+        <nav className="sidebar-scroll flex-1 space-y-2 overflow-y-auto px-5 pb-5">
+          {menuItems.filter(item => user && item.allowedRoles.includes(user.role)).map((item) => {
+            const active =
+              pathname === item.href || pathname.startsWith(item.href + "/");
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`lux-sidebar-link flex items-center gap-5 rounded-xl px-5 py-4 text-lg transition-all hover:translate-x-1 ${
+                  active
+                    ? "border-l-4 border-[#d8b328] bg-[#263248] text-[#f2c426]"
+                    : "text-[#a6adba] hover:bg-[#263248] hover:text-[#f2c426]"
+                }`}
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center text-2xl font-bold">
+                  {item.icon}
+                </span>
+
+                <span className="leading-tight">{item.name}</span>
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="border-t border-white/10 p-6">
+          <button className="mb-4 flex w-full items-center gap-4 rounded-xl px-4 py-3 text-lg text-slate-300 transition hover:bg-white/10 hover:text-white">
+            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30">
+              ?
+            </span>
+            Support
+          </button>
+
+          {user && ["OWNER", "MANAGER"].includes(user.role) && (
+            <Link
+              href="/pricing/new"
+              className="block w-full rounded-xl bg-[#d8b328] px-5 py-4 text-center text-lg font-bold text-[#4c3a00] transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl"
+            >
+              Add Price Item
+            </Link>
+          )}
+
+          <button
+            onClick={handleLogout}
+            className="mt-3 w-full rounded-xl border border-white/20 px-5 py-3 text-sm font-bold text-slate-300 transition hover:bg-white/10 hover:text-white"
+          >
+            Logout
+          </button>
+        </div>
+      </aside>
+    </>
   );
 }

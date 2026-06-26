@@ -133,7 +133,7 @@ export default function EditUserPage() {
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
-        <main className="px-8 py-10 lg:ml-[280px]">
+        <main className="page-slide-in px-8 py-10 lg:ml-[280px]">
           <div className="mb-8">
             <h1 className="text-4xl font-bold text-[#735c00]">
               Edit User

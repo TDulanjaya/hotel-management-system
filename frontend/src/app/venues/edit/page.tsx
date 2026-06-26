@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import ImageUpload from "@/components/ui/ImageUpload";
 import { getVenueById, updateVenue } from "@/lib/api/venueApi";
 
 const defaultImage = "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=900&q=80";
@@ -155,8 +156,13 @@ export default function EditVenuePage() {
                     </div>
 
                     <div className="md:col-span-2">
-                      <label className="text-sm font-bold text-[#4d4635]">Photo URL</label>
-                      <input type="url" required value={image} onChange={(e) => setImage(e.target.value)} className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30" />
+                      <label className="mb-2 block text-sm font-bold text-[#4d4635]">
+                        Venue Photo
+                      </label>
+                      <ImageUpload 
+                        value={image === defaultImage ? null : image}
+                        onChange={(base64) => setImage(base64 || defaultImage)}
+                      />
                     </div>
 
                     <div className="md:col-span-2">

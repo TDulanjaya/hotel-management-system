@@ -1,5 +1,8 @@
+"use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
+import { getUser } from "@/utils/auth";
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: "▦" },
@@ -69,6 +72,12 @@ const occupancyBars = [
 ];
 
 export default function DashboardPage() {
+  const [user, setUser] = useState<{name: string, role: string, email: string} | null>(null);
+
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#f7f4ee] text-[#111827]">
       <AppSidebar />
@@ -103,14 +112,14 @@ export default function DashboardPage() {
 
             <div className="flex items-center gap-3">
               <div className="text-right">
-                <p className="text-sm font-bold leading-none">Alex Stratton</p>
+                <p className="text-sm font-bold leading-none">{user?.name || "Loading..."}</p>
                 <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                  General Manager
+                  {user?.role ? user.role.replace(/_/g, ' ') : "..."}
                 </p>
               </div>
 
-              <div className="flex h-11 w-11 items-center justify-center rounded-full border-4 border-[#d8b328] bg-white shadow-sm">
-                🧾
+              <div className="flex h-11 w-11 items-center justify-center rounded-full border-4 border-[#d8b328] bg-white text-lg font-extrabold uppercase text-[#735c00] shadow-sm">
+                {user?.name ? user.name.charAt(0) : "•"}
               </div>
             </div>
           </div>
@@ -123,7 +132,7 @@ export default function DashboardPage() {
                 Operations Overview
               </h2>
               <p className="mt-2 text-base text-[#57534e]">
-                Good Morning, Alex. Here is the operational status for today.
+                Good Morning, {user?.name ? user.name.split(' ')[0] : '...'}. Here is the operational status for today.
               </p>
             </div>
 

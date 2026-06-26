@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import ImageUpload from "@/components/ui/ImageUpload";
 
 type Venue = {
   id: string;
@@ -259,16 +260,12 @@ export default function NewVenuePage() {
                   </div>
 
                   <div className="md:col-span-2">
-                    <label className="text-sm font-bold text-[#4d4635]">
-                      Photo URL
+                    <label className="mb-2 block text-sm font-bold text-[#4d4635]">
+                      Venue Photo
                     </label>
-                    <input
-                      type="url"
-                      required
-                      value={image}
-                      onChange={(event) => setImage(event.target.value)}
-                      placeholder="https://example.com/hall-image.jpg"
-                      className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                    <ImageUpload 
+                      value={image === defaultImage ? null : image}
+                      onChange={(base64) => setImage(base64 || defaultImage)}
                     />
                   </div>
 

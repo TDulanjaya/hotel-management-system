@@ -4,12 +4,14 @@ import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getDashboardByRole, saveAuth } from "@/utils/auth";
 import { login } from "@/lib/api/authApi";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
 
   const [email, setEmail] = useState("owner@luxestay.com");
   const [password, setPassword] = useState("Owner12345");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
@@ -63,12 +65,22 @@ export default function LoginPage() {
             <label className="text-sm font-bold text-[#4d4635]">
               Password
             </label>
-            <input
-              type="password"
-              value={password}
-              className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#d4af37]/40"
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className="relative mt-2">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                className="w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] py-3 pl-4 pr-12 outline-none focus:ring-2 focus:ring-[#d4af37]/40"
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 flex items-center pr-4 text-[#8a8175] transition-colors hover:text-[#4d4635]"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
 
 
