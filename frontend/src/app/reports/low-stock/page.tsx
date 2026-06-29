@@ -1,5 +1,5 @@
-import AppSidebar from "@/components/layout/Sidebar";
-import ProtectedRoute from "@/components/auth/ProtectedRoute";
+
+
 
 const lowStockSummary = [
   {
@@ -142,51 +142,9 @@ function getPriorityClass(priority: string) {
 
 export default function LowStockReportPage() {
   return (
-    <ProtectedRoute allowedRoles={["OWNER", "MANAGER"]}>
-      <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
-        <AppSidebar />
+    <ReportPageLayout title="Low Stock Report">
 
-        <main className="px-8 py-10 lg:ml-[280px]">
-          <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#735c00]">
-                Reports & Analytics
-              </p>
-
-              <h1 className="mt-3 text-4xl font-bold text-[#735c00]">
-                Low Stock Report
-              </h1>
-
-              <p className="mt-2 text-[#4d4635]">
-                View low stock inventory items, critical reorder alerts,
-                suppliers, and purchase request status.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <a
-                href="/reports"
-                className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
-              >
-                Back to Reports
-              </a>
-
-              <button className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]">
-                Export Report
-              </button>
-            </div>
-          </div>
-
-          <section className="mb-8 grid gap-6 md:grid-cols-4">
-            {lowStockSummary.map((item) => (
-              <StatCard
-                key={item.label}
-                label={item.label}
-                value={item.value}
-                note={item.note}
-              />
-            ))}
-          </section>
+          <ReportSummaryCards cards={lowStockSummary} />
 
           <section className="mb-8 grid gap-8 xl:grid-cols-[1.2fr_0.8fr]">
             <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
@@ -405,33 +363,11 @@ export default function LowStockReportPage() {
               </table>
             </div>
           </section>
-        </main>
-      </div>
-    </ProtectedRoute>
+        </ReportPageLayout>
   );
 }
 
-function StatCard({
-  label,
-  value,
-  note,
-}: {
-  label: string;
-  value: string;
-  note: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-      <p className="text-sm font-bold uppercase tracking-widest text-[#4d4635]">
-        {label}
-      </p>
 
-      <p className="mt-2 text-4xl font-extrabold text-[#735c00]">{value}</p>
-
-      <p className="mt-2 text-sm text-[#4d4635]">{note}</p>
-    </div>
-  );
-}
 
 function AlertRow({
   label,

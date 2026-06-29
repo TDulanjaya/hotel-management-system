@@ -6,6 +6,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SlidePanel from "@/components/ui/SlidePanel";
 import { getPayments, createPayment, updatePayment, deletePayment } from "@/lib/api/paymentsApi";
 import { useAuthContext } from "@/context/AuthContext";
+import { canEditByRole } from "@/lib/utils/roleUtils";
 
 export default function PageComponent() {
   const { user } = useAuthContext();
@@ -77,7 +78,7 @@ export default function PageComponent() {
     }
   };
 
-  const canEdit = user?.role === "OWNER" || user?.role === "MANAGER" || user?.role === "RECEPTIONIST";
+  const canEdit = canEditByRole(user?.role);
   const canDelete = user?.role === "OWNER" || user?.role === "MANAGER";
 
   return (

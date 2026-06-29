@@ -1,6 +1,7 @@
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Link from "next/link";
+import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
 
 const reports = [
   {
@@ -141,13 +142,7 @@ function getCategoryClass(category: string) {
   return "bg-[#d4af37]/20 text-[#735c00]";
 }
 
-function getStatusClass(status: string) {
-  if (status === "Ready") {
-    return "bg-green-100 text-green-700";
-  }
 
-  return "bg-blue-100 text-blue-700";
-}
 
 export default function ReportsPage() {
   return (
@@ -287,7 +282,7 @@ export default function ReportsPage() {
 
                       <td className="px-6 py-5">
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(
+                          className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusBadgeClass(
                             report.status
                           )}`}
                         >

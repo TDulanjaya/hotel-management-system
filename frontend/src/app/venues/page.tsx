@@ -4,7 +4,8 @@ import { useEffect, useState, useMemo, FormEvent } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { getUser, AuthUser } from "@/utils/auth";
+import { useAuthContext } from "@/context/AuthContext";
+import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
 import SlidePanel from "@/components/ui/SlidePanel";
 import ImageUpload from "@/components/ui/ImageUpload";
 import { MapPin } from "lucide-react";
@@ -28,29 +29,12 @@ const fallbackImage =
   "https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=900&q=80";
 const defaultImage = fallbackImage;
 
-function getStatusClass(status: string) {
-  const normalizedStatus = status?.toLowerCase();
-
-  if (normalizedStatus === "available") {
-    return "bg-green-100 text-green-700";
-  }
-
-  if (normalizedStatus === "booked") {
-    return "bg-yellow-100 text-yellow-700";
-  }
-
-  if (normalizedStatus === "maintenance") {
-    return "bg-red-100 text-red-700";
-  }
-
-  return "bg-slate-100 text-slate-700";
-}
 
 export default function VenuesPage() {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const { user } = useAuthContext();
   
   const [panelOpen, setPanelOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
@@ -81,7 +65,6 @@ export default function VenuesPage() {
   };
 
   useEffect(() => {
-    setUser(getUser());
     fetchVenues();
   }, []);
 
@@ -298,9 +281,9 @@ export default function VenuesPage() {
                         </div>
 
                         <span
-                          className={`rounded-full px-4 py-2 text-xs font-bold ${getStatusClass(
-                            venue.status
-                          )}`}
+                            className={`rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wider ${getStatusBadgeClass(
+                              venue.status
+                            )}`}
                         >
                           {venue.status}
                         </span>

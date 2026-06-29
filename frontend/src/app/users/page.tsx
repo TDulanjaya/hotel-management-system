@@ -27,7 +27,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { getUsers, deleteUser as apiDeleteUser, createUser } from "@/lib/api/userApi";
-import { getUser, AuthUser } from "@/utils/auth";
+import { useAuthContext } from "@/context/AuthContext";
 
 type UserItem = {
   id: string;
@@ -417,10 +417,9 @@ function UsersTable({
   users: UserItem[];
   setUsers: React.Dispatch<React.SetStateAction<UserItem[]>>;
 }) {
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const { user: currentUser } = useAuthContext();
 
   useEffect(() => {
-    setCurrentUser(getUser());
   }, []);
 
   const deleteUserRecord = async (id: string) => {

@@ -4,30 +4,16 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { getUser, AuthUser } from "@/utils/auth";
+import { useAuthContext } from "@/context/AuthContext";
+import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
 import { getParkingBookings, deleteParkingBooking as apiDeleteParkingBooking, createParkingBooking } from "@/lib/api/parkingApi";
 import SlidePanel from "@/components/ui/SlidePanel";
 import { Car } from "lucide-react";
 
-function getStatusClass(status: string) {
-  if (status === "Available" || status === "AVAILABLE") {
-    return "bg-green-100 text-green-700";
-  }
-
-  if (status === "Occupied" || status === "OCCUPIED" || status === "CHECKED_IN") {
-    return "bg-yellow-100 text-yellow-700";
-  }
-
-  if (status === "CHECKED_OUT") {
-    return "bg-slate-100 text-slate-700";
-  }
-
-  return "bg-blue-100 text-blue-700";
-}
 
 export default function ParkingPage() {
   const [parkingSlots, setParkingSlots] = useState<any[]>([]);
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const { user } = useAuthContext();
   const [panelOpen, setPanelOpen] = useState(false);
 
   // Form states
@@ -62,7 +48,6 @@ export default function ParkingPage() {
   };
 
   useEffect(() => {
-    setUser(getUser());
     loadParking();
   }, []);
 
@@ -204,8 +189,8 @@ export default function ParkingPage() {
   
                         <td className="px-6 py-5">
                           <span
-                            className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(
-                              parking.status || ""
+                            className={`rounded-full px-3 py-1 text-xs font-bold tracking-widest ${getStatusBadgeClass(
+                              parking.status
                             )}`}
                           >
                             {parking.status}

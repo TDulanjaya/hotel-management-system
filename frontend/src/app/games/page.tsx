@@ -14,7 +14,7 @@ import {
   Plus,
 } from "lucide-react";
 import { getGameSessions, updateGameSession } from "@/lib/api/gameApi";
-import { getUser, AuthUser } from "@/utils/auth";
+import { useAuthContext } from "@/context/AuthContext";
 
 function formatTime(seconds: number) {
   const h = Math.floor(seconds / 3600).toString().padStart(2, "0");
@@ -38,7 +38,7 @@ function badgeClass(status: string) {
 
 export default function GamesPage() {
   const [sessions, setSessions] = useState<any[]>([]);
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const { user } = useAuthContext();
 
   const loadSessions = async () => {
     try {
@@ -50,7 +50,6 @@ export default function GamesPage() {
   };
 
   useEffect(() => {
-    setUser(getUser());
     loadSessions();
   }, []);
 

@@ -7,7 +7,8 @@ import { Package } from "lucide-react";
 import { getInventoryItems, deleteInventoryItem as apiDeleteInventory, createInventoryItem } from "@/lib/api/inventoryApi";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getUser, AuthUser } from "@/utils/auth";
+import { useAuthContext } from "@/context/AuthContext";
+import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
 
 const purchaseRequests = [
   {
@@ -19,30 +20,6 @@ const purchaseRequests = [
   },
 ];
 
-function getStatusClass(status: string) {
-  if (status === "In Stock") {
-    return "bg-green-100 text-green-700";
-  }
-
-  if (status === "Low Stock") {
-    return "bg-yellow-100 text-yellow-700";
-  }
-
-  if (status === "Critical") {
-    return "bg-red-100 text-red-700";
-  }
-
-  if (status === "Approved") {
-    return "bg-green-100 text-green-700";
-  }
-
-  if (status === "Urgent") {
-    return "bg-red-100 text-red-700";
-  }
-
-  return "bg-yellow-100 text-yellow-700";
-}
-
 function getStockPercent(stock: number, minimum: number) {
   const percent = Math.min((stock / (minimum * 3)) * 100, 100);
   return `${percent}%`;
@@ -50,7 +27,7 @@ function getStockPercent(stock: number, minimum: number) {
 
 export default function InventoryPage() {
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const { user } = useAuthContext();
   const [panelOpen, setPanelOpen] = useState(false);
 
   // Form states
@@ -77,7 +54,6 @@ export default function InventoryPage() {
   };
 
   useEffect(() => {
-    setUser(getUser());
     loadInventory();
   }, []);
 
@@ -268,9 +244,9 @@ export default function InventoryPage() {
   
                           <td className="px-6 py-5">
                             <span
-                              className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(
-                                item.status
-                              )}`}
+                                className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusBadgeClass(
+                                  item.status
+                                )}`}
                             >
                               {item.status}
                             </span>
@@ -331,7 +307,7 @@ export default function InventoryPage() {
                         </div>
 
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(
+                          className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusBadgeClass(
                             request.status
                           )}`}
                         >

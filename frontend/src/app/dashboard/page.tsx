@@ -2,10 +2,13 @@
 import { useEffect, useState } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { getUser, getToken } from "@/utils/auth";
+import { useAuthContext } from "@/context/AuthContext";
+import api from "@/lib/api/axiosInstance";
+import { getRooms } from "@/lib/api/roomApi";
+import { getParkingBookings } from "@/lib/api/parkingApi";
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<{name: string, role: string, email: string} | null>(null);
+  const { user } = useAuthContext();
   
   const [totalRooms, setTotalRooms] = useState<number | null>(null);
   const [occupiedRooms, setOccupiedRooms] = useState<number | null>(null);
@@ -18,46 +21,35 @@ export default function DashboardPage() {
   const [loadingParking, setLoadingParking] = useState(true);
 
   useEffect(() => {
-    setUser(getUser());
-    
-    const token = getToken();
-    const headers = {
-      "Authorization": `Bearer ${token}`
+    const fetchDashboardData = async () => {
+      try {
+        const roomData = await getRooms();
+        const total = roomData.length;
+        const available = roomData.filter((r: any) => r.status === "AVAILABLE").length;
+        setTotalRooms(total);
+        setAvailableRooms(available);
+        setOccupiedRooms(total - available);
+      } catch (err) {
+        console.error("Failed to load rooms", err);
+        setTotalRooms(0);
+        setAvailableRooms(0);
+        setOccupiedRooms(0);
+      } finally {
+        setLoadingRooms(false);
+      }
+
+      try {
+        const parkingData = await getParkingBookings();
+        setParkingOccupied(parkingData.length);
+      } catch (err) {
+        console.error("Failed to load parking", err);
+        setParkingOccupied(0);
+      } finally {
+        setLoadingParking(false);
+      }
     };
 
-    // Fetch Rooms
-    fetch("http://localhost:8080/api/rooms", { headers })
-      .then(res => res.json())
-      .then((data: any[]) => {
-         const total = data.length;
-         const available = data.filter((r: any) => r.status === "AVAILABLE").length;
-         const occupied = total - available;
-         
-         setTotalRooms(total);
-         setAvailableRooms(available);
-         setOccupiedRooms(occupied);
-      })
-      .catch(err => {
-         console.error("Failed to load rooms", err);
-         setTotalRooms(0);
-         setAvailableRooms(0);
-         setOccupiedRooms(0);
-      })
-      .finally(() => setLoadingRooms(false));
-
-    // Fetch Parking Bookings
-    fetch("http://localhost:8080/api/parking-bookings", { headers })
-      .then(res => res.json())
-      .then((data: any[]) => {
-         // Count active or all bookings for occupied slots
-         setParkingOccupied(data.length);
-      })
-      .catch(err => {
-         console.error("Failed to load parking", err);
-         setParkingOccupied(0);
-      })
-      .finally(() => setLoadingParking(false));
-      
+    fetchDashboardData();
   }, []);
 
   const occupancyRate = totalRooms && totalRooms > 0 

@@ -6,88 +6,41 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SlidePanel from "@/components/ui/SlidePanel";
 import { getGuests, createGuest, updateGuest, deleteGuest } from "@/lib/api/guestsApi";
 import { useAuthContext } from "@/context/AuthContext";
+import { useCrudPage } from "@/hooks/useCrudPage";
 
 export default function GuestsPage() {
   const { user } = useAuthContext();
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [panelOpen, setPanelOpen] = useState(false);
-  const [editItem, setEditItem] = useState<any>(null);
-  
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    nationality: "",
-    idType: "Passport",
-    idNumber: "",
-    address: "",
-    notes: ""
+  const {
+    items,
+    loading,
+    error,
+    panelOpen,
+    editItem,
+    formData,
+    setFormData,
+    handleOpenNew,
+    handleOpenEdit,
+    handleDelete,
+    handleSubmit,
+    setPanelOpen,
+  } = useCrudPage<any>({
+    fetchFn: getGuests,
+    createFn: createGuest,
+    updateFn: updateGuest,
+    deleteFn: deleteGuest,
+    defaultFormData: {
+      name: "",
+      email: "",
+      phone: "",
+      nationality: "",
+      idType: "Passport",
+      idNumber: "",
+      address: "",
+      notes: ""
+    },
+    deleteConfirmMessage: "Are you sure you want to delete this guest?"
   });
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const data = await getGuests();
-      setItems(data);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const handleOpenNew = () => {
-    setEditItem(null);
-    setFormData({ name: "", email: "", phone: "", nationality: "", idType: "Passport", idNumber: "", address: "", notes: "" });
-    setPanelOpen(true);
-  };
-
-  const handleOpenEdit = (item: any) => {
-    setEditItem(item);
-    setFormData({
-      name: item.name || "",
-      email: item.email || "",
-      phone: item.phone || "",
-      nationality: item.nationality || "",
-      idType: item.idType || "Passport",
-      idNumber: item.idNumber || "",
-      address: item.address || "",
-      notes: item.notes || ""
-    });
-    setPanelOpen(true);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (window.confirm("Are you sure you want to delete this guest?")) {
-      try {
-        await deleteGuest(id);
-        fetchData();
-      } catch (err: any) {
-        alert("Failed to delete");
-      }
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (editItem) {
-        await updateGuest(editItem.id, formData);
-      } else {
-        await createGuest(formData);
-      }
-      setPanelOpen(false);
-      fetchData();
-    } catch (err: any) {
-      alert("Failed to save");
-    }
-  };
 
   const canEdit = user?.role === "OWNER" || user?.role === "MANAGER" || user?.role === "RECEPTIONIST";
   const canDelete = user?.role === "OWNER" || user?.role === "MANAGER";

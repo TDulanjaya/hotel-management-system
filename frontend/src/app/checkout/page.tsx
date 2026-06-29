@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
 
 const checkoutRows = [
   {
@@ -56,17 +57,7 @@ const checkoutSummary = [
   },
 ];
 
-function getStatusClass(status: string) {
-  if (status === "Completed") {
-    return "bg-green-100 text-green-700";
-  }
 
-  if (status === "Ready") {
-    return "bg-blue-100 text-blue-700";
-  }
-
-  return "bg-yellow-100 text-yellow-700";
-}
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -190,7 +181,7 @@ export default function CheckoutPage() {
 
                       <td className="px-6 py-5">
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(
+                          className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusBadgeClass(
                             checkout.status
                           )}`}
                         >

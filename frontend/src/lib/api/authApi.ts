@@ -50,7 +50,10 @@ export async function authenticatedFetch(
 
   if (response.status === 401) {
     if (typeof window !== "undefined") {
-      window.location.href = "/login";
+      localStorage.removeItem("token");
+      if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
     }
     throw new Error("Unauthorized. Please log in again.");
   }

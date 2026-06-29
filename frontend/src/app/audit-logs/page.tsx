@@ -1,5 +1,6 @@
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
 
 const auditStats = [
   {
@@ -146,17 +147,7 @@ const alerts = [
   },
 ];
 
-function getStatusClass(status: string) {
-  if (status === "Success") {
-    return "bg-green-100 text-green-700";
-  }
 
-  if (status === "Denied") {
-    return "bg-yellow-100 text-yellow-700";
-  }
-
-  return "bg-red-100 text-red-700";
-}
 
 function getSeverityClass(severity: string) {
   if (severity === "Critical") {
@@ -350,7 +341,7 @@ export default function AuditLogsPage() {
 
                       <td className="px-6 py-5">
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(
+                          className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusBadgeClass(
                             log.status
                           )}`}
                         >

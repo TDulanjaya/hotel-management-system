@@ -12,47 +12,12 @@ const roomTypesList = ["All Rooms", "Suite", "Deluxe", "Standard"];
 import { getRooms, deleteRoom as apiDeleteRoom, createRoom } from "@/lib/api/roomApi";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getUser, AuthUser } from "@/utils/auth";
-
-function getStatusStyles(color: string) {
-  if (color === "green") {
-    return {
-      card: "border-l-green-500",
-      badge: "bg-green-100 text-green-700",
-      dot: "bg-green-500",
-      filter: "border-green-200 bg-green-50 text-green-700",
-    };
-  }
-
-  if (color === "yellow") {
-    return {
-      card: "border-l-yellow-500",
-      badge: "bg-yellow-100 text-yellow-700",
-      dot: "bg-yellow-500",
-      filter: "border-yellow-200 bg-yellow-50 text-yellow-700",
-    };
-  }
-
-  if (color === "red") {
-    return {
-      card: "border-l-red-500",
-      badge: "bg-red-100 text-red-700",
-      dot: "bg-red-500",
-      filter: "border-red-200 bg-red-50 text-red-700",
-    };
-  }
-
-  return {
-    card: "border-l-slate-400",
-    badge: "bg-slate-100 text-slate-700",
-    dot: "bg-slate-500",
-    filter: "border-slate-200 bg-slate-50 text-slate-700",
-  };
-}
+import { useAuthContext } from "@/context/AuthContext";
+import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
 
 export default function RoomsPage() {
   const [rooms, setRooms] = useState<any[]>([]);
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const { user } = useAuthContext();
   const [panelOpen, setPanelOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
 
@@ -97,7 +62,6 @@ export default function RoomsPage() {
   };
 
   useEffect(() => {
-    setUser(getUser());
     loadRooms();
   }, []);
 
@@ -225,16 +189,16 @@ export default function RoomsPage() {
 
             <div className="room-fade delay-150 mb-8 flex flex-wrap gap-3">
               {statusFilters.map((filter) => {
-                const styles = getStatusStyles(filter.color);
+                const badgeClass = getStatusBadgeClass(filter.label);
 
                 return (
                   <button
                     key={filter.label}
                     onClick={() => setSelectedStatus(selectedStatus === filter.label ? null : filter.label)}
-                    className={`flex items-center gap-3 rounded-full border px-5 py-3 text-lg transition hover:-translate-y-1 hover:shadow-md ${styles.filter} ${selectedStatus === filter.label ? "ring-2 ring-current font-extrabold" : ""}`}
+                    className={`flex items-center gap-3 rounded-full border px-5 py-3 text-lg transition hover:-translate-y-1 hover:shadow-md ${badgeClass} ${selectedStatus === filter.label ? "ring-2 ring-current font-extrabold" : ""}`}
                   >
                     <span
-                      className={`h-2.5 w-2.5 rounded-full ${styles.dot}`}
+                      className={`h-2.5 w-2.5 rounded-full bg-current`}
                     />
                     {filter.label} ({filter.count})
                   </button>
@@ -250,17 +214,12 @@ export default function RoomsPage() {
                 </div>
               ) : (
                 displayedRooms.map((room, index) => {
-                  let color = "green";
-                  if (room.status === "OCCUPIED") color = "red";
-                  if (room.status === "CLEANING") color = "yellow";
-                  if (room.status === "MAINTENANCE") color = "gray";
-                  
-                  const styles = getStatusStyles(color);
+                  const badgeClass = getStatusBadgeClass(room.status);
   
                   return (
                     <article
                       key={room.id || index}
-                      className={`room-card room-fade rounded-2xl border border-[#d9cfbd] border-l-4 bg-white p-7 shadow-sm transition hover:-translate-y-2 hover:shadow-2xl ${styles.card}`}
+                      className={`room-card room-fade rounded-2xl border border-[#d9cfbd] border-l-4 bg-white p-7 shadow-sm transition hover:-translate-y-2 hover:shadow-2xl border-l-current`}
                       style={{ animationDelay: `${0.18 + index * 0.07}s` }}
                     >
                       <div className="mb-6 flex items-start justify-between gap-4">
@@ -279,7 +238,7 @@ export default function RoomsPage() {
                         </div>
   
                         <span
-                          className={`rounded-full px-4 py-2 text-sm font-extrabold tracking-widest ${styles.badge}`}
+                          className={`rounded-full px-4 py-2 text-sm font-extrabold tracking-widest ${badgeClass}`}
                         >
                           {room.status}
                         </span>
