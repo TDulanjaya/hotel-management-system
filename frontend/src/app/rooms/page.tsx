@@ -215,6 +215,7 @@ export default function RoomsPage() {
               ) : (
                 displayedRooms.map((room, index) => {
                   const badgeClass = getStatusBadgeClass(room.status);
+                  const color = room.status === "AVAILABLE" ? "green" : room.status === "CLEANING" ? "yellow" : room.status === "OCCUPIED" ? "red" : "gray";
   
                   return (
                     <article

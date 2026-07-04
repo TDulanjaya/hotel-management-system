@@ -19,9 +19,6 @@ public class MongoConfig {
 
     @Bean
     public MongoClient mongoClient() {
-        // Fix for MongoDB Atlas "Received fatal alert: internal_error" with newer Java versions
-        System.setProperty("jdk.tls.client.protocols", "TLSv1.2");
-
         String mongoUri = getEnvValue("MONGODB_URI");
 
         if (mongoUri == null || mongoUri.isBlank()) {
