@@ -1,130 +1,11 @@
+"use client";
+
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Link from "next/link";
 import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
-
-const reports = [
-  {
-    title: "Daily Revenue",
-    href: "/reports/daily-revenue",
-    category: "Finance",
-    value: "Rs 42,850",
-    note: "Today collection and revenue breakdown.",
-    icon: "$",
-  },
-  {
-    title: "Net Profit",
-    href: "/reports/net-profit",
-    category: "Finance",
-    value: "Rs 18,920",
-    note: "Revenue minus expenses and operating cost.",
-    icon: "↗",
-  },
-  {
-    title: "Occupancy",
-    href: "/reports/occupancy",
-    category: "Rooms",
-    value: "78%",
-    note: "Room occupancy and availability report.",
-    icon: "▰",
-  },
-  {
-    title: "Low Stock",
-    href: "/reports/low-stock",
-    category: "INVENTORY",
-    value: "06",
-    note: "Items below minimum stock level.",
-    icon: "▧",
-  },
-  {
-    title: "Payment Summary",
-    href: "/reports/payment-summary",
-    category: "Payments",
-    value: "Rs 42,850",
-    note: "Card, cash, bank, and online payments.",
-    icon: "▤",
-  },
-  {
-    title: "Event Income",
-    href: "/reports/event-income",
-    category: "EVENTS",
-    value: "Rs 12,400",
-    note: "Event bookings and venue income.",
-    icon: "▣",
-  },
-  {
-    title: "Food Sales",
-    href: "/reports/food-sales",
-    category: "Restaurant",
-    value: "Rs 6,240",
-    note: "Restaurant and room service sales.",
-    icon: "🍽",
-  },
-  {
-    title: "Parking Income",
-    href: "/reports/parking-income",
-    category: "PARKING",
-    value: "Rs 780",
-    note: "Parking slot usage and income.",
-    icon: "P",
-  },
-  {
-    title: "Inventory Usage",
-    href: "/reports/inventory-usage",
-    category: "INVENTORY",
-    value: "128",
-    note: "Stock usage by department.",
-    icon: "▥",
-  },
-  {
-    title: "Audit History",
-    href: "/reports/audit-history",
-    category: "Security",
-    value: "214",
-    note: "User actions and system activity logs.",
-    icon: "☷",
-  },
-];
-
-const quickStats = [
-  {
-    label: "Today Revenue",
-    value: "Rs 42,850",
-  },
-  {
-    label: "Occupancy Rate",
-    value: "78%",
-  },
-  {
-    label: "Pending Payments",
-    value: "Rs 18,420",
-  },
-  {
-    label: "Low Stock Items",
-    value: "06",
-  },
-];
-
-const recentReports = [
-  {
-    name: "Daily Revenue Report",
-    generatedBy: "MANAGER",
-    time: "Today, 09:30 AM",
-    status: "Ready",
-  },
-  {
-    name: "Low Stock Report",
-    generatedBy: "Inventory Staff",
-    time: "Today, 08:15 AM",
-    status: "Ready",
-  },
-  {
-    name: "Audit History Report",
-    generatedBy: "OWNER",
-    time: "Yesterday, 05:40 PM",
-    status: "Reviewed",
-  },
-];
+import { useEffect, useState } from "react";
+import { getReportSummary, downloadAllReports } from "@/lib/api/reportsApi";
 
 function getCategoryClass(category: string) {
   if (category === "Finance" || category === "Payments") {
@@ -142,9 +23,156 @@ function getCategoryClass(category: string) {
   return "bg-[#d4af37]/20 text-[#735c00]";
 }
 
-
-
 export default function ReportsPage() {
+  const [summary, setSummary] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getReportSummary();
+        setSummary(data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const handleExportAll = async () => {
+    try {
+      await downloadAllReports();
+    } catch (err) {
+      alert("Failed to export reports");
+      console.error(err);
+    }
+  };
+
+  const reports = [
+    {
+      title: "Daily Revenue",
+      href: "/reports/daily-revenue",
+      category: "Finance",
+      value: summary?.todayRevenue || "Rs 0",
+      note: "Today collection and revenue breakdown.",
+      icon: "$",
+    },
+    {
+      title: "Net Profit",
+      href: "/reports/net-profit",
+      category: "Finance",
+      value: summary?.netProfit || "Rs 0",
+      note: "Revenue minus expenses and operating cost.",
+      icon: "↗",
+    },
+    {
+      title: "Occupancy",
+      href: "/reports/occupancy",
+      category: "Rooms",
+      value: summary?.occupancyRate || "0%",
+      note: "Room occupancy and availability report.",
+      icon: "▰",
+    },
+    {
+      title: "Low Stock",
+      href: "/reports/low-stock",
+      category: "INVENTORY",
+      value: summary?.lowStockCount || "00",
+      note: "Items below minimum stock level.",
+      icon: "▧",
+    },
+    {
+      title: "Payment Summary",
+      href: "/reports/payment-summary",
+      category: "Payments",
+      value: summary?.todayRevenue || "Rs 0",
+      note: "Card, cash, bank, and online payments.",
+      icon: "▤",
+    },
+    {
+      title: "Event Income",
+      href: "/reports/event-income",
+      category: "EVENTS",
+      value: summary?.eventIncome || "Rs 0",
+      note: "Event bookings and venue income.",
+      icon: "▣",
+    },
+    {
+      title: "Food Sales",
+      href: "/reports/food-sales",
+      category: "Restaurant",
+      value: summary?.foodSales || "Rs 0",
+      note: "Restaurant and room service sales.",
+      icon: "🍽",
+    },
+    {
+      title: "Parking Income",
+      href: "/reports/parking-income",
+      category: "PARKING",
+      value: summary?.parkingIncome || "Rs 0",
+      note: "Parking slot usage and income.",
+      icon: "P",
+    },
+    {
+      title: "Inventory Usage",
+      href: "/reports/inventory-usage",
+      category: "INVENTORY",
+      value: summary?.inventoryUsage || "0",
+      note: "Stock usage by department.",
+      icon: "▥",
+    },
+    {
+      title: "Audit History",
+      href: "/reports/audit-history",
+      category: "Security",
+      value: summary?.auditHistory || "0",
+      note: "User actions and system activity logs.",
+      icon: "☷",
+    },
+  ];
+
+  const quickStats = [
+    {
+      label: "Today Revenue",
+      value: summary?.todayRevenue || "Rs 0",
+    },
+    {
+      label: "Occupancy Rate",
+      value: summary?.occupancyRate || "0%",
+    },
+    {
+      label: "Pending Payments",
+      value: summary?.pendingPayments || "Rs 0",
+    },
+    {
+      label: "Low Stock Items",
+      value: summary?.lowStockCount || "0",
+    },
+  ];
+
+  const recentReports = [
+    {
+      name: "Daily Revenue Report",
+      generatedBy: "MANAGER",
+      time: "Today, 09:30 AM",
+      status: "Ready",
+    },
+    {
+      name: "Low Stock Report",
+      generatedBy: "Inventory Staff",
+      time: "Today, 08:15 AM",
+      status: "Ready",
+    },
+    {
+      name: "Audit History Report",
+      generatedBy: "OWNER",
+      time: "Yesterday, 05:40 PM",
+      status: "Reviewed",
+    },
+  ];
+
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
@@ -167,14 +195,17 @@ export default function ReportsPage() {
               </p>
             </div>
 
-            <button className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]">
+            <button 
+              onClick={handleExportAll}
+              className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
+            >
               Export All Reports
             </button>
           </div>
 
           <section className="mb-8 grid gap-6 md:grid-cols-4">
             {quickStats.map((stat) => (
-              <StatCard key={stat.label} label={stat.label} value={stat.value} />
+              <StatCard key={stat.label} label={stat.label} value={stat.value} loading={loading} />
             ))}
           </section>
 
@@ -233,7 +264,9 @@ export default function ReportsPage() {
                   {report.title}
                 </h2>
 
-                <p className="mt-2 text-3xl font-extrabold">{report.value}</p>
+                <p className="mt-2 text-3xl font-extrabold">
+                  {loading ? "..." : report.value}
+                </p>
 
                 <p className="mt-3 text-sm leading-6 text-[#4d4635]">
                   {report.note}
@@ -291,7 +324,10 @@ export default function ReportsPage() {
                       </td>
 
                       <td className="px-6 py-5 text-right">
-                        <button className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white">
+                        <button 
+                          onClick={handleExportAll}
+                          className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
+                        >
                           Download
                         </button>
                       </td>
@@ -307,14 +343,16 @@ export default function ReportsPage() {
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value, loading }: { label: string; value: string, loading: boolean }) {
   return (
     <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
       <p className="text-sm font-bold uppercase tracking-widest text-[#4d4635]">
         {label}
       </p>
 
-      <p className="mt-2 text-4xl font-extrabold text-[#735c00]">{value}</p>
+      <p className="mt-2 text-4xl font-extrabold text-[#735c00]">
+        {loading ? "..." : value}
+      </p>
     </div>
   );
 }

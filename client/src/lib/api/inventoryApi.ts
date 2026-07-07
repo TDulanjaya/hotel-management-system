@@ -3,7 +3,8 @@ import { authenticatedFetch } from "./authApi";
 export async function getInventoryItems() {
   const res = await authenticatedFetch("/api/inventory");
   if (!res.ok) throw new Error("Failed to fetch inventory items");
-  return res.json();
+  const data = await res.json();
+  return data?.content !== undefined ? data.content : data;
 }
 
 export async function getInventoryItemById(id: string) {

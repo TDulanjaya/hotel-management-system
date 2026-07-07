@@ -7,36 +7,51 @@ import { Bed } from "lucide-react";
 
 const roomTypesList = ["All Rooms", "Suite", "Deluxe", "Standard"];
 
-
-
-import { getRooms, deleteRoom as apiDeleteRoom, createRoom } from "@/lib/api/roomApi";
+import { deleteRoom as apiDeleteRoom, createRoom } from "@/lib/api/roomApi";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuthContext } from "@/context/AuthContext";
 import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
+import useSWR from "swr";
+import { swrFetcher } from "@/lib/api/authApi";
 
 export default function RoomsPage() {
-  const [rooms, setRooms] = useState<any[]>([]);
   const { user } = useAuthContext();
   const [panelOpen, setPanelOpen] = useState(false);
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const [size, setSize] = useState(10);
+
+  // Debounce search
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(0); // Reset page on search
+    }, 500);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
+  const query = new URLSearchParams();
+  query.append("page", page.toString());
+  query.append("size", size.toString());
+  if (debouncedSearch) query.append("search", debouncedSearch);
+  else if (selectedStatus) query.append("search", selectedStatus);
+
+  const url = `/api/rooms?${query.toString()}`;
+  const { data, error: fetchError, mutate } = useSWR(url, swrFetcher);
+
+  const rooms = data?.content || [];
+  const totalPages = data?.totalPages || 1;
+  const totalElements = data?.totalElements || 0;
 
   const statusFilters = [
-    { label: "Available",   count: rooms.filter(r => r.status === "AVAILABLE").length,   color: "green"  },
-    { label: "Cleaning",    count: rooms.filter(r => r.status === "CLEANING").length,    color: "yellow" },
-    { label: "Occupied",    count: rooms.filter(r => r.status === "OCCUPIED").length,    color: "red"    },
-    { label: "Maintenance", count: rooms.filter(r => r.status === "MAINTENANCE").length, color: "gray"   },
+    { label: "Available",   value: "AVAILABLE"  },
+    { label: "Cleaning",    value: "CLEANING"   },
+    { label: "Occupied",    value: "OCCUPIED"   },
+    { label: "Maintenance", value: "MAINTENANCE" },
   ];
-
-  const displayedRooms = selectedStatus
-    ? rooms.filter(r => {
-        if (selectedStatus === "Available")   return r.status === "AVAILABLE";
-        if (selectedStatus === "Cleaning")    return r.status === "CLEANING";
-        if (selectedStatus === "Occupied")    return r.status === "OCCUPIED";
-        if (selectedStatus === "Maintenance") return r.status === "MAINTENANCE";
-        return true;
-      })
-    : rooms;
 
   // Form states
   const [loading, setLoading] = useState(false);
@@ -52,24 +67,11 @@ export default function RoomsPage() {
     image: ""
   });
 
-  const loadRooms = async () => {
-    try {
-      const data = await getRooms();
-      setRooms(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  useEffect(() => {
-    loadRooms();
-  }, []);
-
   const deleteRoomRecord = async (id: string) => {
     if (!confirm("Are you sure you want to delete this room?")) return;
     try {
       await apiDeleteRoom(id);
-      setRooms(prev => prev.filter(r => r.id !== id));
+      mutate();
       alert("Room deleted successfully.");
     } catch (err) {
       console.error(err);
@@ -92,7 +94,7 @@ export default function RoomsPage() {
         pricePerNight: Number(formData.pricePerNight),
       });
       setPanelOpen(false);
-      loadRooms();
+      mutate();
       // Reset form
       setFormData({
         roomNumber: "", roomType: "Standard", floor: "Floor 1", capacity: 2, pricePerNight: 0,
@@ -127,7 +129,9 @@ export default function RoomsPage() {
 
                 <input
                   type="text"
-                  placeholder="Search rooms, guests, bookings..."
+                  placeholder="Search rooms..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="w-full bg-transparent text-lg outline-none placeholder:text-slate-500"
                 />
               </div>
@@ -173,8 +177,12 @@ export default function RoomsPage() {
                 {roomTypesList.map((type, index) => (
                   <button
                     key={type}
+                    onClick={() => {
+                      if(type !== "All Rooms") setSearchTerm(type);
+                      else setSearchTerm("");
+                    }}
                     className={`px-8 py-3 text-lg transition ${
-                      index === 0
+                      (searchTerm === type || (searchTerm === "" && type === "All Rooms"))
                         ? "rounded-lg bg-white text-[#806300] shadow"
                         : "text-[#4c4032] hover:bg-white/60"
                     }`}
@@ -183,37 +191,44 @@ export default function RoomsPage() {
                   </button>
                 ))}
               </div>
-
-              <div className="hidden h-12 w-px bg-[#d9cfbd] md:block" />
             </div>
 
             <div className="room-fade delay-150 mb-8 flex flex-wrap gap-3">
+              <button
+                onClick={() => { setSelectedStatus(""); setPage(0); }}
+                className={`flex items-center gap-3 rounded-full border px-5 py-3 text-lg transition hover:-translate-y-1 hover:shadow-md ${!selectedStatus ? "ring-2 ring-current font-extrabold" : ""}`}
+              >
+                All
+              </button>
               {statusFilters.map((filter) => {
-                const badgeClass = getStatusBadgeClass(filter.label);
+                const badgeClass = getStatusBadgeClass(filter.value);
 
                 return (
                   <button
                     key={filter.label}
-                    onClick={() => setSelectedStatus(selectedStatus === filter.label ? null : filter.label)}
-                    className={`flex items-center gap-3 rounded-full border px-5 py-3 text-lg transition hover:-translate-y-1 hover:shadow-md ${badgeClass} ${selectedStatus === filter.label ? "ring-2 ring-current font-extrabold" : ""}`}
+                    onClick={() => { setSelectedStatus(filter.value); setPage(0); setSearchTerm(""); }}
+                    className={`flex items-center gap-3 rounded-full border px-5 py-3 text-lg transition hover:-translate-y-1 hover:shadow-md ${badgeClass} ${selectedStatus === filter.value ? "ring-2 ring-current font-extrabold" : ""}`}
                   >
                     <span
                       className={`h-2.5 w-2.5 rounded-full bg-current`}
                     />
-                    {filter.label} ({filter.count})
+                    {filter.label}
                   </button>
                 );
               })}
             </div>
+            
+            {fetchError && <p className="text-red-500 font-bold mb-4">Error loading rooms.</p>}
+            {!data && !fetchError && <p className="text-[#3f3b35] mb-4">Loading rooms...</p>}
 
             <div className="grid gap-7 md:grid-cols-2 xl:grid-cols-4">
-              {displayedRooms.length === 0 ? (
+              {rooms.length === 0 && data ? (
                 <div className="col-span-full rounded-2xl border border-[#d9cfbd] bg-white p-10 text-center shadow-sm">
                   <p className="text-xl font-bold text-[#735c00]">No rooms found</p>
-                  <p className="mt-2 text-[#4d4635]">Add a new room to get started.</p>
+                  <p className="mt-2 text-[#4d4635]">Adjust your search or add a new room.</p>
                 </div>
               ) : (
-                displayedRooms.map((room, index) => {
+                rooms.map((room: any, index: number) => {
                   const badgeClass = getStatusBadgeClass(room.status);
                   const color = room.status === "AVAILABLE" ? "green" : room.status === "CLEANING" ? "yellow" : room.status === "OCCUPIED" ? "red" : "gray";
   
@@ -298,6 +313,34 @@ export default function RoomsPage() {
                 })
               )}
             </div>
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="mt-10 flex items-center justify-between border-t border-[#d9cfbd] pt-6">
+                <p className="text-lg text-[#4c4032]">
+                  Showing {rooms.length} of {totalElements} rooms
+                </p>
+                <div className="flex gap-2">
+                  <button 
+                    disabled={page === 0} 
+                    onClick={() => setPage(page - 1)}
+                    className="rounded-xl border border-[#d0c5af] bg-white px-4 py-2 font-bold text-[#4d4635] disabled:opacity-50"
+                  >
+                    Prev
+                  </button>
+                  <span className="flex items-center px-4 font-bold text-[#735c00]">
+                    Page {page + 1} of {totalPages}
+                  </span>
+                  <button 
+                    disabled={page >= totalPages - 1} 
+                    onClick={() => setPage(page + 1)}
+                    className="rounded-xl border border-[#d0c5af] bg-white px-4 py-2 font-bold text-[#4d4635] disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
           </section>
         </main>
 

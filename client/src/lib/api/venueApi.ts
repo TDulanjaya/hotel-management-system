@@ -5,7 +5,8 @@ export async function getVenues() {
   if (!response.ok) {
     throw new Error("Failed to fetch venues");
   }
-  return response.json();
+  const data = await response.json();
+  return data?.content !== undefined ? data.content : data;
 }
 
 export async function getVenueById(id: string) {

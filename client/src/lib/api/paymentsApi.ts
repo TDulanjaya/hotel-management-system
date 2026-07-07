@@ -3,7 +3,8 @@ import { authenticatedFetch } from "./authApi";
 export async function getPayments() {
   const response = await authenticatedFetch("/api/payments");
   if (!response.ok) throw new Error("Failed to fetch payments");
-  return response.json();
+  const data = await response.json();
+  return data?.content !== undefined ? data.content : data;
 }
 
 export async function getPaymentById(id: string) {

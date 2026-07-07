@@ -3,7 +3,8 @@ import { authenticatedFetch } from "./authApi";
 export async function getAll() {
   const response = await authenticatedFetch("/api/recipes");
   if (!response.ok) throw new Error("Failed to fetch recipes");
-  return response.json();
+  const data = await response.json();
+  return data?.content !== undefined ? data.content : data;
 }
 
 export async function getById(id: string) {

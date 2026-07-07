@@ -1,4 +1,4 @@
-export const API_BASE_URL = "http://localhost:8080";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 import { getToken } from "@/utils/auth";
 
@@ -21,17 +21,14 @@ export async function login(email: string, password: string) {
   return res.json();
 }
 
-
 export async function authenticatedFetch(
   endpoint: string,
   options: RequestInit = {}
 ) {
   const token = getToken();
 
-  
   const headers = new Headers({
     "Content-Type": "application/json",
-    
     ...(options.headers instanceof Headers
       ? Object.fromEntries(options.headers.entries())
       : options.headers ?? {}),
@@ -65,40 +62,11 @@ export async function authenticatedFetch(
   return response;
 }
 
-export async function getAll() {
-  const res = await authenticatedFetch(`/api/auths`);
-  if (!res.ok) throw new Error(`Failed to fetch auths`);
+export const swrFetcher = async (url: string) => {
+  const res = await authenticatedFetch(url);
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "An error occurred while fetching the data.");
+  }
   return res.json();
-}
-
-export async function getById(id: string) {
-  const res = await authenticatedFetch(`/api/auths/${id}`);
-  if (!res.ok) throw new Error(`Failed to fetch auths`);
-  return res.json();
-}
-
-export async function create(data: any) {
-  const res = await authenticatedFetch(`/api/auths`, {
-    method: 'POST',
-    body: JSON.stringify(data)
-  });
-  if (!res.ok) throw new Error(`Failed to create auths`);
-  return res.json();
-}
-
-export async function update(id: string, data: any) {
-  const res = await authenticatedFetch(`/api/auths/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify(data)
-  });
-  if (!res.ok) throw new Error(`Failed to update auths`);
-  return res.json();
-}
-
-export async function remove(id: string) {
-  const res = await authenticatedFetch(`/api/auths/${id}`, {
-    method: 'DELETE'
-  });
-  if (!res.ok) throw new Error(`Failed to delete auths`);
-  return res.json();
-}
+};

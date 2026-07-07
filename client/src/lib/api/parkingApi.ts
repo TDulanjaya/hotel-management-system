@@ -3,7 +3,8 @@ import { authenticatedFetch } from "./authApi";
 export async function getParkingBookings() {
   const res = await authenticatedFetch("/api/parking");
   if (!res.ok) throw new Error("Failed to fetch parking bookings");
-  return res.json();
+  const data = await res.json();
+  return data?.content !== undefined ? data.content : data;
 }
 
 export async function getParkingBookingById(id: string) {

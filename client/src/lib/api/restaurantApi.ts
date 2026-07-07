@@ -2,7 +2,8 @@ import { authenticatedFetch } from "./authApi";
 export async function getRestaurantOrders() {
   const res = await authenticatedFetch("/api/restaurant/orders");
   if (!res.ok) throw new Error("Failed to fetch restaurant orders");
-  return res.json();
+  const data = await res.json();
+  return data?.content !== undefined ? data.content : data;
 }
 export async function createRestaurantOrder(data: any) {
   const res = await authenticatedFetch("/api/restaurant/orders", { method: "POST", body: JSON.stringify(data) });

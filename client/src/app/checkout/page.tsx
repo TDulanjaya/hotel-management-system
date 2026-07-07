@@ -4,63 +4,31 @@ import { useRouter } from "next/navigation";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
-
-const checkoutRows = [
-  {
-    id: "CHK-1001",
-    guest: "Elena Rodriguez",
-    room: "402",
-    roomType: "Executive Suite",
-    checkIn: "Oct 21, 2024",
-    checkOut: "Oct 24, 2024",
-    total: "Rs 1,638.00",
-    status: "Ready",
-  },
-  {
-    id: "CHK-1002",
-    guest: "Marcus Thorne",
-    room: "308",
-    roomType: "Deluxe Room",
-    checkIn: "Oct 22, 2024",
-    checkOut: "Oct 24, 2024",
-    total: "Rs 920.00",
-    status: "Pending Payment",
-  },
-  {
-    id: "CHK-1003",
-    guest: "Sophia Chen",
-    room: "210",
-    roomType: "Standard Room",
-    checkIn: "Oct 23, 2024",
-    checkOut: "Oct 24, 2024",
-    total: "Rs 450.00",
-    status: "Completed",
-  },
-];
-
-const checkoutSummary = [
-  {
-    label: "Today Checkouts",
-    value: "12",
-  },
-  {
-    label: "Ready",
-    value: "07",
-  },
-  {
-    label: "Pending Payment",
-    value: "03",
-  },
-  {
-    label: "Completed",
-    value: "02",
-  },
-];
-
-
+import { useState, useEffect } from "react";
+import { getDueCheckouts } from "@/lib/api/checkoutApi";
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const [checkouts, setCheckouts] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const data = await getDueCheckouts();
+        setCheckouts(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    load();
+  }, []);
+
+  const checkoutSummary = [
+    { label: "Today Checkouts", value: checkouts.length.toString() },
+    { label: "Ready", value: checkouts.filter(c => c.paymentStatus === "COMPLETED").length.toString() },
+    { label: "Pending Payment", value: checkouts.filter(c => c.paymentStatus !== "COMPLETED").length.toString() },
+    { label: "Completed", value: "0" } // Not applicable since they vanish when checked out
+  ];
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "RECEPTIONIST"]}>
@@ -150,59 +118,67 @@ export default function CheckoutPage() {
                 </thead>
 
                 <tbody className="divide-y divide-[#d0c5af]">
-                  {checkoutRows.map((checkout) => (
-                    <tr
-                      key={checkout.id}
-                      className="transition hover:bg-[#fbf9f5]"
-                    >
-                      <td className="px-6 py-5 font-bold">{checkout.id}</td>
-
-                      <td className="px-6 py-5 font-semibold">
-                        {checkout.guest}
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <span className="rounded-full bg-[#d4af37]/20 px-3 py-1 text-xs font-bold text-[#735c00]">
-                          Room {checkout.room}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-5 text-[#4d4635]">
-                        {checkout.roomType}
-                      </td>
-
-                      <td className="px-6 py-5 text-[#4d4635]">
-                        {checkout.checkIn}
-                      </td>
-
-                      <td className="px-6 py-5 text-[#4d4635]">
-                        {checkout.checkOut}
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusBadgeClass(
-                            checkout.status
-                          )}`}
-                        >
-                          {checkout.status}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-5 text-right font-bold text-[#735c00]">
-                        {checkout.total}
-                      </td>
-
-                      <td className="px-6 py-5 text-right">
-                        <button
-                          onClick={() => router.push(`/checkout/detail?id=${checkout.id}`)}
-                          className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
-                        >
-                          View
-                        </button>
+                  {checkouts.length === 0 ? (
+                    <tr>
+                      <td colSpan={9} className="px-6 py-10 text-center text-[#4d4635]">
+                        <p className="text-lg font-bold">No due checkouts today</p>
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    checkouts.map((checkout) => (
+                      <tr
+                        key={checkout.id}
+                        className="transition hover:bg-[#fbf9f5]"
+                      >
+                        <td className="px-6 py-5 font-bold">{checkout.id?.substring(0,8)}</td>
+
+                        <td className="px-6 py-5 font-semibold">
+                          {checkout.guestName}
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <span className="rounded-full bg-[#d4af37]/20 px-3 py-1 text-xs font-bold text-[#735c00]">
+                            Room {checkout.roomNumber}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-5 text-[#4d4635]">
+                          -
+                        </td>
+
+                        <td className="px-6 py-5 text-[#4d4635]">
+                          {checkout.checkIn}
+                        </td>
+
+                        <td className="px-6 py-5 text-[#4d4635]">
+                          {checkout.checkOut}
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusBadgeClass(
+                              checkout.paymentStatus === "COMPLETED" ? "Ready" : "Pending Payment"
+                            )}`}
+                          >
+                            {checkout.paymentStatus === "COMPLETED" ? "Ready" : "Pending Payment"}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-5 text-right font-bold text-[#735c00]">
+                          Rs {checkout.totalAmount?.toFixed(2)}
+                        </td>
+
+                        <td className="px-6 py-5 text-right">
+                          <button
+                            onClick={() => router.push(`/checkout/detail?id=${checkout.id}`)}
+                            className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
+                          >
+                            Process
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

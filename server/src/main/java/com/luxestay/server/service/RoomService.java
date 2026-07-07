@@ -5,6 +5,8 @@ import com.luxestay.server.model.Room;
 import com.luxestay.server.repository.RoomRepository;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 @Service
@@ -15,8 +17,11 @@ public class RoomService {
         this.roomRepository = roomRepository;
     }
 
-    public List<Room> getAllRooms() {
-        return roomRepository.findAll();
+    public Page<Room> getRooms(String keyword, Pageable pageable) {
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            return roomRepository.searchRooms(keyword, pageable);
+        }
+        return roomRepository.findAll(pageable);
     }
 
     public Room getRoomById(String id) {

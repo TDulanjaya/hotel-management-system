@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import org.springframework.data.mongodb.core.index.Indexed;
+
 @Data
 @Builder
 @NoArgsConstructor
@@ -20,6 +22,7 @@ public class Room {
     private String floor;
     private Integer capacity;
     private Double pricePerNight;
+    @Indexed
     private String status;
     private String description;
     private String image;

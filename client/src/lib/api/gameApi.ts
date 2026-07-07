@@ -3,7 +3,8 @@ import { authenticatedFetch } from "./authApi";
 export async function getGameSessions() {
   const res = await authenticatedFetch("/api/games");
   if (!res.ok) throw new Error("Failed to fetch game sessions");
-  return res.json();
+  const data = await res.json();
+  return data?.content !== undefined ? data.content : data;
 }
 
 export async function createGameSession(data: any) {

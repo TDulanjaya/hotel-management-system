@@ -10,18 +10,8 @@ import Link from "next/link";
 import { useAuthContext } from "@/context/AuthContext";
 import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
 
-const purchaseRequests = [
-  {
-    id: "PR-001",
-    item: "Basmati Rice",
-    requestedBy: "COOK",
-    quantity: "100 kg",
-    status: "Pending Approval",
-  },
-];
-
 function getStockPercent(stock: number, minimum: number) {
-  const percent = Math.min((stock / (minimum * 3)) * 100, 100);
+  const percent = Math.min((stock / (minimum * 3 || 1)) * 100, 100);
   return `${percent}%`;
 }
 
@@ -138,10 +128,10 @@ export default function InventoryPage() {
           </div>
 
           <section className="mb-8 grid gap-6 md:grid-cols-4">
-            <StatCard label="Total Items" value="5" />
-            <StatCard label="In Stock" value="3" />
-            <StatCard label="Low Stock" value="1" />
-            <StatCard label="Critical" value="1" />
+            <StatCard label="Total Items" value={inventoryItems.length.toString()} />
+            <StatCard label="In Stock" value={inventoryItems.filter(i => i.quantity > i.reorderLevel).length.toString()} />
+            <StatCard label="Low Stock" value={inventoryItems.filter(i => i.quantity > 0 && i.quantity <= i.reorderLevel).length.toString()} />
+            <StatCard label="Critical" value={inventoryItems.filter(i => i.quantity === 0).length.toString()} />
           </section>
 
           <section className="mb-8 rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
@@ -290,36 +280,9 @@ export default function InventoryPage() {
                 <h2 className="text-2xl font-bold">Purchase Requests</h2>
 
                 <div className="mt-6 space-y-4">
-                  {purchaseRequests.map((request) => (
-                    <div
-                      key={request.id}
-                      className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-4"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-bold text-[#735c00]">
-                            {request.item}
-                          </p>
-
-                          <p className="mt-1 text-sm text-[#4d4635]">
-                            {request.id} • {request.requestedBy}
-                          </p>
-                        </div>
-
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusBadgeClass(
-                            request.status
-                          )}`}
-                        >
-                          {request.status}
-                        </span>
-                      </div>
-
-                      <p className="mt-3 text-sm font-bold">
-                        Quantity: {request.quantity}
-                      </p>
-                    </div>
-                  ))}
+                  <div className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-4 text-center text-[#4d4635]">
+                    No pending purchase requests.
+                  </div>
                 </div>
               </section>
 
@@ -327,23 +290,35 @@ export default function InventoryPage() {
                 <h2 className="text-2xl font-bold">Inventory Alerts</h2>
 
                 <div className="mt-6 space-y-4">
-                  <AlertCard
-                    title="Critical Stock"
-                    text="Room Shampoo Set is below minimum stock level."
-                    type="critical"
-                  />
+                  {inventoryItems.filter(i => i.quantity === 0).map(item => (
+                    <AlertCard
+                      key={`crit-${item.id}`}
+                      title="Critical Stock"
+                      text={`${item.itemName} is out of stock.`}
+                      type="critical"
+                    />
+                  ))}
+                  
+                  {inventoryItems.filter(i => i.quantity > 0 && i.quantity <= i.reorderLevel).map(item => (
+                    <AlertCard
+                      key={`warn-${item.id}`}
+                      title="Low Stock"
+                      text={`${item.itemName} is below minimum stock level.`}
+                      type="warning"
+                    />
+                  ))}
 
-                  <AlertCard
-                    title="Low Stock"
-                    text="Basmati Rice needs reorder approval."
-                    type="warning"
-                  />
-
-                  <AlertCard
-                    title="Good Stock"
-                    text="Towels, water bottles, and cleaning items are stable."
-                    type="success"
-                  />
+                  {inventoryItems.length > 0 && inventoryItems.filter(i => i.quantity <= i.reorderLevel).length === 0 && (
+                    <AlertCard
+                      title="Good Stock"
+                      text="All inventory items are sufficiently stocked."
+                      type="success"
+                    />
+                  )}
+                  
+                  {inventoryItems.length === 0 && (
+                    <p className="text-sm text-[#4d4635]">No inventory items to monitor.</p>
+                  )}
                 </div>
               </section>
             </aside>

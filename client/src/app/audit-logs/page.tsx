@@ -1,153 +1,7 @@
+"use client";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
-
-const auditStats = [
-  {
-    label: "Total Logs",
-    value: "214",
-    note: "All recorded actions",
-  },
-  {
-    label: "Success Actions",
-    value: "186",
-    note: "Completed safely",
-  },
-  {
-    label: "Denied Actions",
-    value: "21",
-    note: "Blocked by role access",
-  },
-  {
-    label: "Failed Attempts",
-    value: "07",
-    note: "Login or system failures",
-  },
-];
-
-const auditLogs = [
-  {
-    id: "AUD-1001",
-    user: "Admin Owner",
-    role: "OWNER",
-    action: "Created new staff user",
-    module: "Users",
-    ip: "192.168.1.10",
-    device: "Chrome / Windows",
-    date: "Oct 24, 2024",
-    time: "09:15 AM",
-    status: "Success",
-    severity: "High",
-  },
-  {
-    id: "AUD-1002",
-    user: "Julian Sterling",
-    role: "MANAGER",
-    action: "Generated daily revenue report",
-    module: "Reports",
-    ip: "192.168.1.24",
-    device: "Edge / Windows",
-    date: "Oct 24, 2024",
-    time: "09:30 AM",
-    status: "Success",
-    severity: "Info",
-  },
-  {
-    id: "AUD-1003",
-    user: "Front Desk Staff",
-    role: "RECEPTIONIST",
-    action: "Attempted to access reports",
-    module: "Reports",
-    ip: "192.168.1.38",
-    device: "Chrome / Windows",
-    date: "Oct 24, 2024",
-    time: "10:22 AM",
-    status: "Denied",
-    severity: "Warning",
-  },
-  {
-    id: "AUD-1004",
-    user: "Finance Manager",
-    role: "MANAGER",
-    action: "Added new payment transaction",
-    module: "Payments",
-    ip: "192.168.1.31",
-    device: "Chrome / MacOS",
-    date: "Oct 24, 2024",
-    time: "11:15 AM",
-    status: "Success",
-    severity: "High",
-  },
-  {
-    id: "AUD-1005",
-    user: "Kitchen Staff",
-    role: "COOK",
-    action: "Updated kitchen order status",
-    module: "COOK",
-    ip: "192.168.1.42",
-    device: "Tablet / Android",
-    date: "Oct 24, 2024",
-    time: "12:40 PM",
-    status: "Success",
-    severity: "Info",
-  },
-  {
-    id: "AUD-1006",
-    user: "Unknown User",
-    role: "Unknown",
-    action: "Failed login attempt",
-    module: "Authentication",
-    ip: "192.168.1.99",
-    device: "Unknown Device",
-    date: "Oct 24, 2024",
-    time: "01:05 PM",
-    status: "Failed",
-    severity: "Critical",
-  },
-];
-
-const moduleActivity = [
-  {
-    label: "Authentication",
-    value: "86 logs",
-    percent: "90%",
-  },
-  {
-    label: "Reports",
-    value: "58 logs",
-    percent: "70%",
-  },
-  {
-    label: "Payments",
-    value: "44 logs",
-    percent: "55%",
-  },
-  {
-    label: "Users",
-    value: "26 logs",
-    percent: "34%",
-  },
-];
-
-const alerts = [
-  {
-    title: "Access Denied",
-    text: "Receptionist attempted to access reports without permission.",
-    type: "warning",
-  },
-  {
-    title: "Failed Login",
-    text: "Unknown user failed login using invalid credentials.",
-    type: "critical",
-  },
-  {
-    title: "Sensitive Action",
-    text: "Manager added a payment transaction.",
-    type: "info",
-  },
-];
-
-
 
 function getSeverityClass(severity: string) {
   if (severity === "Critical") {
@@ -165,7 +19,49 @@ function getSeverityClass(severity: string) {
   return "bg-blue-100 text-blue-700";
 }
 
+import { useState, useEffect } from "react";
+import { getAll as getAudits } from "@/lib/api/auditApi";
+
 export default function AuditLogsPage() {
+  const [logs, setLogs] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const data = await getAudits();
+        setLogs(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    load();
+  }, []);
+
+  const totalLogs = logs.length;
+  const successActions = logs.filter(l => l.action?.toLowerCase().includes("created") || l.action?.toLowerCase().includes("updated") || l.action?.toLowerCase().includes("deleted")).length;
+  
+  const auditStats = [
+    { label: "Total Logs", value: totalLogs.toString(), note: "All recorded actions" },
+    { label: "Success Actions", value: successActions.toString(), note: "Completed safely" },
+    { label: "Denied Actions", value: "0", note: "Blocked by role access" },
+    { label: "Failed Attempts", value: "0", note: "Login or system failures" },
+  ];
+
+  const modules = Array.from(new Set(logs.map(l => l.module)));
+  const moduleActivity = modules.map(mod => {
+    const count = logs.filter(l => l.module === mod).length;
+    return {
+      label: mod || "Unknown",
+      value: `${count} logs`,
+      percent: `${Math.round((count / (totalLogs || 1)) * 100)}%`
+    };
+  });
+
+  const alerts = logs.slice(0, 3).map(l => ({
+    title: "System Action",
+    text: l.action,
+    type: "info"
+  }));
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
@@ -297,55 +193,55 @@ export default function AuditLogsPage() {
                 </thead>
 
                 <tbody className="divide-y divide-[#d0c5af]">
-                  {auditLogs.map((log) => (
+                  {logs.map((log) => (
                     <tr key={log.id} className="transition hover:bg-[#fbf9f5]">
-                      <td className="px-6 py-5 font-bold">{log.id}</td>
+                      <td className="px-6 py-5 font-bold">{log.id?.substring(0,8)}</td>
 
-                      <td className="px-6 py-5 font-semibold">{log.user}</td>
+                      <td className="px-6 py-5 font-semibold">{log.userName || log.userId}</td>
 
                       <td className="px-6 py-5">
                         <span className="rounded-full bg-[#d4af37]/20 px-3 py-1 text-xs font-bold text-[#735c00]">
-                          {log.role}
+                          SYSTEM
                         </span>
                       </td>
 
                       <td className="px-6 py-5 text-[#4d4635]">
-                        {log.action}
+                        {log.details || log.action}
                       </td>
 
                       <td className="px-6 py-5 font-semibold">
                         {log.module}
                       </td>
 
-                      <td className="px-6 py-5 text-[#4d4635]">{log.ip}</td>
+                      <td className="px-6 py-5 text-[#4d4635]">-</td>
 
                       <td className="px-6 py-5 text-[#4d4635]">
-                        {log.device}
+                        -
                       </td>
 
                       <td className="px-6 py-5 text-[#4d4635]">
-                        {log.date}
+                        {new Date(log.timestamp).toLocaleDateString()}
                         <br />
-                        <span className="text-xs">{log.time}</span>
+                        <span className="text-xs">{new Date(log.timestamp).toLocaleTimeString()}</span>
                       </td>
 
                       <td className="px-6 py-5">
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-bold ${getSeverityClass(
-                            log.severity
+                            "Info"
                           )}`}
                         >
-                          {log.severity}
+                          Info
                         </span>
                       </td>
 
                       <td className="px-6 py-5">
                         <span
                           className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusBadgeClass(
-                            log.status
+                            "Success"
                           )}`}
                         >
-                          {log.status}
+                          Success
                         </span>
                       </td>
                     </tr>

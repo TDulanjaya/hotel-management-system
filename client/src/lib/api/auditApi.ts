@@ -3,7 +3,8 @@ import { authenticatedFetch } from '@/lib/api/authApi';
 export async function getAll() {
   const res = await authenticatedFetch(`/api/audits`);
   if (!res.ok) throw new Error(`Failed to fetch audits`);
-  return res.json();
+  const data = await res.json();
+  return data?.content !== undefined ? data.content : data;
 }
 
 export async function getById(id: string) {

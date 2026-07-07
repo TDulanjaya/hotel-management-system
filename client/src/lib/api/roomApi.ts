@@ -1,9 +1,19 @@
 import { authenticatedFetch } from "./authApi";
 
-export async function getRooms() {
-  const res = await authenticatedFetch("/api/rooms");
+export async function getRooms(params?: { page?: number, size?: number, search?: string }) {
+  let url = "/api/rooms";
+  if (params) {
+    const query = new URLSearchParams();
+    if (params.page !== undefined) query.append("page", params.page.toString());
+    if (params.size !== undefined) query.append("size", params.size.toString());
+    if (params.search) query.append("search", params.search);
+    const qStr = query.toString();
+    if (qStr) url += `?${qStr}`;
+  }
+  const res = await authenticatedFetch(url);
   if (!res.ok) throw new Error("Failed to fetch rooms");
-  return res.json();
+  const data = await res.json();
+  return data?.content !== undefined ? data.content : data;
 }
 
 export async function getRoomById(id: string) {

@@ -2,7 +2,8 @@ import { authenticatedFetch } from "./authApi";
 export async function getRecipes() {
   const res = await authenticatedFetch("/api/recipes");
   if (!res.ok) throw new Error("Failed to fetch recipes");
-  return res.json();
+  const data = await res.json();
+  return data?.content !== undefined ? data.content : data;
 }
 export async function createRecipe(data: any) {
   const res = await authenticatedFetch("/api/recipes", { method: "POST", body: JSON.stringify(data) });

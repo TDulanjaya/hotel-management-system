@@ -15,18 +15,19 @@ export function useCrudPage<T extends { id: string }>(options: {
   const [editItem, setEditItem] = useState<T | null>(null);
   const [formData, setFormData] = useState<Record<string, any>>(options.defaultFormData);
 
+  const { fetchFn } = options;
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError("");
     try {
-      const data = await options.fetchFn();
+      const data = await fetchFn();
       setItems(data);
     } catch (err: any) {
       setError(err.message || "Failed to fetch data");
     } finally {
       setLoading(false);
     }
-  }, [options]);
+  }, [fetchFn]);
 
   useEffect(() => {
     fetchData();

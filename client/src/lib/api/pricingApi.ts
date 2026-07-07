@@ -5,7 +5,8 @@ export async function getPricingItems() {
   if (!response.ok) {
     throw new Error("Failed to fetch pricing items");
   }
-  return response.json();
+  const data = await response.json();
+  return data?.content !== undefined ? data.content : data;
 }
 
 export async function getPricingItemById(id: string) {

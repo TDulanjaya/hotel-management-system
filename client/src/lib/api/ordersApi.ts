@@ -3,7 +3,8 @@ import { authenticatedFetch } from "./authApi";
 export async function getOrders() {
   const response = await authenticatedFetch("/api/orders");
   if (!response.ok) throw new Error("Failed to fetch orders");
-  return response.json();
+  const data = await response.json();
+  return data?.content !== undefined ? data.content : data;
 }
 
 export async function getOrderById(id: string) {

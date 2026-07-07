@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface FolioRepository extends MongoRepository<Folio, String> {
+    java.util.Optional<Folio> findByReservationId(String reservationId);
 }

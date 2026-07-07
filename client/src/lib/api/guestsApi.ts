@@ -3,7 +3,8 @@ import { authenticatedFetch } from "./authApi";
 export async function getGuests() {
   const response = await authenticatedFetch("/api/guests");
   if (!response.ok) throw new Error("Failed to fetch guests");
-  return response.json();
+  const data = await response.json();
+  return data?.content !== undefined ? data.content : data;
 }
 
 export async function getGuestById(id: string) {

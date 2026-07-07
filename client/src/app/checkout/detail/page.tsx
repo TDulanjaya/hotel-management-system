@@ -5,15 +5,46 @@ import { useSearchParams } from "next/navigation";
 import { useParams, useRouter } from "next/navigation";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { useState, useEffect } from "react";
+import { getReservationById } from "@/lib/api/reservationsApi";
+import { processCheckout } from "@/lib/api/checkoutApi";
 
 export default function CheckoutDetailsPage() {
   const searchParams = useSearchParams();
-  const rawId = searchParams.get("id");
-  const id = rawId as string;
-
+  const id = searchParams.get("id") as string;
   const router = useRouter();
-  const params = useParams();
-  const checkoutId = id as string;
+
+  const [reservation, setReservation] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (id) {
+      getReservationById(id).then(setReservation).catch(console.error);
+    }
+  }, [id]);
+
+  const handleCheckout = async () => {
+    if (!id || !confirm("Complete checkout for this guest?")) return;
+    setLoading(true);
+    try {
+      await processCheckout(id);
+      alert("Checkout processed successfully!");
+      router.push("/checkout");
+    } catch (err) {
+      console.error(err);
+      alert("Failed to process checkout");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!reservation) {
+    return (
+      <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "RECEPTIONIST"]}>
+        <div className="min-h-screen bg-[#fbf9f5] p-10">Loading...</div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "RECEPTIONIST"]}>
@@ -46,10 +77,10 @@ export default function CheckoutDetailsPage() {
           </div>
 
           <section className="mb-8 grid gap-6 md:grid-cols-4">
-            <StatCard label="Checkout ID" value={checkoutId || "N/A"} />
-            <StatCard label="Room No" value="402" />
-            <StatCard label="Guest" value="Elena Rodriguez" />
-            <StatCard label="Status" value="Ready" />
+            <StatCard label="Checkout ID" value={id.substring(0,8)} />
+            <StatCard label="Room No" value={reservation.roomNumber} />
+            <StatCard label="Guest" value={reservation.guestName} />
+            <StatCard label="Status" value={reservation.status === "CHECKED_OUT" ? "Completed" : "Ready"} />
           </section>
 
           <section className="grid gap-8 xl:grid-cols-[1fr_1fr]">
@@ -57,11 +88,11 @@ export default function CheckoutDetailsPage() {
               <h2 className="text-2xl font-bold">Guest Stay Details</h2>
 
               <div className="mt-6 space-y-4">
-                <InfoRow label="Guest Name" value="Elena Rodriguez" />
-                <InfoRow label="Room Type" value="Executive Suite" />
-                <InfoRow label="Check In" value="Oct 21, 2024 - 02:00 PM" />
-                <InfoRow label="Check Out" value="Oct 24, 2024 - 11:00 AM" />
-                <InfoRow label="Nights" value="3 Nights" />
+                <InfoRow label="Guest Name" value={reservation.guestName} />
+                <InfoRow label="Room Type" value="-" />
+                <InfoRow label="Check In" value={reservation.checkIn} />
+                <InfoRow label="Check Out" value={reservation.checkOut} />
+                <InfoRow label="Adults / Children" value={`${reservation.adults} / ${reservation.children}`} />
               </div>
             </div>
 
@@ -69,17 +100,14 @@ export default function CheckoutDetailsPage() {
               <h2 className="text-2xl font-bold">Payment Summary</h2>
 
               <div className="mt-6 space-y-4">
-                <InfoRow label="Room Charges" value="Rs 1,200.00" />
-                <InfoRow label="Room Service" value="Rs 86.00" />
-                <InfoRow label="Restaurant" value="Rs 142.00" />
-                <InfoRow label="Parking" value="Rs 25.00" />
-                <InfoRow label="Tax & Service" value="Rs 185.00" />
+                <InfoRow label="Total Charges" value={`Rs ${reservation.totalAmount?.toFixed(2)}`} />
+                <InfoRow label="Payment Status" value={reservation.paymentStatus} />
               </div>
 
               <div className="mt-6 rounded-xl bg-[#735c00] p-5 text-white">
                 <div className="flex items-center justify-between">
                   <p className="text-lg font-bold">Final Total</p>
-                  <p className="text-2xl font-extrabold">Rs 1,638.00</p>
+                  <p className="text-2xl font-extrabold">Rs {reservation.totalAmount?.toFixed(2)}</p>
                 </div>
               </div>
             </div>
@@ -88,8 +116,12 @@ export default function CheckoutDetailsPage() {
               <h2 className="text-2xl font-bold">Checkout Actions</h2>
 
               <div className="mt-6 flex flex-wrap gap-4">
-                <button className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]">
-                  Complete Checkout
+                <button 
+                  onClick={handleCheckout} 
+                  disabled={loading || reservation.status === "CHECKED_OUT"}
+                  className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] disabled:opacity-50"
+                >
+                  {loading ? "Processing..." : (reservation.status === "CHECKED_OUT" ? "Already Checked Out" : "Complete Checkout")}
                 </button>
 
                 <button className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white">
