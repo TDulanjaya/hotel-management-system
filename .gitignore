@@ -218,4 +218,4 @@ build/
 
 ### VS Code ###
 .vscode/
-backend/env.download
+server/env.download
