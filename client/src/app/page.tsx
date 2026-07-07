@@ -56,12 +56,7 @@ export default function HomePage() {
           <Building2 size={32} className="text-[#d4af37]" />
           <span className="text-xl font-bold tracking-widest uppercase">LuxeStay</span>
         </div>
-        <Link 
-          href="/login"
-          className="rounded-full bg-[#d4af37] px-6 py-2.5 text-sm font-semibold text-slate-900 transition-all hover:bg-[#f6d36b] hover:shadow-[0_0_20px_rgba(212,175,55,0.4)]"
-        >
-          Staff Sign In
-        </Link>
+
       </header>
 
       {/* Hero Section */}

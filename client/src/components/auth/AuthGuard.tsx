@@ -17,7 +17,7 @@ export default function AuthGuard({
   const [forbidden, setForbidden] = useState(false);
 
   useEffect(() => {
-    const publicPaths = ["/", "/login", "/auth/login", "/auth/register"];
+    const publicPaths = ["/", "/login"];
     const isPublic = publicPaths.includes(pathname);
 
     const token = getToken();
@@ -47,7 +47,7 @@ export default function AuthGuard({
     }
   }, [pathname, router, allowedRoles]);
 
-  const publicPaths = ["/", "/login", "/auth/login", "/auth/register"];
+  const publicPaths = ["/", "/login"];
   if (!authorized && !publicPaths.includes(pathname)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#fbf9f5]">
