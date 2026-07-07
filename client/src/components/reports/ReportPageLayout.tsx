@@ -2,9 +2,11 @@ import React from "react";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
+import { UserRole } from "@/utils/auth";
+
 type Props = {
   title: string;
-  allowedRoles?: string[];
+  allowedRoles?: UserRole[];
   children: React.ReactNode;
 };
 

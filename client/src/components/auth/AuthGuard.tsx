@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { getToken, getUser, UserRole } from "@/utils/auth";
+import { getToken, getUser, UserRole, getDashboardByRole } from "@/utils/auth";
 
 export default function AuthGuard({
   children,
@@ -17,13 +17,21 @@ export default function AuthGuard({
   const [forbidden, setForbidden] = useState(false);
 
   useEffect(() => {
-    if (pathname === "/login") {
-      setAuthorized(true);
-      return;
-    }
+    const publicPaths = ["/", "/login", "/auth/login", "/auth/register"];
+    const isPublic = publicPaths.includes(pathname);
 
     const token = getToken();
     const user = getUser();
+
+    if (token && user && pathname === "/") {
+      router.push(getDashboardByRole(user.role));
+      return;
+    }
+
+    if (isPublic && (!token || !user)) {
+      setAuthorized(true);
+      return;
+    }
 
     if (!token || !user) {
       setAuthorized(false);
@@ -39,7 +47,8 @@ export default function AuthGuard({
     }
   }, [pathname, router, allowedRoles]);
 
-  if (!authorized && pathname !== "/login") {
+  const publicPaths = ["/", "/login", "/auth/login", "/auth/register"];
+  if (!authorized && !publicPaths.includes(pathname)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#fbf9f5]">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#d4af37] border-t-transparent"></div>
