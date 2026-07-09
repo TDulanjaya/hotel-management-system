@@ -8,11 +8,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
-@Document(collection = "room_service_orders")
-public class RoomServiceOrder {
+@Document(collection = "laundry_orders")
+public class LaundryOrder {
     @Id private String id;
-    private String roomNumber;
     private String guestName;
+    private String roomNumber;
     private List<OrderLineItem> items;
     private String notes;
     private String status;

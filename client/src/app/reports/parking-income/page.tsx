@@ -1,155 +1,12 @@
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
 import { ReportSummaryCards } from "@/components/reports/ReportSummaryCards";
 import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-
-
-
-const parkingSummary = [
-  {
-    label: "Total Parking Income",
-    value: "Rs 780",
-    note: "Today parking collection",
-  },
-  {
-    label: "Occupied Slots",
-    value: "18",
-    note: "Currently used parking slots",
-  },
-  {
-    label: "Available Slots",
-    value: "22",
-    note: "Ready for new vehicles",
-  },
-  {
-    label: "Vehicle Services",
-    value: "Rs 240",
-    note: "Wash and valet income",
-  },
-];
-
-const parkingRows = [
-  {
-    id: "PK-1001",
-    vehicle: "Honda Fit GP1",
-    plate: "CAB-4521",
-    guest: "Mr. Daniel Smith",
-    slot: "A-12",
-    service: "Parking Only",
-    checkIn: "08:20 AM",
-    checkOut: "02:15 PM",
-    amount: "Rs 25.00",
-    status: "Paid",
-  },
-  {
-    id: "PK-1002",
-    vehicle: "Toyota Yaris",
-    plate: "KQ-8821",
-    guest: "Ms. Olivia Brown",
-    slot: "A-18",
-    service: "Parking + Wash",
-    checkIn: "09:10 AM",
-    checkOut: "03:30 PM",
-    amount: "Rs 45.00",
-    status: "Paid",
-  },
-  {
-    id: "PK-1003",
-    vehicle: "Toyota Corolla",
-    plate: "WP-7781",
-    guest: "Walk-in Guest",
-    slot: "B-09",
-    service: "Parking Only",
-    checkIn: "10:45 AM",
-    checkOut: "-",
-    amount: "Rs 15.00",
-    status: "Pending",
-  },
-  {
-    id: "PK-1004",
-    vehicle: "Honda Civic",
-    plate: "CAQ-3021",
-    guest: "Mr. Marcus Kane",
-    slot: "B-14",
-    service: "Valet Service",
-    checkIn: "11:30 AM",
-    checkOut: "04:20 PM",
-    amount: "Rs 60.00",
-    status: "Paid",
-  },
-  {
-    id: "PK-1005",
-    vehicle: "Suzuki Wagon R",
-    plate: "KV-5520",
-    guest: "Event Guest",
-    slot: "C-04",
-    service: "Event Parking",
-    checkIn: "01:00 PM",
-    checkOut: "-",
-    amount: "Rs 20.00",
-    status: "Pending",
-  },
-];
-
-const serviceBreakdown = [
-  {
-    label: "Parking Only",
-    value: "Rs 420",
-    percent: "54%",
-  },
-  {
-    label: "Valet Service",
-    value: "Rs 180",
-    percent: "23%",
-  },
-  {
-    label: "Vehicle Wash",
-    value: "Rs 120",
-    percent: "15%",
-  },
-  {
-    label: "Event Parking",
-    value: "Rs 60",
-    percent: "8%",
-  },
-];
-
-const hourlyIncome = [
-  { time: "08 AM", value: "Rs 90", height: "45%" },
-  { time: "10 AM", value: "Rs 140", height: "70%" },
-  { time: "12 PM", value: "Rs 160", height: "80%" },
-  { time: "02 PM", value: "Rs 200", height: "100%" },
-  { time: "04 PM", value: "Rs 120", height: "60%" },
-  { time: "06 PM", value: "Rs 70", height: "35%" },
-];
-
-const slotUsage = [
-  {
-    zone: "Zone A",
-    total: 15,
-    occupied: 10,
-    available: 5,
-    income: "Rs 340",
-    rate: "67%",
-  },
-  {
-    zone: "Zone B",
-    total: 15,
-    occupied: 6,
-    available: 9,
-    income: "Rs 260",
-    rate: "40%",
-  },
-  {
-    zone: "Zone C",
-    total: 10,
-    occupied: 2,
-    available: 8,
-    income: "Rs 180",
-    rate: "20%",
-  },
-];
+import { getParkingBookings } from "@/lib/api/parkingApi";
 
 function getStatusClass(status: string) {
-  if (status === "Paid") {
+  if (status === "COMPLETED" || status === "PAID") {
     return "bg-green-100 text-green-700";
   }
 
@@ -171,6 +28,116 @@ function getRateClass(rate: string) {
 }
 
 export default function ParkingIncomeReportPage() {
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getParkingBookings();
+        setBookings(data || []);
+      } catch (err) {
+        console.error("Failed to load parking bookings", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const totalIncome = bookings.reduce((acc, b) => acc + (b.totalAmount || 0), 0);
+  const occupiedSlots = bookings.filter(b => b.status === "ACTIVE" || b.status === "PARKED").length;
+  // Assume a fixed 50 slots for the hotel parking space if not tracked dynamically
+  const totalSlots = 50;
+  const availableSlots = Math.max(0, totalSlots - occupiedSlots);
+  const additionalServices = bookings.reduce((acc, b) => {
+    return acc + (b.services ? b.services.reduce((sAcc: number, s: any) => sAcc + (s.price || 0), 0) : 0);
+  }, 0);
+
+  const parkingSummary = [
+    {
+      label: "Total Parking Income",
+      value: `Rs ${totalIncome.toLocaleString()}`,
+      note: "Today parking collection",
+    },
+    {
+      label: "Occupied Slots",
+      value: occupiedSlots.toString(),
+      note: "Currently used parking slots",
+    },
+    {
+      label: "Available Slots",
+      value: availableSlots.toString(),
+      note: "Ready for new vehicles",
+    },
+    {
+      label: "Vehicle Services",
+      value: `Rs ${additionalServices.toLocaleString()}`,
+      note: "Wash and valet income",
+    },
+  ];
+
+  const parkingRows = bookings.map(b => ({
+    id: `PK-${b.id?.substring(0, 6)}`,
+    vehicle: `${b.vehicleMake || ""} ${b.vehicleModel || ""}`.trim() || "Unknown Vehicle",
+    plate: b.licensePlate || "N/A",
+    guest: b.guestName || "Walk-in Guest",
+    slot: b.slotNumber || "Unassigned",
+    service: b.services && b.services.length > 0 ? b.services.map((s: any) => s.name).join(", ") : "Parking Only",
+    checkIn: b.checkInTime ? new Date(b.checkInTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "-",
+    checkOut: b.checkOutTime ? new Date(b.checkOutTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "-",
+    amount: `Rs ${(b.totalAmount || 0).toLocaleString()}`,
+    status: b.status || "ACTIVE",
+  }));
+
+  const serviceBreakdown = useMemo(() => {
+    let parkingOnly = 0;
+    let servicesTotal = 0;
+    
+    bookings.forEach(b => {
+      let svcAmount = 0;
+      if (b.services && b.services.length > 0) {
+        svcAmount = b.services.reduce((acc: number, s: any) => acc + (s.price || 0), 0);
+      }
+      servicesTotal += svcAmount;
+      parkingOnly += ((b.totalAmount || 0) - svcAmount);
+    });
+
+    return [
+      { label: "Parking Fees", value: `Rs ${parkingOnly.toLocaleString()}`, percent: totalIncome > 0 ? Math.round((parkingOnly / totalIncome) * 100) + "%" : "0%" },
+      { label: "Add-on Services", value: `Rs ${servicesTotal.toLocaleString()}`, percent: totalIncome > 0 ? Math.round((servicesTotal / totalIncome) * 100) + "%" : "0%" },
+    ];
+  }, [bookings, totalIncome]);
+
+  const hourlyIncome = [
+    { time: "08 AM", value: "Rs 90", height: "45%" },
+    { time: "10 AM", value: "Rs 140", height: "70%" },
+    { time: "12 PM", value: "Rs 160", height: "80%" },
+    { time: "02 PM", value: "Rs 200", height: "100%" },
+    { time: "04 PM", value: "Rs 120", height: "60%" },
+    { time: "06 PM", value: "Rs 70", height: "35%" },
+  ];
+
+  // Mock slot usage as zones are not strictly defined in model
+  const slotUsage = [
+    {
+      zone: "Zone A",
+      total: 20,
+      occupied: Math.min(20, occupiedSlots),
+      available: Math.max(0, 20 - occupiedSlots),
+      income: `Rs ${Math.round(totalIncome * 0.5).toLocaleString()}`,
+      rate: `${Math.min(100, Math.round((occupiedSlots / 20) * 100))}%`,
+    },
+    {
+      zone: "Zone B",
+      total: 30,
+      occupied: Math.max(0, occupiedSlots - 20),
+      available: Math.max(0, 30 - Math.max(0, occupiedSlots - 20)),
+      income: `Rs ${Math.round(totalIncome * 0.5).toLocaleString()}`,
+      rate: `${Math.min(100, Math.round((Math.max(0, occupiedSlots - 20) / 30) * 100))}%`,
+    }
+  ];
+
   return (
     <ReportPageLayout title="Parking Income Report">
 
@@ -285,6 +252,9 @@ export default function ParkingIncomeReportPage() {
                 </thead>
 
                 <tbody className="divide-y divide-[#d0c5af]">
+                  {parkingRows.length === 0 && !loading && (
+                    <tr><td colSpan={10} className="p-6 text-center text-[#4d4635]">No parking records.</td></tr>
+                  )}
                   {parkingRows.map((parking) => (
                     <tr
                       key={parking.id}

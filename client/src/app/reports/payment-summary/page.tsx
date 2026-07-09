@@ -1,138 +1,16 @@
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
 import { ReportSummaryCards } from "@/components/reports/ReportSummaryCards";
 import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-
-
-
-const paymentSummary = [
-  {
-    label: "Total Payments",
-    value: "Rs 42,850",
-    note: "All payment collections",
-  },
-  {
-    label: "Completed",
-    value: "Rs 31,420",
-    note: "Successfully settled",
-  },
-  {
-    label: "Pending",
-    value: "Rs 9,330",
-    note: "Waiting confirmation",
-  },
-  {
-    label: "Refunds",
-    value: "Rs 2,100",
-    note: "Refund requests today",
-  },
-];
-
-const paymentMethods = [
-  {
-    method: "Card Payments",
-    amount: "Rs 23,200",
-    count: 32,
-    percent: "54%",
-  },
-  {
-    method: "Bank Transfers",
-    amount: "Rs 14,600",
-    count: 8,
-    percent: "34%",
-  },
-  {
-    method: "Cash Payments",
-    amount: "Rs 5,050",
-    count: 18,
-    percent: "12%",
-  },
-];
-
-const paymentRows = [
-  {
-    id: "PAY-1001",
-    guest: "Elena Rodriguez",
-    reference: "Res #LX-9902",
-    module: "Room Booking",
-    method: "Card",
-    amount: "Rs 1,250.00",
-    date: "Oct 24, 2024",
-    status: "Completed",
-  },
-  {
-    id: "PAY-1002",
-    guest: "Corporate Gala - TechVibe",
-    reference: "Event #EV-0044",
-    module: "EVENTS",
-    method: "Bank Transfer",
-    amount: "Rs 12,400.00",
-    date: "Oct 24, 2024",
-    status: "Pending",
-  },
-  {
-    id: "PAY-1003",
-    guest: "Marcus Thorne",
-    reference: "Res #LX-9871",
-    module: "Room Booking",
-    method: "Card",
-    amount: "Rs 3,800.00",
-    date: "Oct 24, 2024",
-    status: "Failed",
-  },
-  {
-    id: "PAY-1004",
-    guest: "Sophia Chen",
-    reference: "Folio #FOL-1004",
-    module: "Folio",
-    method: "Cash",
-    amount: "Rs 450.00",
-    date: "Oct 24, 2024",
-    status: "Completed",
-  },
-  {
-    id: "PAY-1005",
-    guest: "Room Service - Room 402",
-    reference: "RS #1001",
-    module: "Room Service",
-    method: "Added to Folio",
-    amount: "Rs 32.00",
-    date: "Oct 24, 2024",
-    status: "Completed",
-  },
-];
-
-const refundRows = [
-  {
-    id: "REF-001",
-    guest: "Daniel Smith",
-    reference: "PAY-0988",
-    amount: "Rs 750.00",
-    reason: "Booking cancellation",
-    status: "Pending Approval",
-  },
-  {
-    id: "REF-002",
-    guest: "Sarah Redford",
-    reference: "PAY-0991",
-    amount: "Rs 1,100.00",
-    reason: "Duplicate payment",
-    status: "Approved",
-  },
-  {
-    id: "REF-003",
-    guest: "Walk-in Guest",
-    reference: "PAY-0994",
-    amount: "Rs 250.00",
-    reason: "Service adjustment",
-    status: "Processing",
-  },
-];
+import { getPayments } from "@/lib/api/paymentsApi";
 
 function getStatusClass(status: string) {
-  if (status === "Completed" || status === "Approved") {
+  if (status === "COMPLETED" || status === "APPROVED" || status === "PAID") {
     return "bg-green-100 text-green-700";
   }
 
-  if (status === "Pending" || status === "Pending Approval" || status === "Processing") {
+  if (status === "PENDING" || status === "PENDING_APPROVAL" || status === "PROCESSING") {
     return "bg-yellow-100 text-yellow-700";
   }
 
@@ -140,6 +18,95 @@ function getStatusClass(status: string) {
 }
 
 export default function PaymentSummaryReportPage() {
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const payData = await getPayments();
+        setPayments(payData || []);
+      } catch (err) {
+        console.error("Failed to load payments", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const totalPayments = payments.reduce((acc, p) => acc + (p.amount || 0), 0);
+  const completedPayments = payments.filter(p => p.status === "COMPLETED" || p.status === "PAID" || !p.status);
+  const pendingPayments = payments.filter(p => p.status === "PENDING");
+  const failedPayments = payments.filter(p => p.status === "FAILED");
+  const refundedPayments = payments.filter(p => p.status === "REFUNDED");
+
+  const completedTotal = completedPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
+  const pendingTotal = pendingPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
+  const failedTotal = failedPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
+  const refundedTotal = refundedPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
+  const netCollection = completedTotal - refundedTotal;
+
+  const paymentSummary = [
+    {
+      label: "Total Payments",
+      value: `Rs ${totalPayments.toLocaleString()}`,
+      note: "All payment collections",
+    },
+    {
+      label: "Completed",
+      value: `Rs ${completedTotal.toLocaleString()}`,
+      note: "Successfully settled",
+    },
+    {
+      label: "Pending",
+      value: `Rs ${pendingTotal.toLocaleString()}`,
+      note: "Waiting confirmation",
+    },
+    {
+      label: "Refunds",
+      value: `Rs ${refundedTotal.toLocaleString()}`,
+      note: "Refund requests today",
+    },
+  ];
+
+  const paymentMethods = useMemo(() => {
+    const methods: Record<string, { amount: number; count: number }> = {};
+    payments.forEach(p => {
+      const method = p.paymentMethod || "UNKNOWN";
+      if (!methods[method]) methods[method] = { amount: 0, count: 0 };
+      methods[method].amount += (p.amount || 0);
+      methods[method].count += 1;
+    });
+
+    return Object.entries(methods).map(([method, data]) => ({
+      method,
+      amount: `Rs ${data.amount.toLocaleString()}`,
+      count: data.count,
+      percent: totalPayments > 0 ? ((data.amount / totalPayments) * 100).toFixed(1) + "%" : "0%"
+    }));
+  }, [payments, totalPayments]);
+
+  const paymentRows = payments.map(p => ({
+    id: `PAY-${p.id.substring(0, 6)}`,
+    guest: "Guest/Customer",
+    reference: `Ref #${p.id.substring(0, 8)}`,
+    module: "Hotel System",
+    method: p.paymentMethod || "UNKNOWN",
+    amount: `Rs ${p.amount}`,
+    date: p.paidAt || p.paymentDate ? new Date(p.paidAt || p.paymentDate).toLocaleDateString() : "Unknown",
+    status: p.status || "COMPLETED",
+  }));
+
+  const refundRows = refundedPayments.map(p => ({
+    id: `REF-${p.id.substring(0, 6)}`,
+    guest: "Guest/Customer",
+    reference: `PAY-${p.id.substring(0, 6)}`,
+    amount: `Rs ${p.amount}`,
+    reason: "Requested by guest",
+    status: "APPROVED",
+  }));
+
   return (
     <ReportPageLayout title="Payment Summary Report">
 
@@ -154,6 +121,9 @@ export default function PaymentSummaryReportPage() {
               </p>
 
               <div className="mt-6 space-y-4">
+                {paymentMethods.length === 0 && !loading && (
+                  <p className="text-sm text-[#4d4635]">No payment data.</p>
+                )}
                 {paymentMethods.map((item) => (
                   <MethodRow
                     key={item.method}
@@ -170,11 +140,11 @@ export default function PaymentSummaryReportPage() {
               <h2 className="text-2xl font-bold">Settlement Overview</h2>
 
               <div className="mt-6 space-y-4">
-                <SummaryRow label="Completed Payments" value="Rs 31,420" />
-                <SummaryRow label="Pending Payments" value="Rs 9,330" />
-                <SummaryRow label="Failed Payments" value="Rs 3,800" />
-                <SummaryRow label="Refund Requests" value="Rs 2,100" />
-                <SummaryRow label="Net Collection" value="Rs 40,750" highlight />
+                <SummaryRow label="Completed Payments" value={`Rs ${completedTotal.toLocaleString()}`} />
+                <SummaryRow label="Pending Payments" value={`Rs ${pendingTotal.toLocaleString()}`} />
+                <SummaryRow label="Failed Payments" value={`Rs ${failedTotal.toLocaleString()}`} />
+                <SummaryRow label="Refund Requests" value={`Rs ${refundedTotal.toLocaleString()}`} />
+                <SummaryRow label="Net Collection" value={`Rs ${netCollection.toLocaleString()}`} highlight />
               </div>
             </div>
           </section>
@@ -233,6 +203,9 @@ export default function PaymentSummaryReportPage() {
                 </thead>
 
                 <tbody className="divide-y divide-[#d0c5af]">
+                  {paymentRows.length === 0 && !loading && (
+                    <tr><td colSpan={8} className="p-6 text-center text-[#4d4635]">No transactions.</td></tr>
+                  )}
                   {paymentRows.map((payment) => (
                     <tr
                       key={payment.id}
@@ -303,6 +276,9 @@ export default function PaymentSummaryReportPage() {
                 </thead>
 
                 <tbody className="divide-y divide-[#d0c5af]">
+                  {refundRows.length === 0 && !loading && (
+                    <tr><td colSpan={6} className="p-6 text-center text-[#4d4635]">No refund requests.</td></tr>
+                  )}
                   {refundRows.map((refund) => (
                     <tr key={refund.id} className="transition hover:bg-[#fbf9f5]">
                       <td className="px-6 py-5 font-bold">{refund.id}</td>

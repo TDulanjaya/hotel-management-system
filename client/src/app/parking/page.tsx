@@ -1,18 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useAuthContext } from "@/context/AuthContext";
 import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
-import { getParkingBookings, deleteParkingBooking as apiDeleteParkingBooking, createParkingBooking } from "@/lib/api/parkingApi";
+import { deleteParkingBooking as apiDeleteParkingBooking, createParkingBooking } from "@/lib/api/parkingApi";
 import SlidePanel from "@/components/ui/SlidePanel";
 import { Car } from "lucide-react";
-
+import useSWR from "swr";
+import { swrFetcher } from "@/lib/api/authApi";
+import { useWebSocket } from "@/hooks/useWebSocket";
 
 export default function ParkingPage() {
-  const [parkingSlots, setParkingSlots] = useState<any[]>([]);
   const { user } = useAuthContext();
   const [panelOpen, setPanelOpen] = useState(false);
 
@@ -38,24 +39,18 @@ export default function ParkingPage() {
     status: "CHECKED_IN"
   });
 
-  const loadParking = async () => {
-    try {
-      const data = await getParkingBookings();
-      setParkingSlots(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  const { data, error: fetchError, mutate } = useSWR("/api/parking/bookings", swrFetcher);
+  const parkingSlots = data?.content || (Array.isArray(data) ? data : []);
 
-  useEffect(() => {
-    loadParking();
-  }, []);
+  useWebSocket("/topic/parking", () => {
+    mutate(); // Refresh SWR when a WebSocket message is received
+  });
 
   const deleteParking = async (id: string) => {
     if (!confirm("Are you sure you want to delete this parking record?")) return;
     try {
       await apiDeleteParkingBooking(id);
-      setParkingSlots(prev => prev.filter(p => p.id !== id));
+      mutate();
       alert("Parking record deleted successfully.");
     } catch (error) {
       console.error(error);
@@ -77,7 +72,7 @@ export default function ParkingPage() {
         amount: Number(formData.amount),
       });
       setPanelOpen(false);
-      loadParking();
+      mutate();
       // Reset form
       setFormData({
         vehicleNumber: "", vehicleModel: "", vehicleType: "Car", driverName: "", contactNumber: "",
@@ -126,9 +121,9 @@ export default function ParkingPage() {
 
           <section className="mb-8 grid gap-6 md:grid-cols-4">
             <StatCard label="Total Records" value={String(parkingSlots.length)} />
-            <StatCard label="Checked In" value={String(parkingSlots.filter(p => p.status === "CHECKED_IN" || p.status === "Occupied").length)} />
-            <StatCard label="Checked Out" value={String(parkingSlots.filter(p => p.status === "CHECKED_OUT").length)} />
-            <StatCard label="Reserved" value={String(parkingSlots.filter(p => p.status === "Reserved" || p.status === "RESERVED").length)} />
+            <StatCard label="Checked In" value={String(parkingSlots.filter((p: any) => p.status === "CHECKED_IN" || p.status === "Occupied").length)} />
+            <StatCard label="Checked Out" value={String(parkingSlots.filter((p: any) => p.status === "CHECKED_OUT").length)} />
+            <StatCard label="Reserved" value={String(parkingSlots.filter((p: any) => p.status === "Reserved" || p.status === "RESERVED").length)} />
           </section>
 
           <section className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">
@@ -164,7 +159,7 @@ export default function ParkingPage() {
                       </td>
                     </tr>
                   ) : (
-                    parkingSlots.map((parking) => (
+                    parkingSlots.map((parking: any) => (
                       <tr
                         key={parking.id}
                         className="transition hover:bg-[#fbf9f5]"

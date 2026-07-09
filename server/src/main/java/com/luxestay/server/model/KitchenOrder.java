@@ -5,6 +5,8 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 
+import java.util.List;
+
 @Data
 @Document(collection = "kitchen_orders")
 public class KitchenOrder {
@@ -12,7 +14,7 @@ public class KitchenOrder {
     private String orderSource;
     private String tableOrRoom;
     private String guestName;
-    private String items;
+    private List<OrderLineItem> items;
     private String priority;
     private String status;
     private String notes;

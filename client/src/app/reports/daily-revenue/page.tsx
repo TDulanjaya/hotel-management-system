@@ -1,102 +1,120 @@
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
 import { ReportSummaryCards } from "@/components/reports/ReportSummaryCards";
 import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-
-
-
-const revenueSummary = [
-  {
-    label: "Total Revenue",
-    value: "Rs 42,850",
-    note: "All departments today",
-  },
-  {
-    label: "Room Revenue",
-    value: "Rs 23,400",
-    note: "Bookings and stay charges",
-  },
-  {
-    label: "Food Sales",
-    value: "Rs 6,240",
-    note: "Restaurant and room service",
-  },
-  {
-    label: "Event Income",
-    value: "Rs 12,400",
-    note: "Venue and event payments",
-  },
-];
-
-const revenueRows = [
-  {
-    id: "REV-1001",
-    department: "Rooms",
-    source: "Room Booking",
-    reference: "Res #LX-9902",
-    income: "Rs 1,250.00",
-    paymentMethod: "Card",
-    time: "09:20 AM",
-    status: "Completed",
-  },
-  {
-    id: "REV-1002",
-    department: "Restaurant",
-    source: "Food Sales",
-    reference: "Table #12",
-    income: "Rs 320.00",
-    paymentMethod: "Cash",
-    time: "11:45 AM",
-    status: "Completed",
-  },
-  {
-    id: "REV-1003",
-    department: "EVENTS",
-    source: "Grand Ballroom",
-    reference: "Event #EV-0044",
-    income: "Rs 12,400.00",
-    paymentMethod: "Bank Transfer",
-    time: "01:10 PM",
-    status: "Pending",
-  },
-  {
-    id: "REV-1004",
-    department: "Room Service",
-    source: "Room Order",
-    reference: "Room 402",
-    income: "Rs 88.00",
-    paymentMethod: "Added to Folio",
-    time: "02:35 PM",
-    status: "Completed",
-  },
-  {
-    id: "REV-1005",
-    department: "PARKING",
-    source: "Parking Slot",
-    reference: "Slot A-12",
-    income: "Rs 25.00",
-    paymentMethod: "Cash",
-    time: "03:05 PM",
-    status: "Completed",
-  },
-];
-
-const hourlyRevenue = [
-  { time: "08 AM", value: "Rs 2.1k", height: "35%" },
-  { time: "10 AM", value: "Rs 5.4k", height: "65%" },
-  { time: "12 PM", value: "Rs 7.8k", height: "90%" },
-  { time: "02 PM", value: "Rs 4.6k", height: "55%" },
-  { time: "04 PM", value: "Rs 9.2k", height: "100%" },
-  { time: "06 PM", value: "Rs 6.3k", height: "72%" },
-];
+import { getReportSummary } from "@/lib/api/reportsApi";
+import { getPayments } from "@/lib/api/paymentsApi";
 
 function getStatusClass(status: string) {
-  if (status === "Completed") {
+  if (status === "COMPLETED" || status === "PAID") {
     return "bg-green-100 text-green-700";
   }
-
   return "bg-yellow-100 text-yellow-700";
 }
 
 export default function DailyRevenueReportPage() {
+  const [summary, setSummary] = useState<any>(null);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [sumData, payData] = await Promise.all([
+          getReportSummary(),
+          getPayments()
+        ]);
+        setSummary(sumData);
+        setPayments(payData || []);
+      } catch (err) {
+        console.error("Failed to load daily revenue report", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const revenueSummary = [
+    {
+      label: "Total Revenue",
+      value: summary?.todayRevenue || "Rs 0",
+      note: "All departments today",
+    },
+    {
+      label: "Room Revenue",
+      value: summary?.occupancyRate || "0%", // Replaced since Room Revenue specifically isn't scalar
+      note: "Occupancy Rate",
+    },
+    {
+      label: "Food Sales",
+      value: summary?.foodSales || "Rs 0",
+      note: "Restaurant and room service",
+    },
+    {
+      label: "Event Income",
+      value: summary?.eventIncome || "Rs 0",
+      note: "Venue and event payments",
+    },
+  ];
+
+  // Process today's payments
+  const todayDateString = new Date().toISOString().split('T')[0];
+  
+  const todaysPayments = payments.filter(p => {
+    if (!p.paidAt && !p.paymentDate) return false;
+    const dateObj = new Date(p.paidAt || p.paymentDate);
+    return dateObj.toISOString().split('T')[0] === todayDateString;
+  });
+
+  const revenueRows = todaysPayments.map(p => ({
+    id: `REV-${p.id.substring(0, 6)}`,
+    department: "Hotel", // Since payment doesn't always strictly store department
+    source: "Payment",
+    reference: `Ref #${p.id.substring(0, 8)}`,
+    income: `Rs ${p.amount}`,
+    paymentMethod: p.paymentMethod || "Unknown",
+    time: new Date(p.paidAt || p.paymentDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    status: p.status || "COMPLETED",
+  }));
+
+  // Calculate hourly revenue
+  const hourlyBuckets = useMemo(() => {
+    const buckets: Record<number, number> = {
+      8: 0, 10: 0, 12: 0, 14: 0, 16: 0, 18: 0
+    };
+    
+    let maxBucket = 0;
+
+    todaysPayments.forEach(p => {
+      const date = new Date(p.paidAt || p.paymentDate);
+      let hour = date.getHours();
+      
+      // Map to nearest bucket (naive mapping)
+      if (hour <= 9) buckets[8] += p.amount;
+      else if (hour <= 11) buckets[10] += p.amount;
+      else if (hour <= 13) buckets[12] += p.amount;
+      else if (hour <= 15) buckets[14] += p.amount;
+      else if (hour <= 17) buckets[16] += p.amount;
+      else buckets[18] += p.amount;
+    });
+
+    Object.values(buckets).forEach(val => {
+      if (val > maxBucket) maxBucket = val;
+    });
+
+    return Object.entries(buckets).map(([hour, val]) => {
+      const height = maxBucket === 0 ? 0 : Math.round((val / maxBucket) * 100);
+      const timeLabel = parseInt(hour) > 12 ? `${parseInt(hour)-12} PM` : `${hour} AM`;
+      return {
+        time: timeLabel,
+        value: `Rs ${val.toLocaleString()}`,
+        height: `${height}%`
+      };
+    });
+  }, [todaysPayments]);
+
   return (
     <ReportPageLayout title="Daily Revenue Report">
 
@@ -119,7 +137,7 @@ export default function DailyRevenueReportPage() {
               </div>
 
               <div className="flex h-[280px] items-end gap-4">
-                {hourlyRevenue.map((item) => (
+                {hourlyBuckets.map((item) => (
                   <div
                     key={item.time}
                     className="flex flex-1 flex-col items-center gap-3"
@@ -145,10 +163,10 @@ export default function DailyRevenueReportPage() {
               <h2 className="text-2xl font-bold">Revenue Breakdown</h2>
 
               <div className="mt-6 space-y-4">
-                <BreakdownRow label="Rooms" amount="Rs 23,400" percent="55%" />
-                <BreakdownRow label="EVENTS" amount="Rs 12,400" percent="29%" />
-                <BreakdownRow label="Food Sales" amount="Rs 6,240" percent="15%" />
-                <BreakdownRow label="PARKING" amount="Rs 810" percent="1%" />
+                <BreakdownRow label="Pending Payments" amount={summary?.pendingPayments || "Rs 0"} percent="55%" />
+                <BreakdownRow label="EVENTS" amount={summary?.eventIncome || "Rs 0"} percent="29%" />
+                <BreakdownRow label="Food Sales" amount={summary?.foodSales || "Rs 0"} percent="15%" />
+                <BreakdownRow label="PARKING" amount={summary?.parkingIncome || "Rs 0"} percent="1%" />
               </div>
             </div>
           </section>
@@ -208,6 +226,9 @@ export default function DailyRevenueReportPage() {
                 </thead>
 
                 <tbody className="divide-y divide-[#d0c5af]">
+                  {revenueRows.length === 0 && !loading && (
+                    <tr><td colSpan={8} className="p-6 text-center text-[#4d4635]">No transactions today.</td></tr>
+                  )}
                   {revenueRows.map((row) => (
                     <tr key={row.id} className="transition hover:bg-[#fbf9f5]">
                       <td className="px-6 py-5 font-bold">{row.id}</td>

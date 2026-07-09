@@ -4,6 +4,7 @@ import { useSearchParams } from "next/navigation";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { getEventById } from "@/lib/api/eventApi";
 import { useParams } from "next/navigation";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -56,15 +57,16 @@ export default function EventDetailsPage() {
   const [event, setEvent] = useState<SavedEvent | null>(null);
 
   useEffect(() => {
-    const savedEvents: SavedEvent[] = JSON.parse(
-      localStorage.getItem("hotel_events") || "[]"
-    );
-
-    const selectedEvent = savedEvents.find((item) => item.id === eventId);
-
-    if (selectedEvent) {
-      setEvent(selectedEvent);
+    async function loadEvent() {
+      if (!eventId) return;
+      try {
+        const data = await getEventById(eventId);
+        setEvent(data);
+      } catch (err) {
+        console.error(err);
+      }
     }
+    loadEvent();
   }, [eventId]);
 
   return (

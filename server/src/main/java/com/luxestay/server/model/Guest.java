@@ -9,6 +9,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Guest {
     @Id private String id;
     private String name;
+    @org.springframework.data.mongodb.core.index.Indexed
     private String email;
     private String phone;
     private String nationality;

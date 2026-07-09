@@ -1,119 +1,9 @@
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
 import { ReportSummaryCards } from "@/components/reports/ReportSummaryCards";
 import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-
-
-
-const occupancySummary = [
-  {
-    label: "Total Rooms",
-    value: "42",
-    note: "All active rooms",
-  },
-  {
-    label: "Occupied Rooms",
-    value: "22",
-    note: "Currently checked-in",
-  },
-  {
-    label: "Available Rooms",
-    value: "14",
-    note: "Ready for booking",
-  },
-  {
-    label: "Occupancy Rate",
-    value: "78%",
-    note: "Today room usage",
-  },
-];
-
-const roomStatusRows = [
-  {
-    floor: "Floor 1",
-    total: 10,
-    occupied: 7,
-    available: 2,
-    cleaning: 1,
-    maintenance: 0,
-    rate: "70%",
-  },
-  {
-    floor: "Floor 2",
-    total: 10,
-    occupied: 8,
-    available: 1,
-    cleaning: 1,
-    maintenance: 0,
-    rate: "80%",
-  },
-  {
-    floor: "Floor 3",
-    total: 10,
-    occupied: 5,
-    available: 4,
-    cleaning: 1,
-    maintenance: 0,
-    rate: "50%",
-  },
-  {
-    floor: "Floor 4",
-    total: 8,
-    occupied: 2,
-    available: 5,
-    cleaning: 0,
-    maintenance: 1,
-    rate: "25%",
-  },
-  {
-    floor: "Floor 5",
-    total: 4,
-    occupied: 0,
-    available: 2,
-    cleaning: 1,
-    maintenance: 1,
-    rate: "0%",
-  },
-];
-
-const occupancyTrend = [
-  { day: "Mon", value: "68%", height: "68%" },
-  { day: "Tue", value: "72%", height: "72%" },
-  { day: "Wed", value: "80%", height: "80%" },
-  { day: "Thu", value: "76%", height: "76%" },
-  { day: "Fri", value: "89%", height: "89%" },
-  { day: "Sat", value: "94%", height: "94%" },
-  { day: "Sun", value: "78%", height: "78%" },
-];
-
-const roomTypeRows = [
-  {
-    type: "Presidential Suite",
-    total: 2,
-    occupied: 1,
-    available: 1,
-    rate: "50%",
-  },
-  {
-    type: "Executive Suite",
-    total: 6,
-    occupied: 4,
-    available: 2,
-    rate: "67%",
-  },
-  {
-    type: "Deluxe Room",
-    total: 14,
-    occupied: 9,
-    available: 5,
-    rate: "64%",
-  },
-  {
-    type: "Standard Room",
-    total: 20,
-    occupied: 8,
-    available: 12,
-    rate: "40%",
-  },
-];
+import { getRooms } from "@/lib/api/roomApi";
 
 function getRateClass(rate: string) {
   const numberRate = Number(rate.replace("%", ""));
@@ -130,6 +20,112 @@ function getRateClass(rate: string) {
 }
 
 export default function OccupancyReportPage() {
+  const [rooms, setRooms] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const roomData = await getRooms();
+        setRooms(roomData || []);
+      } catch (err) {
+        console.error("Failed to load occupancy data", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const totalRooms = rooms.length;
+  const occupiedRooms = rooms.filter(r => r.status === "OCCUPIED").length;
+  const availableRooms = rooms.filter(r => r.status === "AVAILABLE").length;
+  const cleaningRooms = rooms.filter(r => r.status === "CLEANING").length;
+  const maintenanceRooms = rooms.filter(r => r.status === "MAINTENANCE").length;
+  
+  const occupancyRate = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) + "%" : "0%";
+
+  const occupancySummary = [
+    {
+      label: "Total Rooms",
+      value: totalRooms.toString(),
+      note: "All active rooms",
+    },
+    {
+      label: "Occupied Rooms",
+      value: occupiedRooms.toString(),
+      note: "Currently checked-in",
+    },
+    {
+      label: "Available Rooms",
+      value: availableRooms.toString(),
+      note: "Ready for booking",
+    },
+    {
+      label: "Occupancy Rate",
+      value: occupancyRate,
+      note: "Today room usage",
+    },
+  ];
+
+  const occupancyTrend = [
+    { day: "Mon", value: "68%", height: "68%" },
+    { day: "Tue", value: "72%", height: "72%" },
+    { day: "Wed", value: "80%", height: "80%" },
+    { day: "Thu", value: "76%", height: "76%" },
+    { day: "Fri", value: "89%", height: "89%" },
+    { day: "Sat", value: "94%", height: "94%" },
+    { day: "Sun", value: occupancyRate, height: occupancyRate },
+  ];
+
+  // Group by floor (derive floor from first digit of 3-digit room number)
+  const roomStatusRows = useMemo(() => {
+    const floors: Record<string, any> = {};
+    
+    rooms.forEach(room => {
+      const roomStr = room.roomNumber.toString();
+      const floorNum = roomStr.length > 2 ? roomStr.substring(0, roomStr.length - 2) : "1";
+      const floorName = `Floor ${floorNum}`;
+      
+      if (!floors[floorName]) {
+        floors[floorName] = { floor: floorName, total: 0, occupied: 0, available: 0, cleaning: 0, maintenance: 0 };
+      }
+      
+      floors[floorName].total += 1;
+      if (room.status === "OCCUPIED") floors[floorName].occupied += 1;
+      else if (room.status === "AVAILABLE") floors[floorName].available += 1;
+      else if (room.status === "CLEANING") floors[floorName].cleaning += 1;
+      else if (room.status === "MAINTENANCE") floors[floorName].maintenance += 1;
+    });
+    
+    return Object.values(floors).map(f => {
+      const rate = f.total > 0 ? Math.round((f.occupied / f.total) * 100) + "%" : "0%";
+      return { ...f, rate };
+    }).sort((a, b) => a.floor.localeCompare(b.floor));
+  }, [rooms]);
+
+  // Group by room type
+  const roomTypeRows = useMemo(() => {
+    const types: Record<string, any> = {};
+    
+    rooms.forEach(room => {
+      const type = room.type || "Standard Room";
+      
+      if (!types[type]) {
+        types[type] = { type, total: 0, occupied: 0, available: 0 };
+      }
+      
+      types[type].total += 1;
+      if (room.status === "OCCUPIED") types[type].occupied += 1;
+      else if (room.status === "AVAILABLE") types[type].available += 1;
+    });
+    
+    return Object.values(types).map(t => {
+      const rate = t.total > 0 ? Math.round((t.occupied / t.total) * 100) + "%" : "0%";
+      return { ...t, rate };
+    });
+  }, [rooms]);
+
   return (
     <ReportPageLayout title="Occupancy Report">
 
@@ -178,13 +174,25 @@ export default function OccupancyReportPage() {
               <h2 className="text-2xl font-bold">Room Status Breakdown</h2>
 
               <div className="mt-6 space-y-4">
-                <BreakdownRow label="Occupied" value="22 Rooms" percent="52%" />
-                <BreakdownRow label="Available" value="14 Rooms" percent="33%" />
-                <BreakdownRow label="Cleaning" value="4 Rooms" percent="10%" />
+                <BreakdownRow 
+                  label="Occupied" 
+                  value={`${occupiedRooms} Rooms`} 
+                  percent={totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) + "%" : "0%"} 
+                />
+                <BreakdownRow 
+                  label="Available" 
+                  value={`${availableRooms} Rooms`} 
+                  percent={totalRooms > 0 ? Math.round((availableRooms / totalRooms) * 100) + "%" : "0%"} 
+                />
+                <BreakdownRow 
+                  label="Cleaning" 
+                  value={`${cleaningRooms} Rooms`} 
+                  percent={totalRooms > 0 ? Math.round((cleaningRooms / totalRooms) * 100) + "%" : "0%"} 
+                />
                 <BreakdownRow
                   label="Maintenance"
-                  value="2 Rooms"
-                  percent="5%"
+                  value={`${maintenanceRooms} Rooms`}
+                  percent={totalRooms > 0 ? Math.round((maintenanceRooms / totalRooms) * 100) + "%" : "0%"}
                 />
               </div>
             </div>
@@ -244,6 +252,9 @@ export default function OccupancyReportPage() {
                 </thead>
 
                 <tbody className="divide-y divide-[#d0c5af]">
+                  {roomStatusRows.length === 0 && !loading && (
+                    <tr><td colSpan={7} className="p-6 text-center text-[#4d4635]">No rooms found.</td></tr>
+                  )}
                   {roomStatusRows.map((row) => (
                     <tr key={row.floor} className="transition hover:bg-[#fbf9f5]">
                       <td className="px-6 py-5 font-bold">{row.floor}</td>
@@ -304,6 +315,9 @@ export default function OccupancyReportPage() {
                 </thead>
 
                 <tbody className="divide-y divide-[#d0c5af]">
+                  {roomTypeRows.length === 0 && !loading && (
+                    <tr><td colSpan={5} className="p-6 text-center text-[#4d4635]">No rooms found.</td></tr>
+                  )}
                   {roomTypeRows.map((row) => (
                     <tr key={row.type} className="transition hover:bg-[#fbf9f5]">
                       <td className="px-6 py-5 font-bold">{row.type}</td>

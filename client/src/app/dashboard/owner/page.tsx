@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import {
@@ -17,86 +18,97 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
-const topMetrics = [
-  {
-    title: "Total Revenue",
-    value: "Rs 185,000",
-    note: "12.4% vs last month",
-    icon: TrendingUp,
-    ribbon: "bg-[#d4af37]",
-    noteColor: "text-[#735c00]",
-  },
-  {
-    title: "Net Profit",
-    value: "Rs 45,200",
-    note: "8.1% margin increase",
-    icon: Wallet,
-    ribbon: "bg-[#565e74]",
-    noteColor: "text-[#565e74]",
-  },
-  {
-    title: "Bank Deposits",
-    value: "Rs 120,000",
-    note: "Next settlement: Tomorrow",
-    icon: Landmark,
-    ribbon: "bg-[#545f73]",
-    noteColor: "text-[#545f73]",
-  },
-];
-
-const revenueCards = [
-  {
-    title: "Room Revenue",
-    value: "Rs 110,000",
-    icon: BedDouble,
-    bg: "bg-[#d4af37]/10",
-    color: "text-[#735c00]",
-  },
-  {
-    title: "Event Revenue",
-    value: "Rs 32,000",
-    icon: PartyPopper,
-    bg: "bg-[#565e74]/10",
-    color: "text-[#565e74]",
-  },
-  {
-    title: "Food & Beverage",
-    value: "Rs 28,000",
-    icon: Utensils,
-    bg: "bg-[#545f73]/10",
-    color: "text-[#545f73]",
-  },
-  {
-    title: "PARKING",
-    value: "Rs 15,000",
-    icon: ParkingCircle,
-    bg: "bg-[#4d4635]/10",
-    color: "text-[#4d4635]",
-  },
-];
-
-const auditAlerts = [
-  {
-    tag: "High Discrepancy",
-    time: "2h ago",
-    text: "Folio #8829: Manual override of breakfast charges by Rs 450.",
-    color: "text-[#ba1a1a]",
-  },
-  {
-    tag: "Refund Flag",
-    time: "5h ago",
-    text: "Bulk refund initiated for Penthouse 402 without GM approval.",
-    color: "text-[#735c00]",
-  },
-  {
-    tag: "Late Check-in",
-    time: "Yesterday",
-    text: "System bypass on 4:00 AM check-in without night audit log.",
-    color: "text-[#4d4635]",
-  },
-];
+import { getReportSummary } from "@/lib/api/reportsApi";
+import { getAll as getAudits } from "@/lib/api/auditApi";
 
 export default function OwnerDashboardPage() {
+  const [summary, setSummary] = useState<any>(null);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [sumData, auditData] = await Promise.all([
+          getReportSummary(),
+          getAudits(),
+        ]);
+        setSummary(sumData);
+        setAuditLogs((auditData || []).slice(0, 3));
+      } catch (err) {
+        console.error("Error loading owner dashboard data", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const topMetrics = [
+    {
+      title: "Today Revenue",
+      value: summary?.todayRevenue || "Rs 0",
+      note: "Daily collection",
+      icon: TrendingUp,
+      ribbon: "bg-[#d4af37]",
+      noteColor: "text-[#735c00]",
+    },
+    {
+      title: "Net Profit",
+      value: summary?.netProfit || "Rs 0",
+      note: "Est. daily profit margin",
+      icon: Wallet,
+      ribbon: "bg-[#565e74]",
+      noteColor: "text-[#565e74]",
+    },
+    {
+      title: "Pending Payments",
+      value: summary?.pendingPayments || "Rs 0",
+      note: "Awaiting settlement",
+      icon: Landmark,
+      ribbon: "bg-[#545f73]",
+      noteColor: "text-[#545f73]",
+    },
+  ];
+
+  const revenueCards = [
+    {
+      title: "Room Occupancy",
+      value: summary?.occupancyRate || "0%",
+      icon: BedDouble,
+      bg: "bg-[#d4af37]/10",
+      color: "text-[#735c00]",
+    },
+    {
+      title: "Event Revenue",
+      value: summary?.eventIncome || "Rs 0",
+      icon: PartyPopper,
+      bg: "bg-[#565e74]/10",
+      color: "text-[#565e74]",
+    },
+    {
+      title: "Food & Beverage",
+      value: summary?.foodSales || "Rs 0",
+      icon: Utensils,
+      bg: "bg-[#545f73]/10",
+      color: "text-[#545f73]",
+    },
+    {
+      title: "PARKING",
+      value: summary?.parkingIncome || "Rs 0",
+      icon: ParkingCircle,
+      bg: "bg-[#4d4635]/10",
+      color: "text-[#4d4635]",
+    },
+  ];
+
+  const auditAlerts = auditLogs.map(audit => ({
+    tag: audit.action || "System Event",
+    time: new Date(audit.timestamp).toLocaleTimeString(),
+    text: audit.details || "No details provided",
+    color: "text-[#ba1a1a]",
+  }));
+
   return (
     <ProtectedRoute allowedRoles={["OWNER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
@@ -191,7 +203,7 @@ export default function OwnerDashboardPage() {
                       <Icon size={22} className={metric.noteColor} />
                     </div>
 
-                    <h2 className="text-4xl font-bold">{metric.value}</h2>
+                    <h2 className="text-4xl font-bold">{loading ? "..." : metric.value}</h2>
 
                     <p className={`mt-3 text-sm font-bold ${metric.noteColor}`}>
                       {metric.note}
@@ -220,7 +232,7 @@ export default function OwnerDashboardPage() {
                       {card.title}
                     </p>
 
-                    <h3 className="mt-2 text-3xl font-bold">{card.value}</h3>
+                    <h3 className="mt-2 text-3xl font-bold">{loading ? "..." : card.value}</h3>
                   </article>
                 );
               })}
@@ -248,9 +260,12 @@ export default function OwnerDashboardPage() {
                 </div>
 
                 <div className="space-y-4">
-                  {auditAlerts.map((alert) => (
+                  {auditAlerts.length === 0 && !loading && (
+                    <div className="text-sm text-[#4d4635]">No recent audit alerts.</div>
+                  )}
+                  {auditAlerts.map((alert, idx) => (
                     <article
-                      key={alert.text}
+                      key={idx}
                       className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-4"
                     >
                       <div className="flex items-center justify-between">

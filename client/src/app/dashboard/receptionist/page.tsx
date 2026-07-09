@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AppSidebar from "@/components/layout/Sidebar";
 import {
@@ -20,140 +21,20 @@ import {
   Plus,
 } from "lucide-react";
 
-const statusCards = [
-  {
-    title: "Today's Arrivals",
-    value: "42",
-    note: "12 Pending",
-    icon: Clock,
-    color: "text-[#735c00]",
-    bg: "bg-[#d4af37]/15",
-  },
-  {
-    title: "Today's Departures",
-    value: "28",
-    note: "16 Checked out",
-    icon: CheckCheck,
-    color: "text-[#545f73]",
-    bg: "bg-[#545f73]/15",
-  },
-  {
-    title: "Rooms to Clean",
-    value: "15",
-    note: "8 Priority",
-    icon: AlertCircle,
-    color: "text-[#ba1a1a]",
-    bg: "bg-[#ba1a1a]/10",
-  },
-  {
-    title: "Availability",
-    value: "12%",
-    note: "18 Rooms left",
-    icon: BedDouble,
-    color: "text-[#565e74]",
-    bg: "bg-[#565e74]/15",
-  },
-];
-
-const rooms = Array.from({ length: 36 }, (_, index) => {
-  const roomNumber = 101 + index;
-  const statuses = ["Available", "Occupied", "Cleaning", "Maintenance"];
-
-  return {
-    number: roomNumber,
-    status: statuses[index % statuses.length],
-  };
-});
-
-const arrivals = [
-  {
-    guest: "Jonathan Burke",
-    member: "Gold Member",
-    roomType: "Executive Suite",
-    eta: "14:30",
-    status: "Pre-arrival",
-    badge: "bg-yellow-50 text-yellow-700",
-  },
-  {
-    guest: "Sarah McAllister",
-    member: "Regular",
-    roomType: "Deluxe King",
-    eta: "15:15",
-    status: "In Transit",
-    badge: "bg-blue-50 text-blue-700",
-  },
-  {
-    guest: "Michael Tan",
-    member: "Platinum Member",
-    roomType: "Royal Garden Room",
-    eta: "16:00",
-    status: "Arrived",
-    badge: "bg-green-50 text-green-700",
-  },
-];
-
-const departures = [
-  {
-    guest: "Robert Langdon",
-    member: "Platinum Member",
-    room: "502",
-    balance: "Rs 0.00",
-    status: "Ready",
-    badge: "bg-green-50 text-green-700",
-    action: "CHECK OUT",
-  },
-  {
-    guest: "Emily Blunt",
-    member: "VIP",
-    room: "Penthouse 1",
-    balance: "Rs 2,840.12",
-    status: "Unpaid Folio",
-    badge: "bg-red-50 text-red-700",
-    action: "VIEW FOLIO",
-  },
-];
-
-const folioActivities = [
-  {
-    guest: "Elena Sorova (Rm 402)",
-    service: "Spa & Wellness Service",
-    amount: "+Rs 450.00",
-    time: "2 mins ago",
-    color: "text-[#735c00]",
-  },
-  {
-    guest: "James Wilson (Rm 105)",
-    service: "Room Service Breakfast",
-    amount: "Pending",
-    time: "15 mins ago",
-    color: "text-[#ba1a1a]",
-  },
-  {
-    guest: "Marcus Thorne (Rm 212)",
-    service: "Minibar - Premium Spirits",
-    amount: "Paid",
-    time: "1 hour ago",
-    color: "text-green-600",
-  },
-  {
-    guest: "Sophie Chen (Rm 304)",
-    service: "Extended Stay Upgrade",
-    amount: "+Rs 1,200.00",
-    time: "3 hours ago",
-    color: "text-[#735c00]",
-  },
-];
+import { getRooms } from "@/lib/api/roomApi";
+import { getReservations } from "@/lib/api/reservationsApi";
+import { getPayments } from "@/lib/api/paymentsApi";
 
 function roomStatusClass(status: string) {
-  if (status === "Available") {
+  if (status === "AVAILABLE") {
     return "bg-green-100 text-green-700 border-green-200";
   }
 
-  if (status === "Occupied") {
+  if (status === "OCCUPIED") {
     return "bg-blue-100 text-blue-700 border-blue-200";
   }
 
-  if (status === "Cleaning") {
+  if (status === "CLEANING" || status === "MAINTENANCE") {
     return "bg-yellow-100 text-yellow-700 border-yellow-200";
   }
 
@@ -161,6 +42,106 @@ function roomStatusClass(status: string) {
 }
 
 export default function ReceptionistDashboardPage() {
+  const [rooms, setRooms] = useState<any[]>([]);
+  const [reservations, setReservations] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [roomsData, resData, payData] = await Promise.all([
+          getRooms(),
+          getReservations(),
+          getPayments()
+        ]);
+        setRooms(roomsData || []);
+        setReservations(resData || []);
+        setPayments(payData || []);
+      } catch (err) {
+        console.error("Error loading receptionist data", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  // Today's date string for comparison
+  const today = new Date().toISOString().split('T')[0];
+  
+  const todaysArrivals = reservations.filter(r => r.checkInDate === today);
+  const todaysDepartures = reservations.filter(r => r.checkOutDate === today);
+  const roomsToClean = rooms.filter(r => r.status === "CLEANING" || r.status === "MAINTENANCE").length;
+  
+  const availableRoomsCount = rooms.filter(r => r.status === "AVAILABLE").length;
+  const availabilityRate = rooms.length > 0 ? ((availableRoomsCount / rooms.length) * 100).toFixed(1) + "%" : "0%";
+
+  const statusCards = [
+    {
+      title: "Today's Arrivals",
+      value: todaysArrivals.length.toString(),
+      note: `${todaysArrivals.filter(r => r.status === "PENDING").length} Pending`,
+      icon: Clock,
+      color: "text-[#735c00]",
+      bg: "bg-[#d4af37]/15",
+    },
+    {
+      title: "Today's Departures",
+      value: todaysDepartures.length.toString(),
+      note: `${todaysDepartures.filter(r => r.status === "COMPLETED").length} Checked out`,
+      icon: CheckCheck,
+      color: "text-[#545f73]",
+      bg: "bg-[#545f73]/15",
+    },
+    {
+      title: "Rooms to Clean",
+      value: roomsToClean.toString(),
+      note: "Needs attention",
+      icon: AlertCircle,
+      color: "text-[#ba1a1a]",
+      bg: "bg-[#ba1a1a]/10",
+    },
+    {
+      title: "Availability",
+      value: availabilityRate,
+      note: `${availableRoomsCount} Rooms left`,
+      icon: BedDouble,
+      color: "text-[#565e74]",
+      bg: "bg-[#565e74]/15",
+    },
+  ];
+
+  const arrivalsList = todaysArrivals.map(r => ({
+    guest: r.guestName || "Unknown",
+    member: `Guests: ${r.numberOfGuests}`,
+    roomType: r.roomType || `Room ${r.roomId}`,
+    eta: "Today",
+    status: r.status,
+    badge: r.status === "CONFIRMED" ? "bg-blue-50 text-blue-700" : "bg-yellow-50 text-yellow-700",
+  }));
+
+  const departuresList = todaysDepartures.map(r => ({
+    guest: r.guestName || "Unknown",
+    member: `Guests: ${r.numberOfGuests}`,
+    room: r.roomId,
+    balance: `Rs ${r.totalAmount}`,
+    status: r.paymentStatus === "PAID" ? "Ready" : "Unpaid Folio",
+    badge: r.paymentStatus === "PAID" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700",
+    action: r.paymentStatus === "PAID" ? "CHECK OUT" : "VIEW FOLIO",
+  }));
+
+  const folioActivities = [...payments]
+    .sort((a, b) => new Date(b.paymentDate || b.paidAt || 0).getTime() - new Date(a.paymentDate || a.paidAt || 0).getTime())
+    .slice(0, 4)
+    .map(p => ({
+      guest: `Payment #${p.id.substring(0, 6)}`,
+      service: p.paymentMethod || "Payment",
+      amount: `Rs ${p.amount}`,
+      time: p.paymentDate || p.paidAt ? new Date(p.paymentDate || p.paidAt).toLocaleTimeString() : "Recent",
+      color: "text-[#735c00]",
+    }));
+
   return (
     <ProtectedRoute allowedRoles={["RECEPTIONIST", "MANAGER", "OWNER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
@@ -249,7 +230,7 @@ export default function ReceptionistDashboardPage() {
                           {card.title}
                         </p>
                         <h2 className="mt-2 text-4xl font-extrabold">
-                          {card.value}
+                          {loading ? "..." : card.value}
                         </h2>
                       </div>
 
@@ -293,9 +274,12 @@ export default function ReceptionistDashboardPage() {
                     </h3>
 
                     <div className="space-y-4">
-                      {arrivals.map((arrival) => (
+                      {arrivalsList.length === 0 && !loading && (
+                        <p className="text-sm text-[#4d4635]">No arrivals for today.</p>
+                      )}
+                      {arrivalsList.map((arrival, idx) => (
                         <article
-                          key={arrival.guest}
+                          key={idx}
                           className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-4"
                         >
                           <div className="flex items-start justify-between">
@@ -334,9 +318,12 @@ export default function ReceptionistDashboardPage() {
                     </h3>
 
                     <div className="space-y-4">
-                      {departures.map((departure) => (
+                      {departuresList.length === 0 && !loading && (
+                        <p className="text-sm text-[#4d4635]">No departures for today.</p>
+                      )}
+                      {departuresList.map((departure, idx) => (
                         <article
-                          key={departure.guest}
+                          key={idx}
                           className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-4"
                         >
                           <div className="flex items-start justify-between">
@@ -384,9 +371,12 @@ export default function ReceptionistDashboardPage() {
                   </div>
 
                   <div className="space-y-4">
-                    {folioActivities.map((activity) => (
+                    {folioActivities.length === 0 && !loading && (
+                      <p className="text-sm text-[#4d4635]">No recent activities.</p>
+                    )}
+                    {folioActivities.map((activity, idx) => (
                       <article
-                        key={`${activity.guest}-${activity.service}`}
+                        key={idx}
                         className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-4"
                       >
                         <div className="flex items-start justify-between gap-4">
@@ -428,18 +418,21 @@ export default function ReceptionistDashboardPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-9 xl:grid-cols-12">
+                  {rooms.length === 0 && !loading && (
+                    <div className="col-span-12 p-4 text-center text-[#4d4635]">No rooms loaded.</div>
+                  )}
                   {rooms.map((room) => (
                     <div
-                      key={room.number}
+                      key={room.roomNumber}
                       className={`rounded-xl border p-3 text-center text-xs font-bold ${roomStatusClass(
                         room.status
                       )}`}
                     >
-                      <p className="text-base">{room.number}</p>
+                      <p className="text-base">{room.roomNumber}</p>
 
                       <div className="mt-1 flex items-center justify-center gap-1">
-                        {room.status === "Cleaning" && <Brush size={13} />}
-                        <span>{room.status}</span>
+                        {(room.status === "CLEANING" || room.status === "MAINTENANCE") && <Brush size={13} />}
+                        <span className="text-[10px]">{room.status}</span>
                       </div>
                     </div>
                   ))}

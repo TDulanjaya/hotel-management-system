@@ -1,145 +1,14 @@
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
 import { ReportSummaryCards } from "@/components/reports/ReportSummaryCards";
 import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-
-
-
-const foodSalesSummary = [
-  {
-    label: "Total Food Sales",
-    value: "Rs 6,240",
-    note: "Restaurant and room service",
-  },
-  {
-    label: "Restaurant Sales",
-    value: "Rs 4,180",
-    note: "Dining table orders",
-  },
-  {
-    label: "Room Service",
-    value: "Rs 1,460",
-    note: "Guest room orders",
-  },
-  {
-    label: "Kitchen Orders",
-    value: "86",
-    note: "Completed food orders",
-  },
-];
-
-const salesRows = [
-  {
-    id: "FS-1001",
-    orderRef: "ORD-501",
-    source: "Restaurant",
-    location: "Table 12",
-    items: "Wagyu Beef Burger, Truffle Fries",
-    amount: "Rs 86.00",
-    payment: "Card",
-    status: "Completed",
-  },
-  {
-    id: "FS-1002",
-    orderRef: "RS-1001",
-    source: "Room Service",
-    location: "Room 402",
-    items: "Club Sandwich, Orange Juice",
-    amount: "Rs 32.00",
-    payment: "Added to Folio",
-    status: "Completed",
-  },
-  {
-    id: "FS-1003",
-    orderRef: "ORD-502",
-    source: "Restaurant",
-    location: "Table 07",
-    items: "Chicken Alfredo, Garden Salad",
-    amount: "Rs 58.00",
-    payment: "Cash",
-    status: "Completed",
-  },
-  {
-    id: "FS-1004",
-    orderRef: "EV-0044",
-    source: "Event Catering",
-    location: "Grand Ballroom",
-    items: "Hors d'oeuvres Tray, Sparkling Water",
-    amount: "Rs 1,250.00",
-    payment: "Bank Transfer",
-    status: "Pending",
-  },
-  {
-    id: "FS-1005",
-    orderRef: "RS-1002",
-    source: "Room Service",
-    location: "Room 308",
-    items: "Caesar Salad, Coffee",
-    amount: "Rs 24.00",
-    payment: "Added to Folio",
-    status: "Completed",
-  },
-];
-
-const categoryBreakdown = [
-  {
-    label: "Main Course",
-    value: "Rs 2,850",
-    percent: "46%",
-  },
-  {
-    label: "Beverages",
-    value: "Rs 1,420",
-    percent: "23%",
-  },
-  {
-    label: "Desserts",
-    value: "Rs 760",
-    percent: "12%",
-  },
-  {
-    label: "Event Catering",
-    value: "Rs 1,210",
-    percent: "19%",
-  },
-];
-
-const topItems = [
-  {
-    item: "Wagyu Beef Burger",
-    sold: 34,
-    revenue: "Rs 1,360",
-    category: "Main Course",
-  },
-  {
-    item: "Chicken Alfredo",
-    sold: 28,
-    revenue: "Rs 980",
-    category: "Main Course",
-  },
-  {
-    item: "Club Sandwich",
-    sold: 26,
-    revenue: "Rs 780",
-    category: "Room Service",
-  },
-  {
-    item: "Cappuccino",
-    sold: 46,
-    revenue: "Rs 460",
-    category: "Beverages",
-  },
-];
-
-const hourlySales = [
-  { time: "08 AM", value: "Rs 420", height: "30%" },
-  { time: "10 AM", value: "Rs 680", height: "45%" },
-  { time: "12 PM", value: "Rs 1.4k", height: "90%" },
-  { time: "02 PM", value: "Rs 950", height: "60%" },
-  { time: "06 PM", value: "Rs 1.6k", height: "100%" },
-  { time: "08 PM", value: "Rs 1.1k", height: "75%" },
-];
+import { getRestaurantOrders } from "@/lib/api/restaurantApi";
+import { getRoomServiceOrders } from "@/lib/api/roomServiceApi";
+import { getKitchenOrders } from "@/lib/api/kitchenApi";
 
 function getStatusClass(status: string) {
-  if (status === "Completed") {
+  if (status === "COMPLETED" || status === "DELIVERED" || status === "SERVED") {
     return "bg-green-100 text-green-700";
   }
 
@@ -159,6 +28,127 @@ function getSourceClass(source: string) {
 }
 
 export default function FoodSalesReportPage() {
+  const [restaurantOrders, setRestaurantOrders] = useState<any[]>([]);
+  const [roomServiceOrders, setRoomServiceOrders] = useState<any[]>([]);
+  const [kitchenOrders, setKitchenOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [restData, rsData, kitData] = await Promise.all([
+          getRestaurantOrders(),
+          getRoomServiceOrders(),
+          getKitchenOrders(),
+        ]);
+        setRestaurantOrders(restData || []);
+        setRoomServiceOrders(rsData || []);
+        setKitchenOrders(kitData || []);
+      } catch (err) {
+        console.error("Failed to load food sales", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const restTotal = restaurantOrders.reduce((acc, o) => acc + (o.totalAmount || 0), 0);
+  const rsTotal = roomServiceOrders.reduce((acc, o) => acc + (o.totalAmount || 0), 0);
+  const totalFoodSales = restTotal + rsTotal;
+
+  const foodSalesSummary = [
+    {
+      label: "Total Food Sales",
+      value: `Rs ${totalFoodSales.toLocaleString()}`,
+      note: "Restaurant and room service",
+    },
+    {
+      label: "Restaurant Sales",
+      value: `Rs ${restTotal.toLocaleString()}`,
+      note: "Dining table orders",
+    },
+    {
+      label: "Room Service",
+      value: `Rs ${rsTotal.toLocaleString()}`,
+      note: "Guest room orders",
+    },
+    {
+      label: "Kitchen Orders",
+      value: kitchenOrders.length.toString(),
+      note: "Total tracked food orders",
+    },
+  ];
+
+  const salesRows = useMemo(() => {
+    const rRows = restaurantOrders.map(o => ({
+      id: `FS-${o.id?.substring(0, 5)}`,
+      orderRef: o.id?.substring(0, 8),
+      source: "Restaurant",
+      location: o.tableNumber ? `Table ${o.tableNumber}` : "Dine-in",
+      items: o.items?.map((i: any) => i.itemName).join(", ") || "No items",
+      amount: `Rs ${(o.totalAmount || 0).toLocaleString()}`,
+      payment: o.paymentStatus || "Unknown",
+      status: o.status || "COMPLETED",
+      rawAmount: o.totalAmount || 0,
+      rawItems: o.items || [],
+    }));
+
+    const rsRows = roomServiceOrders.map(o => ({
+      id: `FS-${o.id?.substring(0, 5)}`,
+      orderRef: o.id?.substring(0, 8),
+      source: "Room Service",
+      location: o.roomNumber ? `Room ${o.roomNumber}` : "Guest Room",
+      items: o.items?.map((i: any) => i.itemName).join(", ") || "No items",
+      amount: `Rs ${(o.totalAmount || 0).toLocaleString()}`,
+      payment: o.paymentStatus || "Added to Folio",
+      status: o.status || "COMPLETED",
+      rawAmount: o.totalAmount || 0,
+      rawItems: o.items || [],
+    }));
+
+    return [...rRows, ...rsRows].sort((a, b) => b.rawAmount - a.rawAmount); // sort by amount desc
+  }, [restaurantOrders, roomServiceOrders]);
+
+  const topItems = useMemo(() => {
+    const itemMap: Record<string, { count: number, rev: number, cat: string }> = {};
+    salesRows.forEach(row => {
+      row.rawItems.forEach((it: any) => {
+        const name = it.itemName || "Unknown Item";
+        if (!itemMap[name]) {
+          itemMap[name] = { count: 0, rev: 0, cat: row.source };
+        }
+        itemMap[name].count += (it.quantity || 1);
+        itemMap[name].rev += ((it.quantity || 1) * (it.price || 0));
+      });
+    });
+
+    return Object.entries(itemMap)
+      .map(([name, data]) => ({
+        item: name,
+        sold: data.count,
+        revenue: `Rs ${data.rev.toLocaleString()}`,
+        category: data.cat,
+        rawRev: data.rev
+      }))
+      .sort((a, b) => b.rawRev - a.rawRev)
+      .slice(0, 5); // top 5
+  }, [salesRows]);
+
+  const categoryBreakdown = [
+    { label: "Restaurant Dining", value: `Rs ${restTotal.toLocaleString()}`, percent: totalFoodSales > 0 ? Math.round((restTotal / totalFoodSales) * 100) + "%" : "0%" },
+    { label: "Room Service", value: `Rs ${rsTotal.toLocaleString()}`, percent: totalFoodSales > 0 ? Math.round((rsTotal / totalFoodSales) * 100) + "%" : "0%" },
+  ];
+
+  const hourlySales = [
+    { time: "08 AM", value: "Rs 420", height: "30%" },
+    { time: "10 AM", value: "Rs 680", height: "45%" },
+    { time: "12 PM", value: "Rs 1.4k", height: "90%" },
+    { time: "02 PM", value: "Rs 950", height: "60%" },
+    { time: "06 PM", value: "Rs 1.6k", height: "100%" },
+    { time: "08 PM", value: "Rs 1.1k", height: "75%" },
+  ];
+
   return (
     <ReportPageLayout title="Food Sales Report">
 
@@ -272,6 +262,9 @@ export default function FoodSalesReportPage() {
                 </thead>
 
                 <tbody className="divide-y divide-[#d0c5af]">
+                  {salesRows.length === 0 && !loading && (
+                    <tr><td colSpan={8} className="p-6 text-center text-[#4d4635]">No food sales recorded.</td></tr>
+                  )}
                   {salesRows.map((sale) => (
                     <tr key={sale.id} className="transition hover:bg-[#fbf9f5]">
                       <td className="px-6 py-5 font-bold">{sale.id}</td>
@@ -294,7 +287,7 @@ export default function FoodSalesReportPage() {
                         {sale.location}
                       </td>
 
-                      <td className="px-6 py-5 text-[#4d4635]">
+                      <td className="px-6 py-5 text-[#4d4635] truncate max-w-[200px]">
                         {sale.items}
                       </td>
 
@@ -341,6 +334,9 @@ export default function FoodSalesReportPage() {
                 </thead>
 
                 <tbody className="divide-y divide-[#d0c5af]">
+                  {topItems.length === 0 && !loading && (
+                    <tr><td colSpan={4} className="p-6 text-center text-[#4d4635]">No items sold.</td></tr>
+                  )}
                   {topItems.map((item) => (
                     <tr key={item.item} className="transition hover:bg-[#fbf9f5]">
                       <td className="px-6 py-5 font-bold">{item.item}</td>

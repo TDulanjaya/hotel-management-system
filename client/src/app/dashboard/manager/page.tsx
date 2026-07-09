@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AppSidebar from "@/components/layout/Sidebar";
 import {
@@ -13,7 +13,6 @@ import {
   TrendingUp,
   DollarSign,
   UserSearch,
-  Siren,
   History,
   AlertTriangle,
   LockOpen,
@@ -28,138 +27,129 @@ import {
   Users,
 } from "lucide-react";
 
-const snapshotCards = [
-  {
-    title: "Room Occupancy",
-    value: "84.2%",
-    note: "+2.4%",
-    icon: BedDouble,
-  },
-  {
-    title: "Staff On-Duty",
-    value: "12/14",
-    note: "Morning Shift",
-    icon: Badge,
-  },
-  {
-    title: "Projected RevPAR",
-    value: "Rs 288",
-    note: "High Demand",
-    icon: TrendingUp,
-  },
-  {
-    title: "Daily Revenue",
-    value: "Rs 14.2k",
-    note: "78%",
-    icon: DollarSign,
-  },
-];
-
-const approvalRequests = [
-  {
-    title: "Alex Thompson",
-    requestedBy: "Requested by Agent Sarah M.",
-    detail: "Room 402 • 15% VIP Loyalty Discount • Total: Rs 1,240.00",
-    icon: UserSearch,
-  },
-  {
-    title: "Jameson Wedding Block",
-    requestedBy: "Requested by Sales Director",
-    detail: "12 Rooms • Rs 500/night flat rate authorization",
-    icon: Siren,
-  },
-  {
-    title: "Refund: Clara Oswald",
-    requestedBy: "Requested by Front Desk",
-    detail: "Maintenance Credit • -Rs 45.00 for AC issues",
-    icon: History,
-  },
-];
-
-const complaints = [
-  {
-    title: "Room 201 • Leak",
-    time: "12m ago",
-    message:
-      "Water dripping from bathroom ceiling. Guest is very frustrated, requested a suite upgrade.",
-    urgent: true,
-  },
-  {
-    title: "Valet Delay • Mr. Chen",
-    time: "45m ago",
-    message:
-      "Waited 20 minutes for car. Expressed disappointment during check-out process.",
-    urgent: false,
-  },
-];
-
-const revenueItems = [
-  { label: "Rooms Revenue", value: "Rs 294,200" },
-  { label: "Food & Beverage", value: "Rs 98,400" },
-  { label: "Ancillary Services", value: "Rs 27,400" },
-];
-
-const staffActivities = [
-  {
-    name: "Mark J.",
-    action: "logged in",
-    role: "Front Desk • 2m ago",
-    avatar: "MJ",
-  },
-  {
-    name: "Elena R.",
-    action: "completed check-in",
-    role: "Concierge • 15m ago",
-    avatar: "ER",
-  },
-  {
-    name: "Maint_Bot",
-    action: "resolved ticket #421",
-    role: "Engineering • 1h ago",
-    avatar: "BOT",
-  },
-];
-
-const auditTrail = [
-  {
-    icon: LockOpen,
-    title: "Manager Override:",
-    text: "Room 104 Price Change by ID:2901",
-    meta: "14:22:10 • IP: 192.168.1.42",
-  },
-  {
-    icon: Trash2,
-    title: "Folio Deleted:",
-    text: "#98221 Draft by Agent Sarah M.",
-    meta: "14:15:05 • IP: 192.168.1.18",
-  },
-  {
-    icon: ShieldCheck,
-    title: "System Config:",
-    text: "Tax rate updated to 12.5%",
-    meta: "13:58:22 • Auto-Scheduled",
-  },
-  {
-    icon: EyeOff,
-    title: "PII Accessed:",
-    text: "Vault decryption for reservation #R-902",
-    meta: "13:45:11 • User: Admin_Lee",
-  },
-  {
-    icon: Verified,
-    title: "New Staff Role:",
-    text: "Junior Agent role assigned to 4 users",
-    meta: "12:30:00 • User: Admin_Lee",
-  },
-];
+import { getReportSummary } from "@/lib/api/reportsApi";
+import { getReservations } from "@/lib/api/reservationsApi";
+import { getAll as getAudits } from "@/lib/api/auditApi";
 
 export default function ManagerDashboardPage() {
   const [hiddenRequests, setHiddenRequests] = useState<string[]>([]);
   const [fabOpen, setFabOpen] = useState(false);
 
+  const [summary, setSummary] = useState<any>(null);
+  const [pendingReservations, setPendingReservations] = useState<any[]>([]);
+  const [auditLogs, setAuditLogs] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [sumData, resData, auditData] = await Promise.all([
+          getReportSummary(),
+          getReservations(),
+          getAudits(),
+        ]);
+
+        setSummary(sumData);
+        setPendingReservations((resData || []).filter((r: any) => r.paymentStatus === "PENDING" || r.status === "PENDING"));
+        setAuditLogs((auditData || []).slice(0, 5));
+      } catch (err) {
+        console.error("Error loading dashboard data", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
   const handleApproval = (title: string) => {
     setHiddenRequests((current) => [...current, title]);
   };
+
+  const snapshotCards = [
+    {
+      title: "Room Occupancy",
+      value: summary?.occupancyRate || "0%",
+      note: "Live",
+      icon: BedDouble,
+    },
+    {
+      title: "Staff On-Duty",
+      value: "12/14",
+      note: "Morning Shift",
+      icon: Badge,
+    },
+    {
+      title: "Pending Payments",
+      value: summary?.pendingPayments || "Rs 0",
+      note: "Requires Action",
+      icon: TrendingUp,
+    },
+    {
+      title: "Daily Revenue",
+      value: summary?.todayRevenue || "Rs 0",
+      note: "Today",
+      icon: DollarSign,
+    },
+  ];
+
+  const approvalRequests = pendingReservations.map(r => ({
+    title: r.guestName || "Unknown Guest",
+    requestedBy: "Auto-System",
+    detail: `Room ${r.roomId} • Payment Status: ${r.paymentStatus} • Total: Rs ${r.totalAmount}`,
+    icon: UserSearch,
+    originalId: r.id
+  }));
+
+  const complaints = [
+    {
+      title: "Room 201 • Leak",
+      time: "12m ago",
+      message:
+        "Water dripping from bathroom ceiling. Guest is very frustrated, requested a suite upgrade.",
+      urgent: true,
+    },
+    {
+      title: "Valet Delay • Mr. Chen",
+      time: "45m ago",
+      message:
+        "Waited 20 minutes for car. Expressed disappointment during check-out process.",
+      urgent: false,
+    },
+  ];
+
+  const revenueItems = [
+    { label: "Today Revenue", value: summary?.todayRevenue || "Rs 0" },
+    { label: "Food & Beverage", value: summary?.foodSales || "Rs 0" },
+    { label: "Event Income", value: summary?.eventIncome || "Rs 0" },
+  ];
+
+  const staffActivities = [
+    {
+      name: "Mark J.",
+      action: "logged in",
+      role: "Front Desk • 2m ago",
+      avatar: "MJ",
+    },
+    {
+      name: "Elena R.",
+      action: "completed check-in",
+      role: "Concierge • 15m ago",
+      avatar: "ER",
+    },
+    {
+      name: "Maint_Bot",
+      action: "resolved ticket #421",
+      role: "Engineering • 1h ago",
+      avatar: "BOT",
+    },
+  ];
+
+  const auditTrail = auditLogs.map(audit => ({
+    icon: ShieldCheck,
+    title: audit.action || "System Action",
+    text: audit.details || "Details unavailable",
+    meta: `${new Date(audit.timestamp).toLocaleTimeString()} • ${audit.userEmail || "System"}`,
+  }));
 
   return (
     <ProtectedRoute allowedRoles={["MANAGER", "OWNER"]}>
@@ -246,7 +236,7 @@ export default function ManagerDashboardPage() {
                     </div>
 
                     <div className="flex items-end justify-between">
-                      <p className="text-4xl font-bold">{card.value}</p>
+                      <p className="text-4xl font-bold">{loading ? "..." : card.value}</p>
 
                       <span className="rounded bg-[#ffe088] px-2 py-1 text-xs font-bold text-[#735c00]">
                         {card.note}
@@ -263,72 +253,72 @@ export default function ManagerDashboardPage() {
                   <div className="flex flex-col justify-between gap-4 border-b border-[#d0c5af] p-6 lg:flex-row lg:items-center">
                     <div>
                       <h3 className="text-xl font-semibold">
-                        Pending Discount Authorizations
+                        Pending Authorizations
                       </h3>
 
                       <p className="text-sm text-[#4d4635]">
-                        Front desk override requests requiring manager approval.
+                        Pending reservations requiring action or approval.
                       </p>
                     </div>
 
                     <span className="w-fit rounded-full bg-[#ffe088] px-4 py-2 text-sm font-bold text-[#241a00]">
-                      4 Urgent
+                      {approvalRequests.length} Pending
                     </span>
                   </div>
 
                   <div className="divide-y divide-[#d0c5af]">
-                    {approvalRequests
-                      .filter((item) => !hiddenRequests.includes(item.title))
-                      .map((request) => {
-                        const Icon = request.icon;
+                    {approvalRequests.length === 0 ? (
+                      <div className="p-6 text-center text-[#4d4635]">No pending authorizations.</div>
+                    ) : (
+                      approvalRequests
+                        .filter((item) => !hiddenRequests.includes(item.title))
+                        .map((request) => {
+                          const Icon = request.icon;
 
-                        return (
-                          <div
-                            key={request.title}
-                            className="flex flex-col justify-between gap-5 p-6 transition hover:bg-[#f5f3ef] lg:flex-row lg:items-center"
-                          >
-                            <div className="flex items-center gap-4">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#dae2fd] text-[#5c647a]">
-                                <Icon size={20} />
+                          return (
+                            <div
+                              key={request.title}
+                              className="flex flex-col justify-between gap-5 p-6 transition hover:bg-[#f5f3ef] lg:flex-row lg:items-center"
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#dae2fd] text-[#5c647a]">
+                                  <Icon size={20} />
+                                </div>
+
+                                <div>
+                                  <h4 className="font-bold">
+                                    {request.title}{" "}
+                                    <span className="font-normal text-[#4d4635]">
+                                      {request.requestedBy}
+                                    </span>
+                                  </h4>
+
+                                  <p className="text-xs text-[#4d4635]">
+                                    {request.detail}
+                                  </p>
+                                </div>
                               </div>
 
-                              <div>
-                                <h4 className="font-bold">
-                                  {request.title}{" "}
-                                  <span className="font-normal text-[#4d4635]">
-                                    {request.requestedBy}
-                                  </span>
-                                </h4>
+                              <div className="flex gap-3">
+                                <button
+                                  onClick={() => handleApproval(request.title)}
+                                  className="rounded-lg border border-[#7f7663] px-5 py-2 text-sm font-semibold transition hover:border-[#ba1a1a] hover:bg-[#ffdad6] hover:text-[#93000a]"
+                                >
+                                  Deny
+                                </button>
 
-                                <p className="text-xs text-[#4d4635]">
-                                  {request.detail}
-                                </p>
+                                <button
+                                  onClick={() => handleApproval(request.title)}
+                                  className="rounded-lg bg-[#d4af37] px-5 py-2 text-sm font-bold text-[#554300] shadow-sm transition hover:opacity-90"
+                                >
+                                  Approve
+                                </button>
                               </div>
                             </div>
-
-                            <div className="flex gap-3">
-                              <button
-                                onClick={() => handleApproval(request.title)}
-                                className="rounded-lg border border-[#7f7663] px-5 py-2 text-sm font-semibold transition hover:border-[#ba1a1a] hover:bg-[#ffdad6] hover:text-[#93000a]"
-                              >
-                                Deny
-                              </button>
-
-                              <button
-                                onClick={() => handleApproval(request.title)}
-                                className="rounded-lg bg-[#d4af37] px-5 py-2 text-sm font-bold text-[#554300] shadow-sm transition hover:opacity-90"
-                              >
-                                Approve
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })
+                    )}
                   </div>
-
-                  <button className="w-full border-t border-[#d0c5af] bg-[#f5f3ef] py-4 text-sm font-bold text-[#735c00] transition hover:bg-[#e4e2de]">
-                    View All 12 Requests
-                  </button>
                 </section>
 
                 <section className="manager-fade overflow-hidden rounded-xl border border-[#d0c5af] border-l-4 border-l-[#ba1a1a] bg-white shadow-sm">
@@ -384,9 +374,9 @@ export default function ManagerDashboardPage() {
                   <div className="mb-8">
                     <div className="mb-2 flex items-end justify-between">
                       <span className="text-sm font-semibold text-[#4d4635]">
-                        Monthly Target
+                        Today Target Progress
                       </span>
-                      <span className="font-bold">Rs 420k / Rs 500k</span>
+                      <span className="font-bold">{summary?.todayRevenue || "Rs 0"} / Rs 100,000</span>
                     </div>
 
                     <div className="h-4 w-full overflow-hidden rounded-full bg-[#e4e2de]">
@@ -403,7 +393,7 @@ export default function ManagerDashboardPage() {
                         <span className="text-sm text-[#4d4635]">
                           {item.label}
                         </span>
-                        <span className="font-bold">{item.value}</span>
+                        <span className="font-bold">{loading ? "..." : item.value}</span>
                       </div>
                     ))}
                   </div>
@@ -446,12 +436,15 @@ export default function ManagerDashboardPage() {
                   <h3 className="mb-4 font-bold">Audit Trail Last 5</h3>
 
                   <ul className="space-y-3">
+                    {auditTrail.length === 0 && !loading && (
+                      <li className="text-sm text-[#4d4635]">No recent audit logs.</li>
+                    )}
                     {auditTrail.map((audit) => {
                       const Icon = audit.icon;
 
                       return (
                         <li
-                          key={`${audit.title}-${audit.text}`}
+                          key={`${audit.title}-${audit.meta}`}
                           className="flex items-start gap-2 text-xs"
                         >
                           <Icon

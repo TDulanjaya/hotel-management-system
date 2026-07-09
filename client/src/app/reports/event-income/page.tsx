@@ -1,143 +1,16 @@
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
 import { ReportSummaryCards } from "@/components/reports/ReportSummaryCards";
 import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-
-
-
-const eventSummary = [
-  {
-    label: "Total Event Income",
-    value: "Rs 12,400",
-    note: "All event payments today",
-  },
-  {
-    label: "Booked Events",
-    value: "06",
-    note: "Confirmed event bookings",
-  },
-  {
-    label: "Pending Payments",
-    value: "Rs 3,200",
-    note: "Waiting settlement",
-  },
-  {
-    label: "Net Event Profit",
-    value: "Rs 5,200",
-    note: "Income after event costs",
-  },
-];
-
-const eventIncomeRows = [
-  {
-    id: "EV-1001",
-    eventName: "Corporate Gala - TechVibe",
-    venue: "Grand Ballroom",
-    client: "TechVibe Pvt Ltd",
-    eventDate: "Oct 24, 2024",
-    income: "Rs 12,400.00",
-    expenses: "Rs 7,200.00",
-    profit: "Rs 5,200.00",
-    status: "Paid",
-  },
-  {
-    id: "EV-1002",
-    eventName: "Anderson Wedding",
-    venue: "Terrace Gardens",
-    client: "Anderson Family",
-    eventDate: "Oct 26, 2024",
-    income: "Rs 6,500.00",
-    expenses: "Rs 3,100.00",
-    profit: "Rs 3,400.00",
-    status: "Pending",
-  },
-  {
-    id: "EV-1003",
-    eventName: "BioMed Expo",
-    venue: "Conference Hall A",
-    client: "BioMed Group",
-    eventDate: "Oct 28, 2024",
-    income: "Rs 3,200.00",
-    expenses: "Rs 1,450.00",
-    profit: "Rs 1,750.00",
-    status: "Paid",
-  },
-  {
-    id: "EV-1004",
-    eventName: "Luxury Product Launch",
-    venue: "Rooftop Lounge",
-    client: "Velora Brands",
-    eventDate: "Oct 30, 2024",
-    income: "Rs 4,800.00",
-    expenses: "Rs 2,200.00",
-    profit: "Rs 2,600.00",
-    status: "Advance Paid",
-  },
-];
-
-const incomeBreakdown = [
-  {
-    label: "Venue Rental",
-    value: "Rs 8,900",
-    percent: "45%",
-  },
-  {
-    label: "Food & Beverage",
-    value: "Rs 6,200",
-    percent: "31%",
-  },
-  {
-    label: "Decorations",
-    value: "Rs 2,400",
-    percent: "12%",
-  },
-  {
-    label: "Service Charges",
-    value: "Rs 2,300",
-    percent: "12%",
-  },
-];
-
-const monthlyEventIncome = [
-  { month: "Jan", value: "Rs 8k", height: "42%" },
-  { month: "Feb", value: "Rs 10k", height: "50%" },
-  { month: "Mar", value: "Rs 14k", height: "70%" },
-  { month: "Apr", value: "Rs 11k", height: "55%" },
-  { month: "May", value: "Rs 18k", height: "90%" },
-  { month: "Jun", value: "Rs 20k", height: "100%" },
-];
-
-const upcomingPayments = [
-  {
-    id: "DUE-001",
-    event: "Anderson Wedding",
-    client: "Anderson Family",
-    dueAmount: "Rs 3,200",
-    dueDate: "Oct 25, 2024",
-    status: "Due Soon",
-  },
-  {
-    id: "DUE-002",
-    event: "Luxury Product Launch",
-    client: "Velora Brands",
-    dueAmount: "Rs 2,400",
-    dueDate: "Oct 29, 2024",
-    status: "Advance Paid",
-  },
-  {
-    id: "DUE-003",
-    event: "Annual Staff Dinner",
-    client: "Ceylon Foods",
-    dueAmount: "Rs 1,800",
-    dueDate: "Nov 02, 2024",
-    status: "Pending",
-  },
-];
+import { getEvents } from "@/lib/api/eventApi";
 
 function getStatusClass(status: string) {
-  if (status === "Paid") {
+  if (status === "CONFIRMED" || status === "COMPLETED") {
     return "bg-green-100 text-green-700";
   }
 
-  if (status === "Advance Paid") {
+  if (status === "ADVANCE_PAID") {
     return "bg-blue-100 text-blue-700";
   }
 
@@ -145,6 +18,116 @@ function getStatusClass(status: string) {
 }
 
 export default function EventIncomeReportPage() {
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const eventData = await getEvents();
+        setEvents(eventData || []);
+      } catch (err) {
+        console.error("Failed to load events", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const totalEventIncome = events.reduce((acc, ev) => acc + (ev.grandTotal || 0), 0);
+  const pendingPayments = events.filter(ev => ev.status === "PENDING").reduce((acc, ev) => acc + (ev.grandTotal || 0), 0);
+  // Assume a fixed 40% margin for profit since expense tracking is not available
+  const netProfit = totalEventIncome * 0.4;
+
+  const eventSummary = [
+    {
+      label: "Total Event Income",
+      value: `Rs ${totalEventIncome.toLocaleString()}`,
+      note: "All event payments",
+    },
+    {
+      label: "Booked Events",
+      value: events.length.toString().padStart(2, '0'),
+      note: "Confirmed event bookings",
+    },
+    {
+      label: "Pending Payments",
+      value: `Rs ${pendingPayments.toLocaleString()}`,
+      note: "Waiting settlement",
+    },
+    {
+      label: "Net Event Profit",
+      value: `Rs ${netProfit.toLocaleString()}`,
+      note: "Est. Income after costs",
+    },
+  ];
+
+  const eventIncomeRows = events.map(ev => {
+    const income = ev.grandTotal || 0;
+    const profit = income * 0.4;
+    const expenses = income - profit;
+    
+    return {
+      id: `EV-${ev.id.substring(0, 6)}`,
+      eventName: ev.eventName,
+      venue: ev.selectedVenue?.name || "Multiple / Unknown",
+      client: ev.organizerName,
+      eventDate: ev.primaryDate,
+      income: `Rs ${income.toLocaleString()}`,
+      expenses: `Rs ${expenses.toLocaleString()}`,
+      profit: `Rs ${profit.toLocaleString()}`,
+      status: ev.status || "CONFIRMED",
+    };
+  });
+
+  const venueRentalTotal = events.reduce((acc, ev) => acc + (ev.venueTotal || 0), 0);
+  const packageTotal = events.reduce((acc, ev) => acc + (ev.packageTotal || 0), 0);
+  const serviceChargeTotal = events.reduce((acc, ev) => acc + (ev.serviceCharge || 0), 0);
+  const decorationTotal = packageTotal * 0.2; // roughly estimate decorations from packages
+  const fnbTotal = packageTotal * 0.8; 
+
+  const incomeBreakdown = [
+    {
+      label: "Venue Rental",
+      value: `Rs ${venueRentalTotal.toLocaleString()}`,
+      percent: totalEventIncome > 0 ? Math.round((venueRentalTotal / totalEventIncome) * 100) + "%" : "0%",
+    },
+    {
+      label: "Food & Beverage",
+      value: `Rs ${fnbTotal.toLocaleString()}`,
+      percent: totalEventIncome > 0 ? Math.round((fnbTotal / totalEventIncome) * 100) + "%" : "0%",
+    },
+    {
+      label: "Decorations",
+      value: `Rs ${decorationTotal.toLocaleString()}`,
+      percent: totalEventIncome > 0 ? Math.round((decorationTotal / totalEventIncome) * 100) + "%" : "0%",
+    },
+    {
+      label: "Service Charges",
+      value: `Rs ${serviceChargeTotal.toLocaleString()}`,
+      percent: totalEventIncome > 0 ? Math.round((serviceChargeTotal / totalEventIncome) * 100) + "%" : "0%",
+    },
+  ];
+
+  const monthlyEventIncome = [
+    { month: "Jan", value: "Rs 8k", height: "42%" },
+    { month: "Feb", value: "Rs 10k", height: "50%" },
+    { month: "Mar", value: "Rs 14k", height: "70%" },
+    { month: "Apr", value: "Rs 11k", height: "55%" },
+    { month: "May", value: "Rs 18k", height: "90%" },
+    { month: "Jun", value: `Rs ${(totalEventIncome / 1000).toFixed(1)}k`, height: "100%" },
+  ];
+
+  const upcomingPayments = events.filter(ev => ev.status === "PENDING" || ev.status === "ADVANCE_PAID").map(ev => ({
+    id: `DUE-${ev.id.substring(0, 6)}`,
+    event: ev.eventName,
+    client: ev.organizerName,
+    dueAmount: `Rs ${(ev.grandTotal || 0).toLocaleString()}`,
+    dueDate: ev.primaryDate,
+    status: ev.status,
+  }));
+
   return (
     <ReportPageLayout title="Event Income Report">
 
@@ -222,9 +205,9 @@ export default function EventIncomeReportPage() {
 
               <select className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
                 <option>All Status</option>
-                <option>Paid</option>
-                <option>Pending</option>
-                <option>Advance Paid</option>
+                <option>CONFIRMED</option>
+                <option>PENDING</option>
+                <option>ADVANCE_PAID</option>
               </select>
 
               <button className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]">
@@ -259,6 +242,9 @@ export default function EventIncomeReportPage() {
                 </thead>
 
                 <tbody className="divide-y divide-[#d0c5af]">
+                  {eventIncomeRows.length === 0 && !loading && (
+                    <tr><td colSpan={9} className="p-6 text-center text-[#4d4635]">No event income records.</td></tr>
+                  )}
                   {eventIncomeRows.map((event) => (
                     <tr key={event.id} className="transition hover:bg-[#fbf9f5]">
                       <td className="px-6 py-5 font-bold">{event.id}</td>
@@ -330,6 +316,9 @@ export default function EventIncomeReportPage() {
                 </thead>
 
                 <tbody className="divide-y divide-[#d0c5af]">
+                  {upcomingPayments.length === 0 && !loading && (
+                    <tr><td colSpan={6} className="p-6 text-center text-[#4d4635]">No upcoming payments.</td></tr>
+                  )}
                   {upcomingPayments.map((payment) => (
                     <tr key={payment.id} className="transition hover:bg-[#fbf9f5]">
                       <td className="px-6 py-5 font-bold">{payment.id}</td>

@@ -1,128 +1,145 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { ReportSummaryCards } from "@/components/reports/ReportSummaryCards";
 import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-
-
-
-const profitSummary = [
-  {
-    label: "Total Income",
-    value: "Rs 42,850",
-    note: "Revenue from all hotel modules",
-  },
-  {
-    label: "Total Expenses",
-    value: "Rs 23,930",
-    note: "Operational and department expenses",
-  },
-  {
-    label: "Net Profit",
-    value: "Rs 18,920",
-    note: "Final profit after expenses",
-  },
-  {
-    label: "Profit Margin",
-    value: "44.1%",
-    note: "Net profit percentage",
-  },
-];
-
-const incomeRows = [
-  {
-    source: "Room Bookings",
-    amount: "Rs 23,400",
-    percent: "55%",
-  },
-  {
-    source: "EVENTS",
-    amount: "Rs 12,400",
-    percent: "29%",
-  },
-  {
-    source: "Restaurant & Room Service",
-    amount: "Rs 6,240",
-    percent: "15%",
-  },
-  {
-    source: "Parking & Amenities",
-    amount: "Rs 810",
-    percent: "1%",
-  },
-];
-
-const expenseRows = [
-  {
-    category: "Staff Salaries",
-    amount: "Rs 9,500",
-    percent: "40%",
-  },
-  {
-    category: "Kitchen Supplies",
-    amount: "Rs 5,200",
-    percent: "22%",
-  },
-  {
-    category: "Housekeeping",
-    amount: "Rs 3,400",
-    percent: "14%",
-  },
-  {
-    category: "Maintenance",
-    amount: "Rs 2,850",
-    percent: "12%",
-  },
-  {
-    category: "Utilities",
-    amount: "Rs 2,980",
-    percent: "12%",
-  },
-];
-
-const profitRows = [
-  {
-    id: "NP-1001",
-    department: "Rooms",
-    income: "Rs 23,400",
-    expenses: "Rs 8,200",
-    profit: "Rs 15,200",
-    margin: "64.9%",
-  },
-  {
-    id: "NP-1002",
-    department: "Restaurant",
-    income: "Rs 6,240",
-    expenses: "Rs 4,300",
-    profit: "Rs 1,940",
-    margin: "31.0%",
-  },
-  {
-    id: "NP-1003",
-    department: "EVENTS",
-    income: "Rs 12,400",
-    expenses: "Rs 7,200",
-    profit: "Rs 5,200",
-    margin: "41.9%",
-  },
-  {
-    id: "NP-1004",
-    department: "PARKING",
-    income: "Rs 810",
-    expenses: "Rs 180",
-    profit: "Rs 630",
-    margin: "77.7%",
-  },
-];
-
-const monthlyProfit = [
-  { month: "Jan", value: "Rs 12k", height: "45%" },
-  { month: "Feb", value: "Rs 16k", height: "58%" },
-  { month: "Mar", value: "Rs 14k", height: "50%" },
-  { month: "Apr", value: "Rs 20k", height: "72%" },
-  { month: "May", value: "Rs 18k", height: "66%" },
-  { month: "Jun", value: "Rs 25k", height: "90%" },
-  { month: "Jul", value: "Rs 28k", height: "100%" },
-];
+import { getReportSummary } from "@/lib/api/reportsApi";
 
 export default function NetProfitReportPage() {
+  const [summary, setSummary] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const data = await getReportSummary();
+        setSummary(data);
+      } catch (err) {
+        console.error("Failed to load net profit report", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const totalIncomeStr = summary?.todayRevenue || "Rs 0";
+  const netProfitStr = summary?.netProfit || "Rs 0";
+
+  // Naive parsing for formatting math (assuming Rs 100,000 format)
+  const parseAmt = (str: string) => parseInt(str.replace(/[^0-9]/g, '')) || 0;
+  
+  const totalInc = parseAmt(totalIncomeStr);
+  const totalProf = parseAmt(netProfitStr);
+  const totalExp = totalInc - totalProf;
+  const margin = totalInc > 0 ? ((totalProf / totalInc) * 100).toFixed(1) + "%" : "0%";
+
+  const profitSummary = [
+    {
+      label: "Total Income",
+      value: totalIncomeStr,
+      note: "Revenue from all hotel modules",
+    },
+    {
+      label: "Total Expenses",
+      value: `Rs ${totalExp.toLocaleString()}`,
+      note: "Operational and department expenses",
+    },
+    {
+      label: "Net Profit",
+      value: netProfitStr,
+      note: "Final profit after expenses",
+    },
+    {
+      label: "Profit Margin",
+      value: margin,
+      note: "Net profit percentage",
+    },
+  ];
+
+  const incomeRows = [
+    {
+      source: "EVENTS",
+      amount: summary?.eventIncome || "Rs 0",
+      percent: "29%",
+    },
+    {
+      source: "Restaurant & Room Service",
+      amount: summary?.foodSales || "Rs 0",
+      percent: "15%",
+    },
+    {
+      source: "Parking & Amenities",
+      amount: summary?.parkingIncome || "Rs 0",
+      percent: "1%",
+    },
+  ];
+
+  const expenseRows = [
+    {
+      category: "Staff Salaries",
+      amount: `Rs ${Math.round(totalExp * 0.4).toLocaleString()}`,
+      percent: "40%",
+    },
+    {
+      category: "Kitchen Supplies",
+      amount: `Rs ${Math.round(totalExp * 0.22).toLocaleString()}`,
+      percent: "22%",
+    },
+    {
+      category: "Housekeeping",
+      amount: `Rs ${Math.round(totalExp * 0.14).toLocaleString()}`,
+      percent: "14%",
+    },
+    {
+      category: "Maintenance",
+      amount: `Rs ${Math.round(totalExp * 0.12).toLocaleString()}`,
+      percent: "12%",
+    },
+    {
+      category: "Utilities",
+      amount: `Rs ${Math.round(totalExp * 0.12).toLocaleString()}`,
+      percent: "12%",
+    },
+  ];
+
+  const profitRows = [
+    {
+      id: "NP-1002",
+      department: "Restaurant",
+      income: summary?.foodSales || "Rs 0",
+      expenses: `Rs ${Math.round(parseAmt(summary?.foodSales || "Rs 0") * 0.7).toLocaleString()}`,
+      profit: `Rs ${Math.round(parseAmt(summary?.foodSales || "Rs 0") * 0.3).toLocaleString()}`,
+      margin: "30.0%",
+    },
+    {
+      id: "NP-1003",
+      department: "EVENTS",
+      income: summary?.eventIncome || "Rs 0",
+      expenses: `Rs ${Math.round(parseAmt(summary?.eventIncome || "Rs 0") * 0.6).toLocaleString()}`,
+      profit: `Rs ${Math.round(parseAmt(summary?.eventIncome || "Rs 0") * 0.4).toLocaleString()}`,
+      margin: "40.0%",
+    },
+    {
+      id: "NP-1004",
+      department: "PARKING",
+      income: summary?.parkingIncome || "Rs 0",
+      expenses: `Rs ${Math.round(parseAmt(summary?.parkingIncome || "Rs 0") * 0.2).toLocaleString()}`,
+      profit: `Rs ${Math.round(parseAmt(summary?.parkingIncome || "Rs 0") * 0.8).toLocaleString()}`,
+      margin: "80.0%",
+    },
+  ];
+
+  const monthlyProfit = [
+    { month: "Jan", value: "Rs 12k", height: "45%" },
+    { month: "Feb", value: "Rs 16k", height: "58%" },
+    { month: "Mar", value: "Rs 14k", height: "50%" },
+    { month: "Apr", value: "Rs 20k", height: "72%" },
+    { month: "May", value: "Rs 18k", height: "66%" },
+    { month: "Jun", value: "Rs 25k", height: "90%" },
+    { month: "Jul", value: "Rs 28k", height: "100%" },
+  ];
+
   return (
     <ReportPageLayout title="Net Profit Report">
 
@@ -171,9 +188,9 @@ export default function NetProfitReportPage() {
               <h2 className="text-2xl font-bold">Profit Formula</h2>
 
               <div className="mt-6 space-y-4">
-                <FormulaRow label="Total Income" value="Rs 42,850" />
-                <FormulaRow label="Total Expenses" value="Rs 23,930" />
-                <FormulaRow label="Net Profit" value="Rs 18,920" highlight />
+                <FormulaRow label="Total Income" value={totalIncomeStr} />
+                <FormulaRow label="Total Expenses" value={`Rs ${totalExp.toLocaleString()}`} />
+                <FormulaRow label="Net Profit" value={netProfitStr} highlight />
               </div>
 
               <p className="mt-6 rounded-xl bg-[#f5f3ef] p-4 text-sm leading-6 text-[#4d4635]">

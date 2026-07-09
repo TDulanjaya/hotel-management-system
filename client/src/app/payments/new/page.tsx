@@ -195,7 +195,7 @@ export default function NewPaymentPage() {
 
               <div className="flex gap-4">
                 <a
-                  href="/payments/list"
+                  href="/payments"
                   className="flex-1 rounded-xl border border-[#735c00] px-6 py-4 text-center font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
                 >
                   Cancel

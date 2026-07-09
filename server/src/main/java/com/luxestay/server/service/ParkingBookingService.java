@@ -3,6 +3,7 @@ package com.luxestay.server.service;
 import com.luxestay.server.dto.ParkingBookingRequest;
 import com.luxestay.server.model.ParkingBooking;
 import com.luxestay.server.repository.ParkingBookingRepository;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,9 +11,11 @@ import java.util.List;
 @Service
 public class ParkingBookingService {
     private final ParkingBookingRepository parkingBookingRepository;
+    private final SimpMessagingTemplate messagingTemplate;
 
-    public ParkingBookingService(ParkingBookingRepository parkingBookingRepository) {
+    public ParkingBookingService(ParkingBookingRepository parkingBookingRepository, SimpMessagingTemplate messagingTemplate) {
         this.parkingBookingRepository = parkingBookingRepository;
+        this.messagingTemplate = messagingTemplate;
     }
 
     public List<ParkingBooking> getAllBookings() {
@@ -44,7 +47,9 @@ public class ParkingBookingService {
                 .status(request.getStatus())
                 .createdAt(System.currentTimeMillis())
                 .build();
-        return parkingBookingRepository.save(booking);
+        ParkingBooking saved = parkingBookingRepository.save(booking);
+        messagingTemplate.convertAndSend("/topic/parking", "updated");
+        return saved;
     }
 
     public ParkingBooking updateBooking(String id, ParkingBookingRequest request) {
@@ -65,10 +70,14 @@ public class ParkingBookingService {
         booking.setPaymentStatus(request.getPaymentStatus());
         booking.setNotes(request.getNotes());
         booking.setStatus(request.getStatus());
-        return parkingBookingRepository.save(booking);
+        ParkingBooking saved = parkingBookingRepository.save(booking);
+        messagingTemplate.convertAndSend("/topic/parking", "updated");
+        return saved;
     }
 
     public void deleteBooking(String id) {
         parkingBookingRepository.deleteById(id);
+        messagingTemplate.convertAndSend("/topic/parking", "updated");
     }
 }
+

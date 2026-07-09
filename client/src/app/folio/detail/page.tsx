@@ -1,89 +1,64 @@
 "use client";
 import { useSearchParams } from "next/navigation";
 
-
-import { useParams, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-
-const folioItems = [
-  {
-    id: "FOL-ITEM-001",
-    description: "Room Charge - Executive Suite",
-    category: "Room",
-    date: "Oct 21, 2024",
-    amount: "Rs 400.00",
-  },
-  {
-    id: "FOL-ITEM-002",
-    description: "Room Charge - Executive Suite",
-    category: "Room",
-    date: "Oct 22, 2024",
-    amount: "Rs 400.00",
-  },
-  {
-    id: "FOL-ITEM-003",
-    description: "Room Charge - Executive Suite",
-    category: "Room",
-    date: "Oct 23, 2024",
-    amount: "Rs 400.00",
-  },
-  {
-    id: "FOL-ITEM-004",
-    description: "Club Sandwich, Orange Juice",
-    category: "Room Service",
-    date: "Oct 23, 2024",
-    amount: "Rs 32.00",
-  },
-  {
-    id: "FOL-ITEM-005",
-    description: "Restaurant Dinner",
-    category: "Restaurant",
-    date: "Oct 23, 2024",
-    amount: "Rs 142.00",
-  },
-  {
-    id: "FOL-ITEM-006",
-    description: "Parking Fee",
-    category: "Parking",
-    date: "Oct 24, 2024",
-    amount: "Rs 25.00",
-  },
-];
-
-const paymentRows = [
-  {
-    id: "PAY-1001",
-    method: "Card",
-    date: "Oct 24, 2024",
-    amount: "Rs 800.00",
-    status: "Paid",
-  },
-  {
-    id: "PAY-1002",
-    method: "Cash",
-    date: "Oct 24, 2024",
-    amount: "Rs 0.00",
-    status: "Pending",
-  },
-];
-
-function getStatusClass(status: string) {
-  if (status === "Paid") {
-    return "bg-green-100 text-green-700";
-  }
-
-  return "bg-yellow-100 text-yellow-700";
-}
+import { getById as getFolioById, update as updateFolio } from "@/lib/api/folioApi";
+import { getPricingItemsByCategory } from "@/lib/api/pricingApi";
 
 export default function FolioDetailsPage() {
   const searchParams = useSearchParams();
   const rawId = searchParams.get("id");
   const id = rawId as string;
-
   const router = useRouter();
-  const params = useParams();
-  const folioId = id as string;
+
+  const [folio, setFolio] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [amenityItems, setAmenityItems] = useState<any[]>([]);
+  const [showAmenityPanel, setShowAmenityPanel] = useState(false);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [folioData, amenities] = await Promise.all([
+          getFolioById(id),
+          getPricingItemsByCategory("Amenity"),
+        ]);
+        setFolio(folioData);
+        setAmenityItems(amenities || []);
+      } catch (err: any) {
+        setError(err.message || "Failed to load folio");
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (id) loadData();
+  }, [id]);
+
+  const addAmenityCharge = async (amenity: any) => {
+    if (!folio) return;
+    const newLine = {
+      description: amenity.name,
+      amount: amenity.price,
+      date: new Date().toISOString().split("T")[0],
+      category: "Amenity",
+    };
+    const updatedLines = [...(folio.lines || []), newLine];
+    const updatedTotal = updatedLines.reduce((acc: number, l: any) => acc + (l.amount || 0), 0);
+    try {
+      const updated = await updateFolio(id, { ...folio, lines: updatedLines, totalAmount: updatedTotal });
+      setFolio(updated);
+      setShowAmenityPanel(false);
+    } catch {
+      alert("Failed to add amenity charge");
+    }
+  };
+
+  const folioLines = folio?.lines || [];
+  const totalAmount = folio?.totalAmount || folioLines.reduce((acc: number, l: any) => acc + (l.amount || 0), 0);
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "RECEPTIONIST"]}>
@@ -109,6 +84,12 @@ export default function FolioDetailsPage() {
 
             <div className="flex flex-wrap gap-3">
               <button
+                onClick={() => setShowAmenityPanel(true)}
+                className="rounded-xl border border-[#d4af37] bg-[#d4af37]/10 px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#d4af37]/20"
+              >
+                + Add Amenity
+              </button>
+              <button
                 onClick={() => router.push("/folio")}
                 className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
               >
@@ -116,7 +97,7 @@ export default function FolioDetailsPage() {
               </button>
 
               <button
-                onClick={() => router.push(`/checkout/detail?id=${folioId}`)}
+                onClick={() => router.push(`/checkout/detail?id=${id}`)}
                 className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
               >
                 Checkout
@@ -124,151 +105,122 @@ export default function FolioDetailsPage() {
             </div>
           </div>
 
-          <section className="mb-8 grid gap-6 md:grid-cols-4">
-            <StatCard label="Folio ID" value={folioId || "N/A"} />
-            <StatCard label="Guest" value="Elena Rodriguez" />
-            <StatCard label="Room" value="402" />
-            <StatCard label="Status" value="Open" />
-          </section>
+          {loading ? (
+            <div className="flex h-64 items-center justify-center text-lg text-[#806300]">Loading...</div>
+          ) : error ? (
+            <div className="text-red-600">{error}</div>
+          ) : (
+            <>
+              <section className="mb-8 grid gap-6 md:grid-cols-4">
+                <StatCard label="Folio ID" value={folio?.id?.substring(0, 8) || "N/A"} />
+                <StatCard label="Guest" value={folio?.guestName || "N/A"} />
+                <StatCard label="Room" value={folio?.roomNumber || "N/A"} />
+                <StatCard label="Status" value={folio?.status || "Open"} />
+              </section>
 
-          <section className="mb-8 grid gap-8 xl:grid-cols-[1fr_1fr]">
-            <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-              <h2 className="text-2xl font-bold">Guest Information</h2>
-
-              <div className="mt-6 space-y-4">
-                <InfoRow label="Guest Name" value="Elena Rodriguez" />
-                <InfoRow label="Email" value="elena@example.com" />
-                <InfoRow label="Room Type" value="Executive Suite" />
-                <InfoRow label="Check In" value="Oct 21, 2024" />
-                <InfoRow label="Check Out" value="Oct 24, 2024" />
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-              <h2 className="text-2xl font-bold">Folio Summary</h2>
-
-              <div className="mt-6 space-y-4">
-                <InfoRow label="Room Charges" value="Rs 1,200.00" />
-                <InfoRow label="Service Charges" value="Rs 199.00" />
-                <InfoRow label="Tax" value="Rs 185.00" />
-                <InfoRow label="Paid Amount" value="Rs 800.00" />
-              </div>
-
-              <div className="mt-6 rounded-xl bg-[#735c00] p-5 text-white">
-                <div className="flex items-center justify-between">
-                  <p className="text-lg font-bold">Balance Due</p>
-                  <p className="text-2xl font-extrabold">Rs 784.00</p>
+              <section className="mb-8 grid gap-8 xl:grid-cols-[1fr_1fr]">
+                <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
+                  <h2 className="text-2xl font-bold">Guest Information</h2>
+                  <div className="mt-6 space-y-4">
+                    <InfoRow label="Guest Name" value={folio?.guestName || "N/A"} />
+                    <InfoRow label="Room Number" value={folio?.roomNumber || "N/A"} />
+                    <InfoRow label="Reservation ID" value={folio?.reservationId || "N/A"} />
+                  </div>
                 </div>
+
+                <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
+                  <h2 className="text-2xl font-bold">Folio Summary</h2>
+                  <div className="mt-6 space-y-4">
+                    <InfoRow label="Total Charges" value={`Rs ${totalAmount.toLocaleString()}`} />
+                    <InfoRow label="Line Items" value={`${folioLines.length} items`} />
+                  </div>
+
+                  <div className="mt-6 rounded-xl bg-[#735c00] p-5 text-white">
+                    <div className="flex items-center justify-between">
+                      <p className="text-lg font-bold">Total Amount</p>
+                      <p className="text-2xl font-extrabold">Rs {totalAmount.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section className="mb-8 overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">
+                <div className="border-b border-[#d0c5af] p-6">
+                  <h2 className="text-2xl font-bold">Folio Charges</h2>
+                  <p className="mt-1 text-sm text-[#4d4635]">
+                    All charges added to this guest folio.
+                  </p>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[900px] text-left">
+                    <thead>
+                      <tr className="border-b border-[#d0c5af] bg-[#f5f3ef] text-xs uppercase tracking-widest text-[#4d4635]">
+                        <th className="px-6 py-4">#</th>
+                        <th className="px-6 py-4">Description</th>
+                        <th className="px-6 py-4">Category</th>
+                        <th className="px-6 py-4">Date</th>
+                        <th className="px-6 py-4 text-right">Amount</th>
+                      </tr>
+                    </thead>
+
+                    <tbody className="divide-y divide-[#d0c5af]">
+                      {folioLines.length === 0 ? (
+                        <tr><td colSpan={5} className="p-6 text-center text-[#4d4635]">No charges yet.</td></tr>
+                      ) : (
+                        folioLines.map((item: any, idx: number) => (
+                          <tr key={idx} className="transition hover:bg-[#fbf9f5]">
+                            <td className="px-6 py-5 font-bold">{idx + 1}</td>
+                            <td className="px-6 py-5 font-semibold">{item.description}</td>
+                            <td className="px-6 py-5">
+                              <span className="rounded-full bg-[#d4af37]/20 px-3 py-1 text-xs font-bold text-[#735c00]">
+                                {item.category || "General"}
+                              </span>
+                            </td>
+                            <td className="px-6 py-5 text-[#4d4635]">{item.date}</td>
+                            <td className="px-6 py-5 text-right font-bold text-[#735c00]">
+                              Rs {(item.amount || 0).toLocaleString()}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </>
+          )}
+
+          {/* Amenity Add Panel */}
+          {showAmenityPanel && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+              <div className="w-full max-w-md rounded-2xl border border-[#d0c5af] bg-white p-8 shadow-2xl">
+                <h2 className="mb-6 text-2xl font-bold text-[#735c00]">Add Amenity Charge</h2>
+                {amenityItems.length === 0 ? (
+                  <p className="text-gray-500">No amenity pricing items found. Add items under the &quot;Amenity&quot; category in Service Pricing.</p>
+                ) : (
+                  <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                    {amenityItems.map((item: any) => (
+                      <button
+                        key={item.id}
+                        onClick={() => addAmenityCharge(item)}
+                        className="flex w-full items-center justify-between rounded-xl border border-[#d0c5af] bg-[#fbf9f5] p-4 transition hover:bg-[#f5eed9]"
+                      >
+                        <span className="font-bold">{item.name}</span>
+                        <span className="font-bold text-[#735c00]">Rs {item.price}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <button
+                  onClick={() => setShowAmenityPanel(false)}
+                  className="mt-6 w-full rounded-xl border border-[#d0c5af] py-3 font-bold text-[#4d4635] transition hover:bg-[#f5f3ef]"
+                >
+                  Cancel
+                </button>
               </div>
             </div>
-          </section>
-
-          <section className="mb-8 overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">
-            <div className="border-b border-[#d0c5af] p-6">
-              <h2 className="text-2xl font-bold">Folio Charges</h2>
-
-              <p className="mt-1 text-sm text-[#4d4635]">
-                All charges added to this guest folio.
-              </p>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[900px] text-left">
-                <thead>
-                  <tr className="border-b border-[#d0c5af] bg-[#f5f3ef] text-xs uppercase tracking-widest text-[#4d4635]">
-                    <th className="px-6 py-4">Item ID</th>
-                    <th className="px-6 py-4">Description</th>
-                    <th className="px-6 py-4">Category</th>
-                    <th className="px-6 py-4">Date</th>
-                    <th className="px-6 py-4 text-right">Amount</th>
-                  </tr>
-                </thead>
-
-                <tbody className="divide-y divide-[#d0c5af]">
-                  {folioItems.map((item) => (
-                    <tr key={item.id} className="transition hover:bg-[#fbf9f5]">
-                      <td className="px-6 py-5 font-bold">{item.id}</td>
-
-                      <td className="px-6 py-5 font-semibold">
-                        {item.description}
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <span className="rounded-full bg-[#d4af37]/20 px-3 py-1 text-xs font-bold text-[#735c00]">
-                          {item.category}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-5 text-[#4d4635]">
-                        {item.date}
-                      </td>
-
-                      <td className="px-6 py-5 text-right font-bold text-[#735c00]">
-                        {item.amount}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">
-            <div className="border-b border-[#d0c5af] p-6">
-              <h2 className="text-2xl font-bold">Payment History</h2>
-
-              <p className="mt-1 text-sm text-[#4d4635]">
-                Payments linked to this folio.
-              </p>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[750px] text-left">
-                <thead>
-                  <tr className="border-b border-[#d0c5af] bg-[#f5f3ef] text-xs uppercase tracking-widest text-[#4d4635]">
-                    <th className="px-6 py-4">Payment ID</th>
-                    <th className="px-6 py-4">Method</th>
-                    <th className="px-6 py-4">Date</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4 text-right">Amount</th>
-                  </tr>
-                </thead>
-
-                <tbody className="divide-y divide-[#d0c5af]">
-                  {paymentRows.map((payment) => (
-                    <tr
-                      key={payment.id}
-                      className="transition hover:bg-[#fbf9f5]"
-                    >
-                      <td className="px-6 py-5 font-bold">{payment.id}</td>
-
-                      <td className="px-6 py-5 text-[#4d4635]">
-                        {payment.method}
-                      </td>
-
-                      <td className="px-6 py-5 text-[#4d4635]">
-                        {payment.date}
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusClass(
-                            payment.status
-                          )}`}
-                        >
-                          {payment.status}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-5 text-right font-bold text-[#735c00]">
-                        {payment.amount}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
+          )}
         </main>
       </div>
     </ProtectedRoute>

@@ -7,6 +7,7 @@ import { useRouter, useParams } from "next/navigation";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { getParkingBookingById, updateParkingBooking } from "@/lib/api/parkingApi";
+import { getPricingItemsByCategory } from "@/lib/api/pricingApi";
 
 export default function EditParkingPage() {
   const searchParams = useSearchParams();
@@ -19,6 +20,7 @@ export default function EditParkingPage() {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState("");
+  const [pricingItems, setPricingItems] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     vehicleNumber: "",
@@ -73,6 +75,27 @@ export default function EditParkingPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const handlePricingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedId = e.target.value;
+    if (!selectedId) return;
+    const selectedItem = pricingItems.find(item => item.id === selectedId);
+    if (selectedItem) {
+      setFormData({ ...formData, amount: selectedItem.price });
+    }
+  };
+
+  useEffect(() => {
+    async function loadPricing() {
+      try {
+        const items = await getPricingItemsByCategory("PARKING");
+        setPricingItems(items);
+      } catch (err) {
+        console.error("Failed to load parking pricing items", err);
+      }
+    }
+    loadPricing();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -191,6 +214,13 @@ export default function EditParkingPage() {
 
                 <div className="grid grid-cols-3 gap-4">
                   <div>
+                    <label className="block text-sm font-bold text-[#4d4635]">Parking Package</label>
+                    <select onChange={handlePricingChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 mb-2 bg-[#fbf9f5]">
+                      <option value="">-- Select a package --</option>
+                      {pricingItems.map(item => (
+                        <option key={item.id} value={item.id}>{item.name} - Rs {item.price}</option>
+                      ))}
+                    </select>
                     <label className="block text-sm font-bold text-[#4d4635]">Amount (Rs)</label>
                     <input required type="number" name="amount" value={formData.amount} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
                   </div>

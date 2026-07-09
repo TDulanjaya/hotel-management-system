@@ -1,56 +1,30 @@
 "use client";
-import { useEffect, useState } from "react";
+import useSWR from "swr";
+import { swrFetcher } from "@/lib/api/authApi";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useAuthContext } from "@/context/AuthContext";
-import api from "@/lib/api/axiosInstance";
-import { getRooms } from "@/lib/api/roomApi";
-import { getParkingBookings } from "@/lib/api/parkingApi";
 
 export default function DashboardPage() {
   const { user } = useAuthContext();
   
-  const [totalRooms, setTotalRooms] = useState<number | null>(null);
-  const [occupiedRooms, setOccupiedRooms] = useState<number | null>(null);
-  const [availableRooms, setAvailableRooms] = useState<number | null>(null);
-  
-  const [parkingOccupied, setParkingOccupied] = useState<number | null>(null);
-  const [parkingTotal, setParkingTotal] = useState<number>(50); // Hardcoded total for now or we could fetch
-  
-  const [loadingRooms, setLoadingRooms] = useState(true);
-  const [loadingParking, setLoadingParking] = useState(true);
+  // Fetch all rooms (size=1000) for accurate stats
+  const { data: roomData, error: roomError } = useSWR("/api/rooms?size=1000", swrFetcher);
+  // Fetch all parking bookings
+  const { data: parkingData, error: parkingError } = useSWR("/api/parking/bookings?size=1000", swrFetcher);
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const roomData = await getRooms();
-        const total = roomData.length;
-        const available = roomData.filter((r: any) => r.status === "AVAILABLE").length;
-        setTotalRooms(total);
-        setAvailableRooms(available);
-        setOccupiedRooms(total - available);
-      } catch (err) {
-        console.error("Failed to load rooms", err);
-        setTotalRooms(0);
-        setAvailableRooms(0);
-        setOccupiedRooms(0);
-      } finally {
-        setLoadingRooms(false);
-      }
+  const loadingRooms = !roomData && !roomError;
+  const loadingParking = !parkingData && !parkingError;
 
-      try {
-        const parkingData = await getParkingBookings();
-        setParkingOccupied(parkingData.length);
-      } catch (err) {
-        console.error("Failed to load parking", err);
-        setParkingOccupied(0);
-      } finally {
-        setLoadingParking(false);
-      }
-    };
+  const roomsList = roomData?.content || [];
+  const totalRooms = roomsList.length;
+  const availableRooms = roomsList.filter((r: any) => r.status === "AVAILABLE").length;
+  const occupiedRooms = totalRooms - availableRooms;
 
-    fetchDashboardData();
-  }, []);
+  const parkingBookingsList = parkingData?.content || (Array.isArray(parkingData) ? parkingData : []);
+  const parkingOccupied = parkingBookingsList.length;
+  const parkingTotal = 50; // Hardcoded total for now
+
 
   const occupancyRate = totalRooms && totalRooms > 0 
     ? ((occupiedRooms! / totalRooms) * 100).toFixed(1)

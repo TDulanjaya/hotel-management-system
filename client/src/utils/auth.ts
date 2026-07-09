@@ -8,7 +8,9 @@ export type UserRole =
   | "EVENTS"
   | "PARKING"
   | "GAME_STAFF"
-  | "ROOM_SERVICE";
+  | "ROOM_SERVICE"
+  | "LAUNDRY"
+  | "SPA";
 
 export type AuthUser = {
   id: string;
@@ -64,6 +66,8 @@ export function getDashboardByRole(role: UserRole) {
     PARKING: "/parking",
     GAME_STAFF: "/games",
     ROOM_SERVICE: "/room-service",
+    LAUNDRY: "/laundry",
+    SPA: "/spa",
   };
 
   return roleRoutes[role] || "/dashboard";

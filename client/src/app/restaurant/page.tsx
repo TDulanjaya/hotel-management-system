@@ -16,12 +16,6 @@ const restaurantPages = [
     href: "/restaurant/orders",
     icon: Utensils,
   },
-  {
-    title: "Table Reservations",
-    description: "Manage restaurant booking list and upcoming reservations.",
-    href: "/restaurant/reservations",
-    icon: CalendarDays,
-  },
 ];
 
 export default function RestaurantPage() {

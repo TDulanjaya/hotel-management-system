@@ -1,126 +1,9 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { ReportSummaryCards } from "@/components/reports/ReportSummaryCards";
 import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-
-
-
-const lowStockSummary = [
-  {
-    label: "Low Stock Items",
-    value: "06",
-    note: "Below reorder level",
-  },
-  {
-    label: "Critical Items",
-    value: "02",
-    note: "Need urgent purchase",
-  },
-  {
-    label: "Pending Requests",
-    value: "03",
-    note: "Waiting approval",
-  },
-  {
-    label: "Estimated Cost",
-    value: "Rs 3,850",
-    note: "Reorder budget needed",
-  },
-];
-
-const lowStockItems = [
-  {
-    id: "INV-1002",
-    item: "Basmati Rice",
-    category: "COOK",
-    currentStock: "35 kg",
-    minimumStock: "50 kg",
-    reorderQty: "100 kg",
-    supplier: "FreshMart Supplies",
-    status: "Low Stock",
-    priority: "Medium",
-  },
-  {
-    id: "INV-1004",
-    item: "Room Shampoo Set",
-    category: "Amenities",
-    currentStock: "18 sets",
-    minimumStock: "60 sets",
-    reorderQty: "250 sets",
-    supplier: "HotelCare Products",
-    status: "Critical",
-    priority: "High",
-  },
-  {
-    id: "INV-1006",
-    item: "Premium Coffee Beans",
-    category: "Restaurant",
-    currentStock: "12 kg",
-    minimumStock: "30 kg",
-    reorderQty: "40 kg",
-    supplier: "Ceylon Coffee Co.",
-    status: "Critical",
-    priority: "High",
-  },
-  {
-    id: "INV-1007",
-    item: "Laundry Detergent",
-    category: "Housekeeping",
-    currentStock: "22 liters",
-    minimumStock: "40 liters",
-    reorderQty: "60 liters",
-    supplier: "CleanPro",
-    status: "Low Stock",
-    priority: "Medium",
-  },
-  {
-    id: "INV-1008",
-    item: "Toilet Paper Rolls",
-    category: "Amenities",
-    currentStock: "90 rolls",
-    minimumStock: "150 rolls",
-    reorderQty: "300 rolls",
-    supplier: "HotelCare Products",
-    status: "Low Stock",
-    priority: "Medium",
-  },
-  {
-    id: "INV-1009",
-    item: "Chicken Breast",
-    category: "COOK",
-    currentStock: "14 kg",
-    minimumStock: "25 kg",
-    reorderQty: "50 kg",
-    supplier: "FreshMart Supplies",
-    status: "Low Stock",
-    priority: "Medium",
-  },
-];
-
-const purchaseRequests = [
-  {
-    id: "PR-001",
-    item: "Room Shampoo Set",
-    requestedBy: "Housekeeping",
-    quantity: "250 sets",
-    estimatedCost: "Rs 1,250",
-    status: "Urgent",
-  },
-  {
-    id: "PR-002",
-    item: "Basmati Rice",
-    requestedBy: "COOK",
-    quantity: "100 kg",
-    estimatedCost: "Rs 420",
-    status: "Pending Approval",
-  },
-  {
-    id: "PR-003",
-    item: "Premium Coffee Beans",
-    requestedBy: "Restaurant",
-    quantity: "40 kg",
-    estimatedCost: "Rs 680",
-    status: "Approved",
-  },
-];
+import { getInventoryItems } from "@/lib/api/inventoryApi";
 
 function getStatusClass(status: string) {
   if (status === "Critical" || status === "Urgent") {
@@ -143,6 +26,81 @@ function getPriorityClass(priority: string) {
 }
 
 export default function LowStockReportPage() {
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const invData = await getInventoryItems();
+        setItems(invData || []);
+      } catch (err) {
+        console.error("Failed to load low stock report", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadData();
+  }, []);
+
+  const lowStockThreshold = (item: any) => item.quantity <= item.reorderLevel;
+  const criticalThreshold = (item: any) => item.quantity <= item.reorderLevel / 2;
+
+  const lowStockItems = items.filter(lowStockThreshold);
+  const criticalItems = items.filter(criticalThreshold);
+
+  // Since we don't have a purchase request API, we'll mock them based on critical items
+  const purchaseRequests = criticalItems.map((item, idx) => ({
+    id: `PR-00${idx + 1}`,
+    item: item.itemName,
+    requestedBy: item.category || "Auto",
+    quantity: `${item.reorderLevel * 2} ${item.unit || "units"}`,
+    estimatedCost: `Rs ${(item.reorderLevel * 2 * (item.purchasePrice || 100)).toLocaleString()}`,
+    status: idx === 0 ? "Urgent" : "Pending Approval",
+  }));
+
+  const estimatedReorderCost = lowStockItems.reduce((acc, item) => {
+    return acc + ((item.reorderLevel * 2 - item.quantity) * (item.purchasePrice || 100));
+  }, 0);
+
+  const lowStockSummary = [
+    {
+      label: "Low Stock Items",
+      value: lowStockItems.length.toString().padStart(2, '0'),
+      note: "Below reorder level",
+    },
+    {
+      label: "Critical Items",
+      value: criticalItems.length.toString().padStart(2, '0'),
+      note: "Need urgent purchase",
+    },
+    {
+      label: "Pending Requests",
+      value: purchaseRequests.length.toString().padStart(2, '0'),
+      note: "Waiting approval",
+    },
+    {
+      label: "Estimated Cost",
+      value: `Rs ${estimatedReorderCost.toLocaleString()}`,
+      note: "Reorder budget needed",
+    },
+  ];
+
+  const lowStockTableRows = lowStockItems.map(item => {
+    const isCritical = criticalThreshold(item);
+    return {
+      id: `INV-${item.id.substring(0, 6)}`,
+      item: item.itemName,
+      category: item.category || "General",
+      currentStock: `${item.quantity} ${item.unit || ""}`,
+      minimumStock: `${item.reorderLevel} ${item.unit || ""}`,
+      reorderQty: `${item.reorderLevel * 2} ${item.unit || ""}`,
+      supplier: item.supplierName || "Default Supplier",
+      status: isCritical ? "Critical" : "Low Stock",
+      priority: isCritical ? "High" : "Medium",
+    };
+  });
+
   return (
     <ReportPageLayout title="Low Stock Report">
 
@@ -155,22 +113,22 @@ export default function LowStockReportPage() {
               <div className="mt-6 space-y-4">
                 <AlertRow
                   label="Critical Items"
-                  value="2 Items"
-                  percent="35%"
+                  value={`${criticalItems.length} Items`}
+                  percent={items.length > 0 ? Math.round((criticalItems.length / items.length) * 100) + "%" : "0%"}
                   type="critical"
                 />
 
                 <AlertRow
                   label="Low Stock Items"
-                  value="4 Items"
-                  percent="65%"
+                  value={`${lowStockItems.length - criticalItems.length} Items`}
+                  percent={items.length > 0 ? Math.round(((lowStockItems.length - criticalItems.length) / items.length) * 100) + "%" : "0%"}
                   type="warning"
                 />
 
                 <AlertRow
                   label="Purchase Requests Created"
-                  value="3 Requests"
-                  percent="50%"
+                  value={`${purchaseRequests.length} Requests`}
+                  percent={lowStockItems.length > 0 ? Math.round((purchaseRequests.length / lowStockItems.length) * 100) + "%" : "0%"}
                   type="normal"
                 />
               </div>
@@ -182,7 +140,7 @@ export default function LowStockReportPage() {
               <div className="mt-6 space-y-4">
                 <PriorityCard
                   title="Urgent Purchase Needed"
-                  text="Room Shampoo Set and Premium Coffee Beans are below critical level."
+                  text={criticalItems.length > 0 ? `${criticalItems.map(i => i.itemName).join(', ')} are below critical level.` : "No urgent items."}
                   type="critical"
                 />
 
@@ -255,7 +213,10 @@ export default function LowStockReportPage() {
                 </thead>
 
                 <tbody className="divide-y divide-[#d0c5af]">
-                  {lowStockItems.map((item) => (
+                  {lowStockTableRows.length === 0 && !loading && (
+                    <tr><td colSpan={9} className="p-6 text-center text-[#4d4635]">No low stock items found.</td></tr>
+                  )}
+                  {lowStockTableRows.map((item) => (
                     <tr key={item.id} className="transition hover:bg-[#fbf9f5]">
                       <td className="px-6 py-5 font-bold">{item.id}</td>
 
@@ -332,6 +293,9 @@ export default function LowStockReportPage() {
                 </thead>
 
                 <tbody className="divide-y divide-[#d0c5af]">
+                  {purchaseRequests.length === 0 && !loading && (
+                    <tr><td colSpan={6} className="p-6 text-center text-[#4d4635]">No purchase requests found.</td></tr>
+                  )}
                   {purchaseRequests.map((request) => (
                     <tr key={request.id} className="transition hover:bg-[#fbf9f5]">
                       <td className="px-6 py-5 font-bold">{request.id}</td>

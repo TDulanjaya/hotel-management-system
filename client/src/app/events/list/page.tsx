@@ -138,9 +138,6 @@ function EventsListPageContent() {
           <section className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">
             <div className="border-b border-[#d0c5af] p-6">
               <h2 className="text-2xl font-bold">All Event Bookings</h2>
-              <p className="mt-1 text-sm text-[#4d4635]">
-                Data is saved in browser localStorage for client demo.
-              </p>
             </div>
 
             {events.length === 0 ? (

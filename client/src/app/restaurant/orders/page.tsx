@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SlidePanel from "@/components/ui/SlidePanel";
+import OrderForm from "@/components/forms/OrderForm";
 import { getRestaurantOrders, createRestaurantOrder, updateRestaurantOrder, deleteRestaurantOrder } from "@/lib/api/restaurantApi";
 import { useAuthContext } from "@/context/AuthContext";
 
@@ -14,8 +15,9 @@ export default function PageComponent() {
   const [error, setError] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
+  const [submitting, setSubmitting] = useState(false);
   
-  const [formData, setFormData] = useState({ tableNumber: "", guestName: "", roomNumber: "", items: "", notes: "", status: "PENDING", totalAmount: 0, paymentStatus: "PENDING" });
+  const [formData, setFormData] = useState({ tableNumber: "", guestName: "", roomNumber: "", items: [] as any[], notes: "", status: "PENDING", totalAmount: 0, paymentStatus: "PENDING" });
 
   const fetchData = async () => {
     setLoading(true);
@@ -35,14 +37,14 @@ export default function PageComponent() {
 
   const handleOpenNew = () => {
     setEditItem(null);
-    setFormData({ tableNumber: "", guestName: "", roomNumber: "", items: "", notes: "", status: "PENDING", totalAmount: 0, paymentStatus: "PENDING" });
+    setFormData({ tableNumber: "", guestName: "", roomNumber: "", items: [], notes: "", status: "PENDING", totalAmount: 0, paymentStatus: "PENDING" });
     setPanelOpen(true);
   };
 
   const handleOpenEdit = (item: any) => {
     setEditItem(item);
     const mapped: any = {};
-    const defaultState: any = { tableNumber: "", guestName: "", roomNumber: "", items: "", notes: "", status: "PENDING", totalAmount: 0, paymentStatus: "PENDING" };
+    const defaultState: any = { tableNumber: "", guestName: "", roomNumber: "", items: [], notes: "", status: "PENDING", totalAmount: 0, paymentStatus: "PENDING" };
     const keys = Object.keys(defaultState);
     keys.forEach(k => {
       mapped[k] = item[k] !== undefined && item[k] !== null ? item[k] : defaultState[k];
@@ -64,6 +66,7 @@ export default function PageComponent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
       if (editItem) {
         await updateRestaurantOrder(editItem.id, formData);
@@ -74,6 +77,8 @@ export default function PageComponent() {
       fetchData();
     } catch (err: any) {
       alert("Failed to save");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -114,7 +119,17 @@ export default function PageComponent() {
                       <td className="p-4 font-semibold">{item.tableNumber}</td>
                       <td className="p-4">{item.guestName}</td>
                       <td className="p-4">{item.roomNumber}</td>
-                      <td className="p-4">{item.items}</td>
+                      <td className="p-4">
+                        {Array.isArray(item.items) ? (
+                          <div className="text-xs">
+                            {item.items.map((i: any, idx: number) => (
+                              <div key={idx}>{i.quantity}x {i.name}</div>
+                            ))}
+                          </div>
+                        ) : (
+                          item.items
+                        )}
+                      </td>
                       <td className="p-4"><button onClick={() => {
                         const statuses = ["PENDING", "IN_PROGRESS", "SERVED", "CANCELLED"];
                         const next = statuses[(statuses.indexOf(item.status) + 1) % statuses.length];
@@ -138,20 +153,14 @@ export default function PageComponent() {
             </div>
           )}
 
-          <SlidePanel open={panelOpen} onClose={() => setPanelOpen(false)} title={editItem ? "Edit" : "Add"}>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              
-              <div><label className="block text-sm font-bold">Table Number</label><input className="w-full rounded border p-2" value={formData.tableNumber} onChange={e => setFormData({...formData, tableNumber: e.target.value})} /></div>
-              <div><label className="block text-sm font-bold">Guest Name</label><input className="w-full rounded border p-2" value={formData.guestName} onChange={e => setFormData({...formData, guestName: e.target.value})} /></div>
-              <div><label className="block text-sm font-bold">Room Number</label><input className="w-full rounded border p-2" value={formData.roomNumber} onChange={e => setFormData({...formData, roomNumber: e.target.value})} /></div>
-              <div><label className="block text-sm font-bold">Items *</label><textarea required className="w-full rounded border p-2" value={formData.items} onChange={e => setFormData({...formData, items: e.target.value})} /></div>
-              <div><label className="block text-sm font-bold">Notes</label><textarea className="w-full rounded border p-2" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} /></div>
-              <div><label className="block text-sm font-bold">Status</label><select className="w-full rounded border p-2" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}><option>PENDING</option><option>IN_PROGRESS</option><option>SERVED</option><option>CANCELLED</option></select></div>
-              <div><label className="block text-sm font-bold">Payment Status</label><select className="w-full rounded border p-2" value={formData.paymentStatus} onChange={e => setFormData({...formData, paymentStatus: e.target.value})}><option>PENDING</option><option>PAID</option><option>CHARGE_TO_ROOM</option></select></div>
-              <div><label className="block text-sm font-bold">Total Amount</label><input type="number" className="w-full rounded border p-2" value={formData.totalAmount} onChange={e => setFormData({...formData, totalAmount: parseFloat(e.target.value) || 0})} /></div>
-
-              <button type="submit" className="w-full rounded bg-[#806300] py-3 text-white font-bold hover:bg-[#6b5400]">Save</button>
-            </form>
+          <SlidePanel open={panelOpen} onClose={() => setPanelOpen(false)} title={editItem ? "Edit Order" : "New Order"}>
+            <OrderForm
+              formData={formData}
+              setFormData={setFormData}
+              onSubmit={handleSubmit}
+              categories={["Menu", "Bites", "Drinks", "Bar"]}
+              loading={submitting}
+            />
           </SlidePanel>
         </main>
       </div>

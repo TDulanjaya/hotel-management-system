@@ -9,6 +9,15 @@ export async function getPricingItems() {
   return data?.content !== undefined ? data.content : data;
 }
 
+export async function getPricingItemsByCategory(category: string) {
+  const response = await authenticatedFetch(`/api/pricing/category/${encodeURIComponent(category)}`);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch pricing items for category ${category}`);
+  }
+  const data = await response.json();
+  return data?.content !== undefined ? data.content : data;
+}
+
 export async function getPricingItemById(id: string) {
   const response = await authenticatedFetch(`/api/pricing/${id}`);
   if (!response.ok) {
