@@ -1,12 +1,11 @@
 "use client";
-import { useSearchParams } from "next/navigation";
 
-
-import { useEffect, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { useRouter, useParams } from "next/navigation";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { ArrowLeft, Save, UserCog } from "lucide-react";
 import { getUserById, updateUser } from "@/lib/api/userApi";
 
 const allRoles = [
@@ -22,26 +21,24 @@ const allRoles = [
   "GAME_STAFF",
 ];
 
-function getAvailableRoles(creatorRole: string) {
-  if (creatorRole === "OWNER") {
+function getAvailableRoles(currentRole: string) {
+  if (currentRole === "OWNER") {
     return allRoles;
   }
+
   return allRoles.filter((role) => role !== "OWNER" && role !== "MANAGER");
 }
 
 export default function EditUserPage() {
-  const searchParams = useSearchParams();
-  const rawId = searchParams.get("id");
-
   const router = useRouter();
-  const params = useParams();
-  const id = rawId as string;
+  const searchParams = useSearchParams();
+  const userId = searchParams.get("id");
 
-  const [loading, setLoading] = useState(false);
-  const [fetching, setFetching] = useState(true);
-  const [error, setError] = useState("");
-  const [creatorRole, setCreatorRole] = useState("MANAGER");
+  const [currentRole, setCurrentRole] = useState("MANAGER");
   const [availableRoles, setAvailableRoles] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const [formData, setFormData] = useState({
     name: "",
@@ -55,211 +52,245 @@ export default function EditUserPage() {
     try {
       const userStr = localStorage.getItem("user");
       if (userStr) {
-        const user = JSON.parse(userStr);
-        setCreatorRole(user.role || "MANAGER");
+        const loggedUser = JSON.parse(userStr);
+        setCurrentRole(loggedUser.role || "MANAGER");
+        setAvailableRoles(getAvailableRoles(loggedUser.role || "MANAGER"));
       }
     } catch {
-      
+      setCurrentRole("MANAGER");
+      setAvailableRoles(getAvailableRoles("MANAGER"));
     }
   }, []);
 
   useEffect(() => {
-    const roles = getAvailableRoles(creatorRole);
-    setAvailableRoles(roles);
-  }, [creatorRole]);
-
-  useEffect(() => {
     async function loadUser() {
+      if (!userId) {
+        setError("User ID is missing.");
+        setPageLoading(false);
+        return;
+      }
+
       try {
-        const data = await getUserById(id);
+        const user = await getUserById(userId);
+
         setFormData({
-          name: data.name || "",
-          email: data.email || "",
-          password: "", 
-          role: data.role || "",
-          active: data.active !== false
+          name: user.name || "",
+          email: user.email || "",
+          password: "",
+          role: user.role || "RECEPTIONIST",
+          active: user.active ?? true,
         });
       } catch (err: any) {
-        setError("Failed to load user details.");
+        setError(err.message || "Failed to load user.");
       } finally {
-        setFetching(false);
+        setPageLoading(false);
       }
     }
+
     loadUser();
-  }, [id]);
+  }, [userId]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    let value: any = e.target.value;
-    if (e.target.name === "active") {
-      value = e.target.value === "true";
+    const { name, value } = e.target;
+
+    if (name === "active") {
+      setFormData((prev) => ({
+        ...prev,
+        active: value === "true",
+      }));
+      return;
     }
-    setFormData({ ...formData, [e.target.name]: value });
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setLoading(true);
-    setError("");
+
+    if (!userId) {
+      setError("User ID is missing.");
+      return;
+    }
 
     if (!formData.name || !formData.email || !formData.role) {
-      setError("Name, email, and role are required");
-      setLoading(false);
+      setError("Name, email and role are required.");
       return;
     }
 
     try {
-      const updateData: any = {
+      setLoading(true);
+      setError("");
+
+      await updateUser(userId, {
         name: formData.name,
         email: formData.email,
         role: formData.role,
-        active: formData.active
-      };
-      if (formData.password) {
-        updateData.password = formData.password;
-      }
-      
-      await updateUser(id, updateData);
+        active: formData.active,
+        password: formData.password.trim() ? formData.password : undefined,
+      });
+
+      alert("User updated successfully.");
       router.push("/users");
     } catch (err: any) {
-      setError(err.message || "Failed to update user");
+      setError(err.message || "Failed to update user.");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
-        <main className="page-slide-in px-8 py-10 lg:ml-[280px]">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold text-[#735c00]">
-              Edit User
-            </h1>
-            <p className="mt-2 text-[#4d4635]">
-              Update staff account details.
-            </p>
-          </div>
 
-          <div className="max-w-2xl rounded-2xl border border-[#d0c5af] bg-white p-8 shadow-sm">
-            {error && (
-              <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
-                {error}
-              </div>
-            )}
+        <main className="min-h-screen lg:ml-[280px]">
+          <section className="mx-auto max-w-3xl p-8">
+            <Link
+              href="/users"
+              className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-[#735c00] hover:underline"
+            >
+              <ArrowLeft size={18} />
+              Back to Users
+            </Link>
 
-            {creatorRole === "MANAGER" && (
-              <div className="mb-6 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-                <strong>Note:</strong> As a Manager, you cannot assign Owner or
-                Manager roles.
-              </div>
-            )}
-
-            {fetching ? (
-              <p>Loading user details...</p>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-bold text-[#4d4635]">
-                    Full Name
-                  </label>
-                  <input
-                    required
-                    type="text"
-                    name="name"
-                    placeholder="e.g. John Doe"
-                    value={formData.name}
-                    onChange={handleChange}
-                    className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
-                  />
+            <div className="rounded-3xl border border-[#d0c5af] bg-white p-8 shadow-sm">
+              <div className="mb-8 flex items-center gap-4">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#735c00]/10 text-[#735c00]">
+                  <UserCog size={28} />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-bold text-[#4d4635]">
-                    Email Address
-                  </label>
-                  <input
-                    required
-                    type="email"
-                    name="email"
-                    placeholder="e.g. john@luxestay.com"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-bold text-[#4d4635]">
-                    Password (Optional)
-                  </label>
-                  <input
-                    type="password"
-                    name="password"
-                    placeholder="Leave blank to keep current password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
-                  />
-                  <p className="mt-1 text-xs text-[#6d6251]">
-                    If entered, password will be hashed with BCrypt.
+                  <h1 className="text-3xl font-bold">Edit User</h1>
+                  <p className="mt-1 text-sm text-[#4d4635]">
+                    Update staff details, role, status or password.
                   </p>
                 </div>
+              </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold text-[#4d4635]">
-                      Role
-                    </label>
-                    <select
-                      name="role"
-                      value={formData.role}
-                      onChange={handleChange}
-                      className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
-                    >
-                      {availableRoles.map((role) => (
-                        <option key={role} value={role}>
-                          {role}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold text-[#4d4635]">
-                      Status
-                    </label>
-                    <select
-                      name="active"
-                      value={formData.active.toString()}
-                      onChange={handleChange}
-                      className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
-                    >
-                      <option value="true">Active</option>
-                      <option value="false">Inactive (Deactivated)</option>
-                    </select>
-                  </div>
+              {pageLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#d4af37] border-t-transparent" />
                 </div>
+              ) : (
+                <>
+                  {error && (
+                    <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+                      {error}
+                    </div>
+                  )}
 
-                <div className="flex gap-4 pt-4">
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="rounded-xl bg-[#735c00] px-8 py-3 font-bold text-white transition hover:bg-[#d4af37]"
-                  >
-                    {loading ? "Updating..." : "Update User"}
-                  </button>
-                  <Link
-                    href="/users"
-                    className="rounded-xl border border-[#d0c5af] px-8 py-3 font-bold text-[#4d4635] transition hover:bg-[#f5f3ef]"
-                  >
-                    Cancel
-                  </Link>
-                </div>
-              </form>
-            )}
-          </div>
+                  {currentRole === "MANAGER" && (
+                    <div className="mb-6 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+                      <strong>Note:</strong> Managers cannot update Owner or
+                      Manager accounts.
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-bold text-[#4d4635]">
+                        Full Name
+                      </label>
+                      <input
+                        required
+                        name="name"
+                        value={formData.name}
+                        onChange={handleChange}
+                        className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 outline-none focus:ring-2 focus:ring-[#d4af37]/30"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-[#4d4635]">
+                        Email Address
+                      </label>
+                      <input
+                        required
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 outline-none focus:ring-2 focus:ring-[#d4af37]/30"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-[#4d4635]">
+                        New Password
+                      </label>
+                      <input
+                        type="password"
+                        name="password"
+                        placeholder="Leave empty to keep old password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 outline-none focus:ring-2 focus:ring-[#d4af37]/30"
+                      />
+                      <p className="mt-1 text-xs text-[#6d6251]">
+                        Leave this empty if you do not want to change password.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-[#4d4635]">
+                        Role
+                      </label>
+                      <select
+                        name="role"
+                        value={formData.role}
+                        onChange={handleChange}
+                        className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 outline-none focus:ring-2 focus:ring-[#d4af37]/30"
+                      >
+                        {availableRoles.map((role) => (
+                          <option key={role} value={role}>
+                            {role}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-bold text-[#4d4635]">
+                        Status
+                      </label>
+                      <select
+                        name="active"
+                        value={String(formData.active)}
+                        onChange={handleChange}
+                        className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 outline-none focus:ring-2 focus:ring-[#d4af37]/30"
+                      >
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+                      </select>
+                    </div>
+
+                    <div className="flex gap-4 pt-4">
+                      <Link
+                        href="/users"
+                        className="flex-1 rounded-xl border border-[#d0c5af] px-8 py-4 text-center font-bold text-[#4d4635] transition hover:bg-[#ece9e2]"
+                      >
+                        Cancel
+                      </Link>
+
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#735c00] px-8 py-4 font-bold text-white transition hover:bg-[#d4af37] disabled:opacity-60"
+                      >
+                        <Save size={18} />
+                        {loading ? "Saving..." : "Save Changes"}
+                      </button>
+                    </div>
+                  </form>
+                </>
+              )}
+            </div>
+          </section>
         </main>
       </div>
     </ProtectedRoute>

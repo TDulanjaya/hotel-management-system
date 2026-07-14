@@ -434,7 +434,7 @@ function UsersTable({
   };
 
   const canEdit = currentUser?.role === "OWNER" || currentUser?.role === "MANAGER";
-  const canDelete = currentUser?.role === "OWNER" || currentUser?.role === "MANAGER";
+  const canDelete = currentUser?.role === "OWNER";
 
   return (
     <section className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">
@@ -590,7 +590,7 @@ function PermissionsMatrix() {
 
   const handleSavePermissions = (e: React.FormEvent) => {
     e.preventDefault();
-    alert("Permissions updated (UI only â€” server integration pending)");
+    alert("Permissions updated. Server integration pending.");
     setPanelOpen(false);
   };
 
