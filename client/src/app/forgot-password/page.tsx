@@ -10,7 +10,6 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [message, setMessage] = useState("");
-  const [resetToken, setResetToken] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
@@ -24,7 +23,6 @@ export default function ForgotPasswordPage() {
     try {
       setLoading(true);
       setMessage("");
-      setResetToken("");
 
       const response = await fetch(`${API_BASE_URL}/forgot-password`, {
         method: "POST",
@@ -39,14 +37,16 @@ export default function ForgotPasswordPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Failed to create reset request.");
+        throw new Error(data.message || "Failed to send reset email.");
       }
 
-      setMessage(data.message || "Password reset request created.");
-      setResetToken(data.resetToken || "");
+      setMessage(
+        data.message || "Password reset link has been sent to your email."
+      );
       setSent(true);
     } catch (error: any) {
       setMessage(error.message || "Something went wrong.");
+      setSent(false);
     } finally {
       setLoading(false);
     }
@@ -86,8 +86,8 @@ export default function ForgotPasswordPage() {
         {!sent ? (
           <>
             <p className="mt-8 text-center text-sm leading-relaxed text-[#4b4438]">
-              Enter your staff email address. We will create a password reset
-              request for your account.
+              Enter your staff email address. We will send a password reset link
+              to your email.
             </p>
 
             {message && (
@@ -102,6 +102,7 @@ export default function ForgotPasswordPage() {
 
                 <div className="flex items-center gap-3 rounded-xl border border-[#d8c8a8] bg-white px-4 py-4 shadow-sm">
                   <Mail className="h-5 w-5 text-[#9b7600]" />
+
                   <input
                     type="email"
                     value={email}
@@ -117,49 +118,41 @@ export default function ForgotPasswordPage() {
                 disabled={loading}
                 className="w-full rounded-xl bg-[#9b7600] px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-[#7f6100] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                {loading ? "Creating Request..." : "Request Password Reset"}
+                {loading ? "Sending Email..." : "Send Reset Link"}
               </button>
             </form>
           </>
         ) : (
           <div className="mt-8 rounded-2xl border border-[#d3a13b]/40 bg-[#fff8e8] p-6 text-center">
             <h3 className="text-xl font-bold text-[#5d4613]">
-              Request Created
+              Check Your Email
             </h3>
 
             <p className="mt-3 text-sm leading-relaxed text-[#4b4438]">
               {message}
             </p>
 
-            <p className="mt-3 text-sm leading-relaxed text-[#4b4438]">
-              Email:
+            <p className="mt-4 text-sm leading-relaxed text-[#4b4438]">
+              We sent the reset link to:
             </p>
 
-            <p className="font-bold text-[#9b7600]">{email}</p>
+            <p className="mt-2 break-all font-bold text-[#9b7600]">{email}</p>
 
-            {resetToken && (
-              <div className="mt-5 rounded-xl border border-[#d3a13b]/30 bg-white p-4 text-left">
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#5d4613]">
-                  Development Reset Token
-                </p>
+            <div className="mt-5 rounded-xl border border-[#d3a13b]/30 bg-white p-4 text-sm leading-relaxed text-[#4b4438]">
+              Please open your email inbox and click the reset password link.
+              The reset link will expire in 30 minutes.
+            </div>
 
-                <p className="mt-3 break-all rounded-lg bg-[#f8f2e7] p-3 text-sm font-semibold text-[#806300]">
-                  {resetToken}
-                </p>
-
-                <Link
-                  href={`/reset-password?token=${resetToken}`}
-                  className="mt-4 block rounded-xl bg-[#9b7600] px-5 py-3 text-center text-sm font-bold text-white transition hover:bg-[#7f6100]"
-                >
-                  Continue to Reset Password
-                </Link>
-              </div>
-            )}
-
-            <p className="mt-5 text-xs leading-relaxed text-[#6b6254]">
-              In production, this reset link should be sent by email instead of
-              showing the token here.
-            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setSent(false);
+                setMessage("");
+              }}
+              className="mt-5 rounded-xl border border-[#9b7600] px-5 py-3 text-sm font-bold text-[#9b7600] transition hover:bg-[#fff3d0]"
+            >
+              Try Another Email
+            </button>
           </div>
         )}
 
