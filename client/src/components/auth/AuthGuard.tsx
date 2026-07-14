@@ -17,7 +17,7 @@ export default function AuthGuard({
   const [forbidden, setForbidden] = useState(false);
 
   useEffect(() => {
-    const publicPaths = ["/", "/login", "/forgot-password"];
+    const publicPaths = ["/", "/login", "/forgot-password", "/reset-password"];
     const isPublic = publicPaths.includes(pathname);
 
     const token = getToken();
@@ -50,7 +50,7 @@ export default function AuthGuard({
     setForbidden(false);
   }, [pathname, router, allowedRoles]);
 
-  const publicPaths = ["/", "/login", "/forgot-password"];
+  const publicPaths = ["/", "/login", "/forgot-password", "/reset-password"];
 
   if (!authorized && !publicPaths.includes(pathname)) {
     return (

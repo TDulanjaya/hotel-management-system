@@ -4,11 +4,16 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { ArrowLeft, Mail, Sparkles } from "lucide-react";
 
+const API_BASE_URL = "http://localhost:8080/api/auth";
+
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
+  const [message, setMessage] = useState("");
+  const [resetToken, setResetToken] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     if (!email.trim()) {
@@ -16,7 +21,35 @@ export default function ForgotPasswordPage() {
       return;
     }
 
-    setSent(true);
+    try {
+      setLoading(true);
+      setMessage("");
+      setResetToken("");
+
+      const response = await fetch(`${API_BASE_URL}/forgot-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to create reset request.");
+      }
+
+      setMessage(data.message || "Password reset request created.");
+      setResetToken(data.resetToken || "");
+      setSent(true);
+    } catch (error: any) {
+      setMessage(error.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -53,9 +86,15 @@ export default function ForgotPasswordPage() {
         {!sent ? (
           <>
             <p className="mt-8 text-center text-sm leading-relaxed text-[#4b4438]">
-              Enter your staff email address. The IT support team will help you
-              reset your password.
+              Enter your staff email address. We will create a password reset
+              request for your account.
             </p>
+
+            {message && (
+              <div className="mt-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-bold text-red-700">
+                {message}
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-5">
               <div>
@@ -75,42 +114,52 @@ export default function ForgotPasswordPage() {
 
               <button
                 type="submit"
-                className="w-full rounded-xl bg-[#9b7600] px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-[#7f6100]"
+                disabled={loading}
+                className="w-full rounded-xl bg-[#9b7600] px-6 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-[#7f6100] disabled:cursor-not-allowed disabled:opacity-70"
               >
-                Request Password Reset
+                {loading ? "Creating Request..." : "Request Password Reset"}
               </button>
             </form>
           </>
         ) : (
           <div className="mt-8 rounded-2xl border border-[#d3a13b]/40 bg-[#fff8e8] p-6 text-center">
             <h3 className="text-xl font-bold text-[#5d4613]">
-              Request Sent
+              Request Created
             </h3>
 
             <p className="mt-3 text-sm leading-relaxed text-[#4b4438]">
-              Password reset request has been noted for:
+              {message}
             </p>
 
-            <p className="mt-2 font-bold text-[#9b7600]">{email}</p>
-
-            <p className="mt-4 text-sm leading-relaxed text-[#4b4438]">
-              Please contact IT Support if you need urgent access.
+            <p className="mt-3 text-sm leading-relaxed text-[#4b4438]">
+              Email:
             </p>
 
-            <div className="mt-5 rounded-xl bg-white p-4 text-sm text-[#4b4438]">
-              <p>
-                Email:{" "}
-                <span className="font-bold text-[#9b7600]">
-                  it.support@camelliareserve.com
-                </span>
-              </p>
-              <p className="mt-1">
-                Phone:{" "}
-                <span className="font-bold text-[#9b7600]">
-                  +94 11 234 5678
-                </span>
-              </p>
-            </div>
+            <p className="font-bold text-[#9b7600]">{email}</p>
+
+            {resetToken && (
+              <div className="mt-5 rounded-xl border border-[#d3a13b]/30 bg-white p-4 text-left">
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#5d4613]">
+                  Development Reset Token
+                </p>
+
+                <p className="mt-3 break-all rounded-lg bg-[#f8f2e7] p-3 text-sm font-semibold text-[#806300]">
+                  {resetToken}
+                </p>
+
+                <Link
+                  href={`/reset-password?token=${resetToken}`}
+                  className="mt-4 block rounded-xl bg-[#9b7600] px-5 py-3 text-center text-sm font-bold text-white transition hover:bg-[#7f6100]"
+                >
+                  Continue to Reset Password
+                </Link>
+              </div>
+            )}
+
+            <p className="mt-5 text-xs leading-relaxed text-[#6b6254]">
+              In production, this reset link should be sent by email instead of
+              showing the token here.
+            </p>
           </div>
         )}
 
