@@ -17,7 +17,7 @@ export default function AuthGuard({
   const [forbidden, setForbidden] = useState(false);
 
   useEffect(() => {
-    const publicPaths = ["/", "/login"];
+    const publicPaths = ["/", "/login", "/forgot-password"];
     const isPublic = publicPaths.includes(pathname);
 
     const token = getToken();
@@ -28,26 +28,30 @@ export default function AuthGuard({
       return;
     }
 
-    if (isPublic && (!token || !user)) {
+    if (isPublic) {
       setAuthorized(true);
+      setForbidden(false);
       return;
     }
 
     if (!token || !user) {
       setAuthorized(false);
       router.push("/login");
-    } else {
-      if (allowedRoles && !allowedRoles.includes(user.role)) {
-        setForbidden(true);
-        setAuthorized(true); // Technically authenticated, but not authorized for this route
-      } else {
-        setAuthorized(true);
-        setForbidden(false);
-      }
+      return;
     }
+
+    if (allowedRoles && !allowedRoles.includes(user.role)) {
+      setForbidden(true);
+      setAuthorized(true);
+      return;
+    }
+
+    setAuthorized(true);
+    setForbidden(false);
   }, [pathname, router, allowedRoles]);
 
-  const publicPaths = ["/", "/login"];
+  const publicPaths = ["/", "/login", "/forgot-password"];
+
   if (!authorized && !publicPaths.includes(pathname)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#fbf9f5]">
@@ -60,8 +64,14 @@ export default function AuthGuard({
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#fbf9f5]">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-[#4d4635] mb-4">403 Forbidden</h1>
-          <p className="text-lg text-[#857d6b] mb-6">You do not have permission to access this page.</p>
+          <h1 className="mb-4 text-3xl font-bold text-[#4d4635]">
+            403 Forbidden
+          </h1>
+
+          <p className="mb-6 text-lg text-[#857d6b]">
+            You do not have permission to access this page.
+          </p>
+
           <button
             onClick={() => router.push("/dashboard")}
             className="rounded-xl bg-[#4d4635] px-6 py-3 font-semibold text-[#fbf9f5] transition hover:bg-[#3a3528]"

@@ -1,6 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getDashboardByRole, saveAuth } from "@/utils/auth";
 import { login } from "@/lib/api/authApi";
@@ -146,17 +147,18 @@ export default function LoginPage() {
             </svg>
           </div>
 
-         <h1 className="font-serif text-4xl tracking-[0.14em] text-[#5d4613] animate-[fadeUp_0.8s_ease-out_0.15s_both]">
-  The Camellia
-</h1>
+          <h1 className="font-serif text-4xl tracking-[0.14em] text-[#5d4613] animate-[fadeUp_0.8s_ease-out_0.15s_both]">
+            The Camellia
+          </h1>
 
-<h2 className="mt-1 font-serif text-4xl tracking-[0.18em] text-[#5d4613] animate-[fadeUp_0.8s_ease-out_0.2s_both]">
-  Reserve
-</h2>
+          <h2 className="mt-1 font-serif text-4xl tracking-[0.18em] text-[#5d4613] animate-[fadeUp_0.8s_ease-out_0.2s_both]">
+            Reserve
+          </h2>
 
-<p className="mt-2 text-sm font-semibold uppercase tracking-[0.45em] text-[#3f3a31] animate-[fadeUp_0.8s_ease-out_0.25s_both]">
-  Hotel & Resort
-</p>
+          <p className="mt-2 text-sm font-semibold uppercase tracking-[0.45em] text-[#3f3a31] animate-[fadeUp_0.8s_ease-out_0.25s_both]">
+            Hotel & Resort
+          </p>
+
           <div className="mx-auto mt-5 h-[2px] w-12 bg-[#9b7a12] animate-[lineGrow_0.9s_ease-out_0.35s_both]" />
 
           <p className="mt-6 text-lg font-semibold uppercase tracking-[0.45em] text-[#2f2f2f] animate-[fadeUp_0.8s_ease-out_0.45s_both]">
@@ -246,11 +248,12 @@ export default function LoginPage() {
           </label>
 
           <button
-            type="button"
-            className="font-medium text-[#806300] transition hover:text-[#4d3900] hover:underline"
-          >
-            Forgot Password?
-          </button>
+  type="button"
+  onClick={() => router.push("/forgot-password")}
+  className="font-medium text-[#806300] transition hover:text-[#4d3900] hover:underline"
+>
+  Forgot Password?
+</button>
         </div>
 
         {/* Bottom hotel line art */}
