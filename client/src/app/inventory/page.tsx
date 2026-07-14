@@ -1,12 +1,16 @@
 "use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SlidePanel from "@/components/ui/SlidePanel";
 import { Package } from "lucide-react";
-
-import { getInventoryItems, deleteInventoryItem as apiDeleteInventory, createInventoryItem } from "@/lib/api/inventoryApi";
-import { useEffect, useState } from "react";
-import Link from "next/link";
+import {
+  getInventoryItems,
+  deleteInventoryItem as apiDeleteInventory,
+  createInventoryItem,
+} from "@/lib/api/inventoryApi";
 import { useAuthContext } from "@/context/AuthContext";
 import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
 
@@ -18,11 +22,12 @@ function getStockPercent(stock: number, minimum: number) {
 export default function InventoryPage() {
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
   const { user } = useAuthContext();
+  const [currentRole, setCurrentRole] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
 
-  // Form states
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
   const [formData, setFormData] = useState({
     itemName: "",
     category: "Kitchen",
@@ -31,7 +36,7 @@ export default function InventoryPage() {
     reorderLevel: 10,
     supplierName: "",
     purchasePrice: 0,
-    status: "In Stock"
+    status: "In Stock",
   });
 
   const loadInventory = async () => {
@@ -45,13 +50,29 @@ export default function InventoryPage() {
 
   useEffect(() => {
     loadInventory();
-  }, []);
+
+    if (user?.role) {
+      setCurrentRole(user.role);
+      return;
+    }
+
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        setCurrentRole(parsedUser.role || "");
+      }
+    } catch {
+      setCurrentRole("");
+    }
+  }, [user]);
 
   const deleteInventoryItem = async (id: string) => {
     if (!confirm("Are you sure you want to delete this inventory item?")) return;
+
     try {
       await apiDeleteInventory(id);
-      setInventoryItems(prev => prev.filter(item => item.id !== id));
+      setInventoryItems((prev) => prev.filter((item) => item.id !== id));
       alert("Inventory item deleted successfully.");
     } catch (err) {
       console.error(err);
@@ -59,7 +80,9 @@ export default function InventoryPage() {
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -67,6 +90,7 @@ export default function InventoryPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
+
     try {
       await createInventoryItem({
         ...formData,
@@ -74,12 +98,19 @@ export default function InventoryPage() {
         reorderLevel: Number(formData.reorderLevel),
         purchasePrice: Number(formData.purchasePrice),
       });
+
       setPanelOpen(false);
-      loadInventory();
-      // Reset form
+      await loadInventory();
+
       setFormData({
-        itemName: "", category: "Kitchen", quantity: 0, unit: "pcs", reorderLevel: 10,
-        supplierName: "", purchasePrice: 0, status: "In Stock"
+        itemName: "",
+        category: "Kitchen",
+        quantity: 0,
+        unit: "pcs",
+        reorderLevel: 10,
+        supplierName: "",
+        purchasePrice: 0,
+        status: "In Stock",
       });
     } catch (err: any) {
       setError(err.message || "Failed to add inventory item");
@@ -88,8 +119,12 @@ export default function InventoryPage() {
     }
   };
 
-  const canEdit = user?.role === "OWNER" || user?.role === "MANAGER" || user?.role === "INVENTORY";
-  const canDelete = user?.role === "OWNER" || user?.role === "MANAGER";
+  const canEdit =
+    currentRole === "OWNER" ||
+    currentRole === "MANAGER" ||
+    currentRole === "INVENTORY";
+
+  const canDelete = currentRole === "OWNER" || currentRole === "MANAGER";
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "INVENTORY"]}>
@@ -114,11 +149,14 @@ export default function InventoryPage() {
             </div>
 
             <div className="flex flex-wrap gap-3">
-              <Link href="/inventory/purchase" className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white">
+              <Link
+                href="/inventory/purchase"
+                className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
+              >
                 + Purchase Request
               </Link>
 
-              <button 
+              <button
                 onClick={() => setPanelOpen(true)}
                 className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
               >
@@ -128,10 +166,28 @@ export default function InventoryPage() {
           </div>
 
           <section className="mb-8 grid gap-6 md:grid-cols-4">
-            <StatCard label="Total Items" value={inventoryItems.length.toString()} />
-            <StatCard label="In Stock" value={inventoryItems.filter(i => i.quantity > i.reorderLevel).length.toString()} />
-            <StatCard label="Low Stock" value={inventoryItems.filter(i => i.quantity > 0 && i.quantity <= i.reorderLevel).length.toString()} />
-            <StatCard label="Critical" value={inventoryItems.filter(i => i.quantity === 0).length.toString()} />
+            <StatCard
+              label="Total Items"
+              value={inventoryItems.length.toString()}
+            />
+            <StatCard
+              label="In Stock"
+              value={inventoryItems
+                .filter((i) => i.quantity > i.reorderLevel)
+                .length.toString()}
+            />
+            <StatCard
+              label="Low Stock"
+              value={inventoryItems
+                .filter((i) => i.quantity > 0 && i.quantity <= i.reorderLevel)
+                .length.toString()}
+            />
+            <StatCard
+              label="Critical"
+              value={inventoryItems
+                .filter((i) => i.quantity === 0)
+                .length.toString()}
+            />
           </section>
 
           <section className="mb-8 rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
@@ -192,59 +248,75 @@ export default function InventoryPage() {
                   <tbody className="divide-y divide-[#d0c5af]">
                     {inventoryItems.length === 0 ? (
                       <tr>
-                        <td colSpan={8} className="px-6 py-10 text-center text-[#4d4635]">
-                          <p className="text-lg font-bold">No inventory items found</p>
+                        <td
+                          colSpan={8}
+                          className="px-6 py-10 text-center text-[#4d4635]"
+                        >
+                          <p className="text-lg font-bold">
+                            No inventory items found
+                          </p>
                         </td>
                       </tr>
                     ) : (
                       inventoryItems.map((item) => (
-                        <tr key={item.id} className="transition hover:bg-[#fbf9f5]">
-                          <td className="px-6 py-5 font-bold">{item.id?.substring(0,8) || "NEW"}</td>
-  
+                        <tr
+                          key={item.id}
+                          className="transition hover:bg-[#fbf9f5]"
+                        >
+                          <td className="px-6 py-5 font-bold">
+                            {item.id?.substring(0, 8) || "NEW"}
+                          </td>
+
                           <td className="px-6 py-5">
                             <p className="font-bold">{item.itemName}</p>
-  
+
                             <div className="mt-2 h-2 overflow-hidden rounded-full bg-[#f5f3ef]">
                               <div
                                 className="h-full rounded-full bg-[#735c00]"
                                 style={{
-                                  width: getStockPercent(item.quantity, item.reorderLevel),
+                                  width: getStockPercent(
+                                    item.quantity,
+                                    item.reorderLevel
+                                  ),
                                 }}
                               />
                             </div>
                           </td>
-  
+
                           <td className="px-6 py-5">
                             <span className="rounded-full bg-[#d4af37]/20 px-3 py-1 text-xs font-bold text-[#735c00]">
                               {item.category}
                             </span>
                           </td>
-  
+
                           <td className="px-6 py-5 font-bold">
                             {item.quantity} {item.unit}
                           </td>
-  
+
                           <td className="px-6 py-5 text-[#4d4635]">
                             {item.reorderLevel} {item.unit}
                           </td>
-  
+
                           <td className="px-6 py-5 text-[#4d4635]">
                             {item.supplierName}
                           </td>
-  
+
                           <td className="px-6 py-5">
                             <span
-                                className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusBadgeClass(
-                                  item.status
-                                )}`}
+                              className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusBadgeClass(
+                                item.status
+                              )}`}
                             >
                               {item.status}
                             </span>
                           </td>
-  
+
                           <td className="px-6 py-5">
                             <div className="flex justify-end gap-3">
-                              <Link href={`/inventory/purchase?itemId=${item.id}`} className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white">
+                              <Link
+                                href={`/inventory/purchase?itemId=${item.id}`}
+                                className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
+                              >
                                 Purchase
                               </Link>
 
@@ -290,34 +362,42 @@ export default function InventoryPage() {
                 <h2 className="text-2xl font-bold">Inventory Alerts</h2>
 
                 <div className="mt-6 space-y-4">
-                  {inventoryItems.filter(i => i.quantity === 0).map(item => (
-                    <AlertCard
-                      key={`crit-${item.id}`}
-                      title="Critical Stock"
-                      text={`${item.itemName} is out of stock.`}
-                      type="critical"
-                    />
-                  ))}
-                  
-                  {inventoryItems.filter(i => i.quantity > 0 && i.quantity <= i.reorderLevel).map(item => (
-                    <AlertCard
-                      key={`warn-${item.id}`}
-                      title="Low Stock"
-                      text={`${item.itemName} is below minimum stock level.`}
-                      type="warning"
-                    />
-                  ))}
+                  {inventoryItems
+                    .filter((i) => i.quantity === 0)
+                    .map((item) => (
+                      <AlertCard
+                        key={`crit-${item.id}`}
+                        title="Critical Stock"
+                        text={`${item.itemName} is out of stock.`}
+                        type="critical"
+                      />
+                    ))}
 
-                  {inventoryItems.length > 0 && inventoryItems.filter(i => i.quantity <= i.reorderLevel).length === 0 && (
-                    <AlertCard
-                      title="Good Stock"
-                      text="All inventory items are sufficiently stocked."
-                      type="success"
-                    />
-                  )}
-                  
+                  {inventoryItems
+                    .filter((i) => i.quantity > 0 && i.quantity <= i.reorderLevel)
+                    .map((item) => (
+                      <AlertCard
+                        key={`warn-${item.id}`}
+                        title="Low Stock"
+                        text={`${item.itemName} is below minimum stock level.`}
+                        type="warning"
+                      />
+                    ))}
+
+                  {inventoryItems.length > 0 &&
+                    inventoryItems.filter((i) => i.quantity <= i.reorderLevel)
+                      .length === 0 && (
+                      <AlertCard
+                        title="Good Stock"
+                        text="All inventory items are sufficiently stocked."
+                        type="success"
+                      />
+                    )}
+
                   {inventoryItems.length === 0 && (
-                    <p className="text-sm text-[#4d4635]">No inventory items to monitor.</p>
+                    <p className="text-sm text-[#4d4635]">
+                      No inventory items to monitor.
+                    </p>
                   )}
                 </div>
               </section>
@@ -325,62 +405,138 @@ export default function InventoryPage() {
           </section>
         </main>
 
-        <SlidePanel 
-          open={panelOpen} 
-          onClose={() => setPanelOpen(false)} 
-          title="Add New Inventory Item" 
+        <SlidePanel
+          open={panelOpen}
+          onClose={() => setPanelOpen(false)}
+          title="Add New Inventory Item"
           subtitle="Add stock, supplies, or amenities to your inventory."
           icon={<Package className="h-5 w-5" />}
         >
-          {error && <div className="mb-4 text-red-600 font-bold">{error}</div>}
-          
+          {error && (
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 font-bold text-red-700">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="block text-sm font-bold text-[#4d4635]">Item Name</label>
-              <input required type="text" name="itemName" value={formData.itemName} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+              <label className="block text-sm font-bold text-[#4d4635]">
+                Item Name
+              </label>
+              <input
+                required
+                type="text"
+                name="itemName"
+                value={formData.itemName}
+                onChange={handleChange}
+                className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+              />
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-bold text-[#4d4635]">Category</label>
-                <select name="category" value={formData.category} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3">
+                <label className="block text-sm font-bold text-[#4d4635]">
+                  Category
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+                >
                   <option value="Kitchen">Kitchen</option>
                   <option value="Housekeeping">Housekeeping</option>
                   <option value="Restaurant">Restaurant</option>
                   <option value="Amenities">Amenities</option>
                 </select>
               </div>
+
               <div>
-                <label className="block text-sm font-bold text-[#4d4635]">Unit Type</label>
-                <input required type="text" name="unit" placeholder="e.g. pcs, kg, liters" value={formData.unit} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+                <label className="block text-sm font-bold text-[#4d4635]">
+                  Unit Type
+                </label>
+                <input
+                  required
+                  type="text"
+                  name="unit"
+                  placeholder="e.g. pcs, kg, liters"
+                  value={formData.unit}
+                  onChange={handleChange}
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-bold text-[#4d4635]">Initial Quantity</label>
-                <input required type="number" name="quantity" value={formData.quantity} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+                <label className="block text-sm font-bold text-[#4d4635]">
+                  Initial Quantity
+                </label>
+                <input
+                  required
+                  type="number"
+                  name="quantity"
+                  value={formData.quantity}
+                  onChange={handleChange}
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+                />
               </div>
+
               <div>
-                <label className="block text-sm font-bold text-[#4d4635]">Reorder Level</label>
-                <input required type="number" name="reorderLevel" value={formData.reorderLevel} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+                <label className="block text-sm font-bold text-[#4d4635]">
+                  Reorder Level
+                </label>
+                <input
+                  required
+                  type="number"
+                  name="reorderLevel"
+                  value={formData.reorderLevel}
+                  onChange={handleChange}
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+                />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-bold text-[#4d4635]">Purchase Price (Initial)</label>
-                <input required type="number" name="purchasePrice" value={formData.purchasePrice} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+                <label className="block text-sm font-bold text-[#4d4635]">
+                  Purchase Price (Initial)
+                </label>
+                <input
+                  required
+                  type="number"
+                  name="purchasePrice"
+                  value={formData.purchasePrice}
+                  onChange={handleChange}
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+                />
               </div>
+
               <div>
-                <label className="block text-sm font-bold text-[#4d4635]">Supplier Name</label>
-                <input required type="text" name="supplierName" value={formData.supplierName} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+                <label className="block text-sm font-bold text-[#4d4635]">
+                  Supplier Name
+                </label>
+                <input
+                  required
+                  type="text"
+                  name="supplierName"
+                  value={formData.supplierName}
+                  onChange={handleChange}
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+                />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-[#4d4635]">Status</label>
-              <select name="status" value={formData.status} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3">
+              <label className="block text-sm font-bold text-[#4d4635]">
+                Status
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+              >
                 <option value="In Stock">In Stock</option>
                 <option value="Low Stock">Low Stock</option>
                 <option value="Critical">Critical</option>
@@ -388,16 +544,24 @@ export default function InventoryPage() {
             </div>
 
             <div className="flex gap-4 pt-4">
-              <button type="button" onClick={() => setPanelOpen(false)} className="flex-1 rounded-xl border border-[#d0c5af] px-8 py-4 font-bold text-[#4d4635] transition hover:bg-[#ece9e2]">
+              <button
+                type="button"
+                onClick={() => setPanelOpen(false)}
+                className="flex-1 rounded-xl border border-[#d0c5af] px-8 py-4 font-bold text-[#4d4635] transition hover:bg-[#ece9e2]"
+              >
                 Cancel
               </button>
-              <button type="submit" disabled={loading} className="flex-1 rounded-xl bg-[#735c00] px-8 py-4 font-bold text-white transition hover:bg-[#d4af37]">
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 rounded-xl bg-[#735c00] px-8 py-4 font-bold text-white transition hover:bg-[#d4af37]"
+              >
                 {loading ? "Saving..." : "Save Item"}
               </button>
             </div>
           </form>
         </SlidePanel>
-
       </div>
     </ProtectedRoute>
   );
