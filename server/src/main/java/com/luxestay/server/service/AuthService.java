@@ -28,21 +28,26 @@ import java.util.stream.Collectors;
 public class AuthService {
 
     private final AppUserRepository userRepository;
+    
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
+    private final EmailService emailService;
+    
 
     public AuthService(AppUserRepository userRepository,
-                       PasswordEncoder passwordEncoder,
-                       JwtService jwtService,
-                       AuthenticationManager authenticationManager,
-                       UserDetailsService userDetailsService) {
+                   PasswordEncoder passwordEncoder,
+                   JwtService jwtService,
+                   AuthenticationManager authenticationManager,
+                   UserDetailsService userDetailsService,
+                   EmailService emailService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
+        this.emailService = emailService; 
     }
 
     public AuthResponse login(LoginRequest request) {
@@ -96,10 +101,10 @@ public class AuthService {
 
         userRepository.save(user);
 
-        response.put("message", "Password reset token created successfully.");
-        response.put("resetToken", token); // Development only. Later send this token by email.
+emailService.sendPasswordResetEmail(user.getEmail(), token);
 
-        return response;
+response.put("message", "Password reset link has been sent to your email.");
+return response;
     }
 
     public Map<String, String> resetPassword(ResetPasswordRequest request) {
