@@ -1,12 +1,15 @@
 package com.luxestay.server.controller;
 
 import com.luxestay.server.dto.AuthResponse;
+import com.luxestay.server.dto.ForgotPasswordRequest;
 import com.luxestay.server.dto.LoginRequest;
+import com.luxestay.server.dto.ResetPasswordRequest;
 import com.luxestay.server.dto.UserResponse;
 import com.luxestay.server.service.AuthService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -23,8 +26,24 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(request));
     }
 
+    @PostMapping("/forgot-password")
+    public ResponseEntity<Map<String, String>> forgotPassword(
+            @RequestBody ForgotPasswordRequest request
+    ) {
+        return ResponseEntity.ok(authService.forgotPassword(request));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<Map<String, String>> resetPassword(
+            @RequestBody ResetPasswordRequest request
+    ) {
+        return ResponseEntity.ok(authService.resetPassword(request));
+    }
+
     @GetMapping("/me")
-    public ResponseEntity<UserResponse> getCurrentUser(Authentication authentication) {
-        return ResponseEntity.ok(authService.getCurrentUser(authentication.getName()));
+    public ResponseEntity<UserResponse> getCurrentUser(
+            @RequestParam String email
+    ) {
+        return ResponseEntity.ok(authService.getCurrentUser(email));
     }
 }

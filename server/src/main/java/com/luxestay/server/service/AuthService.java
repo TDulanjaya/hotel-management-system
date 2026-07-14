@@ -1,8 +1,10 @@
 package com.luxestay.server.service;
 
 import com.luxestay.server.dto.AuthResponse;
+import com.luxestay.server.dto.ForgotPasswordRequest;
 import com.luxestay.server.dto.LoginRequest;
 import com.luxestay.server.dto.RegisterUserRequest;
+import com.luxestay.server.dto.ResetPasswordRequest;
 import com.luxestay.server.dto.UserResponse;
 import com.luxestay.server.model.AppUser;
 import com.luxestay.server.model.Role;
@@ -15,7 +17,11 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,8 +33,10 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
 
-    public AuthService(AppUserRepository userRepository, PasswordEncoder passwordEncoder,
-                       JwtService jwtService, AuthenticationManager authenticationManager,
+    public AuthService(AppUserRepository userRepository,
+                       PasswordEncoder passwordEncoder,
+                       JwtService jwtService,
+                       AuthenticationManager authenticationManager,
                        UserDetailsService userDetailsService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
@@ -55,14 +63,80 @@ public class AuthService {
         } catch (org.springframework.security.core.AuthenticationException e) {
             throw new IllegalArgumentException("Invalid email or password.");
         }
-                
+
         UserDetails userDetails = userDetailsService.loadUserByUsername(request.getEmail());
         var jwtToken = jwtService.generateToken(userDetails, user.getRole().name());
-        
+
         return AuthResponse.builder()
                 .token(jwtToken)
                 .user(mapToUserResponse(user))
                 .build();
+    }
+
+    public Map<String, String> forgotPassword(ForgotPasswordRequest request) {
+        Map<String, String> response = new HashMap<>();
+
+        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            response.put("message", "Email is required");
+            return response;
+        }
+
+        AppUser user = userRepository.findByEmail(request.getEmail().trim())
+                .orElse(null);
+
+        if (user == null) {
+            response.put("message", "If this email exists, a password reset request has been created.");
+            return response;
+        }
+
+        String token = UUID.randomUUID().toString();
+
+        user.setResetPasswordToken(token);
+        user.setResetPasswordTokenExpiry(LocalDateTime.now().plusMinutes(30));
+
+        userRepository.save(user);
+
+        response.put("message", "Password reset token created successfully.");
+        response.put("resetToken", token); // Development only. Later send this token by email.
+
+        return response;
+    }
+
+    public Map<String, String> resetPassword(ResetPasswordRequest request) {
+        Map<String, String> response = new HashMap<>();
+
+        if (request.getToken() == null || request.getToken().trim().isEmpty()) {
+            response.put("message", "Reset token is required");
+            return response;
+        }
+
+        if (request.getNewPassword() == null || request.getNewPassword().length() < 6) {
+            response.put("message", "Password must be at least 6 characters");
+            return response;
+        }
+
+        AppUser user = userRepository.findByResetPasswordToken(request.getToken().trim())
+                .orElse(null);
+
+        if (user == null) {
+            response.put("message", "Invalid reset token");
+            return response;
+        }
+
+        if (user.getResetPasswordTokenExpiry() == null ||
+                user.getResetPasswordTokenExpiry().isBefore(LocalDateTime.now())) {
+            response.put("message", "Reset token has expired");
+            return response;
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setResetPasswordToken(null);
+        user.setResetPasswordTokenExpiry(null);
+
+        userRepository.save(user);
+
+        response.put("message", "Password reset successfully");
+        return response;
     }
 
     public UserResponse createUser(RegisterUserRequest request, Role creatorRole) {
@@ -72,10 +146,16 @@ public class AuthService {
 
         if (creatorRole == Role.MANAGER) {
             if (request.getRole() == Role.OWNER || request.getRole() == Role.MANAGER) {
-                throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "You do not have permission to create this user role");
+                throw new org.springframework.web.server.ResponseStatusException(
+                        org.springframework.http.HttpStatus.FORBIDDEN,
+                        "You do not have permission to create this user role"
+                );
             }
         } else if (creatorRole != Role.OWNER) {
-            throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.FORBIDDEN, "You do not have permission to create this user role");
+            throw new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.FORBIDDEN,
+                    "You do not have permission to create this user role"
+            );
         }
 
         var user = AppUser.builder()
@@ -118,6 +198,7 @@ public class AuthService {
             if (existingUser.getRole() == Role.OWNER || existingUser.getRole() == Role.MANAGER) {
                 throw new SecurityException("Managers cannot update OWNER or MANAGER users.");
             }
+
             if (request.getRole() == Role.OWNER || request.getRole() == Role.MANAGER) {
                 throw new SecurityException("Managers cannot change roles to OWNER or MANAGER.");
             }
@@ -127,11 +208,11 @@ public class AuthService {
 
         existingUser.setName(request.getName());
         existingUser.setEmail(request.getEmail());
-        
+
         if (request.getRole() != null) {
             existingUser.setRole(request.getRole());
         }
-        
+
         if (request.getActive() != null) {
             existingUser.setActive(request.getActive());
         }
@@ -148,17 +229,21 @@ public class AuthService {
         if (deleterRole != Role.OWNER) {
             throw new SecurityException("Only OWNER can delete users.");
         }
+
         var user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found."));
+
         if (user.getRole() == Role.OWNER) {
             throw new SecurityException("OWNER cannot be deleted.");
         }
+
         userRepository.deleteById(id);
     }
 
     public void deactivateUser(String id) {
         var user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found."));
+
         user.setActive(false);
         userRepository.save(user);
     }

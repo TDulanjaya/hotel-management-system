@@ -12,6 +12,8 @@ public interface AppUserRepository extends MongoRepository<AppUser, String> {
 
     Optional<AppUser> findByEmail(String email);
 
+    Optional<AppUser> findByResetPasswordToken(String resetPasswordToken);
+
     boolean existsByEmail(String email);
 
     boolean existsByRole(Role role);

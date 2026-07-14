@@ -4,8 +4,13 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+
+import java.time.LocalDateTime;
+
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
 
 @Data
 @NoArgsConstructor
@@ -23,4 +28,6 @@ public class AppUser {
     private Role role;
     private boolean active;
     private Long createdAt;
+    private String resetPasswordToken;
+    private LocalDateTime resetPasswordTokenExpiry;
 }
