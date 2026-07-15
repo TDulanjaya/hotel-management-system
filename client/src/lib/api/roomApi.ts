@@ -1,48 +1,104 @@
-import { authenticatedFetch } from "./authApi";
+import { getToken } from "@/utils/auth";
 
-export async function getRooms(params?: { page?: number, size?: number, search?: string }) {
-  let url = "/api/rooms";
-  if (params) {
-    const query = new URLSearchParams();
-    if (params.page !== undefined) query.append("page", params.page.toString());
-    if (params.size !== undefined) query.append("size", params.size.toString());
-    if (params.search) query.append("search", params.search);
-    const qStr = query.toString();
-    if (qStr) url += `?${qStr}`;
+const API_BASE_URL = "http://localhost:8080/api/rooms";
+
+function getAuthHeaders() {
+  const token = getToken();
+
+  if (!token) {
+    throw new Error("You are not logged in.");
   }
-  const res = await authenticatedFetch(url);
-  if (!res.ok) throw new Error("Failed to fetch rooms");
-  const data = await res.json();
-  return data?.content !== undefined ? data.content : data;
+
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+async function handleResponse(response: Response) {
+  if (!response.ok) {
+    let message = "Request failed";
+
+    try {
+      const data = await response.json();
+      message = data.message || data.error || message;
+    } catch {
+      message = await response.text();
+    }
+
+    throw new Error(message);
+  }
+
+  if (response.status === 204) {
+    return null;
+  }
+
+  const text = await response.text();
+
+  if (!text) {
+    return null;
+  }
+
+  return JSON.parse(text);
+}
+
+export async function getRooms(params?: {
+  page?: number;
+  size?: number;
+  search?: string;
+}) {
+  const query = new URLSearchParams();
+
+  if (params?.page !== undefined) query.append("page", String(params.page));
+  if (params?.size !== undefined) query.append("size", String(params.size));
+  if (params?.search) query.append("search", params.search);
+
+  const url = query.toString()
+    ? `${API_BASE_URL}?${query.toString()}`
+    : API_BASE_URL;
+
+  const response = await fetch(url, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  return handleResponse(response);
 }
 
 export async function getRoomById(id: string) {
-  const res = await authenticatedFetch(`/api/rooms/${id}`);
-  if (!res.ok) throw new Error("Failed to fetch room");
-  return res.json();
+  const response = await fetch(`${API_BASE_URL}/${id}`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  return handleResponse(response);
 }
 
 export async function createRoom(data: any) {
-  const res = await authenticatedFetch("/api/rooms", {
+  const response = await fetch(API_BASE_URL, {
     method: "POST",
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to create room");
-  return res.json();
+
+  return handleResponse(response);
 }
 
 export async function updateRoom(id: string, data: any) {
-  const res = await authenticatedFetch(`/api/rooms/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/${id}`, {
     method: "PUT",
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to update room");
-  return res.json();
+
+  return handleResponse(response);
 }
 
 export async function deleteRoom(id: string) {
-  const res = await authenticatedFetch(`/api/rooms/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/${id}`, {
     method: "DELETE",
+    headers: getAuthHeaders(),
   });
-  if (!res.ok) throw new Error("Failed to delete room");
+
+  return handleResponse(response);
 }
