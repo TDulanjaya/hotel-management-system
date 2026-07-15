@@ -1,7 +1,7 @@
 import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { ClipboardList, CalendarDays, Table2, Utensils } from "lucide-react";
+import { ClipboardList, Table2, Utensils } from "lucide-react";
 
 const restaurantPages = [
   {
@@ -27,7 +27,7 @@ export default function RestaurantPage() {
         <main className="min-h-screen px-8 py-10 lg:ml-[280px]">
           <div className="mb-10">
             <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#735c00]">
-              LuxeStay Restaurant
+              The Camellia Reserve Restaurant
             </p>
 
             <h1 className="mt-3 text-4xl font-extrabold">
@@ -35,11 +35,11 @@ export default function RestaurantPage() {
             </h1>
 
             <p className="mt-3 max-w-2xl text-[#4d4635]">
-              Manage restaurant tables, orders, and reservations from one place.
+              Manage restaurant tables and food orders from one place.
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {restaurantPages.map((page) => {
               const Icon = page.icon;
 
@@ -73,7 +73,7 @@ export default function RestaurantPage() {
               <h2 className="text-2xl font-bold">Restaurant Module Flow</h2>
             </div>
 
-            <div className="mt-6 grid gap-4 md:grid-cols-3">
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
               <div className="rounded-xl bg-white/10 p-5">
                 <h3 className="font-bold text-[#d4af37]">Tables</h3>
                 <p className="mt-2 text-sm text-white/75">
@@ -85,13 +85,6 @@ export default function RestaurantPage() {
                 <h3 className="font-bold text-[#d4af37]">Orders</h3>
                 <p className="mt-2 text-sm text-white/75">
                   Send restaurant orders to kitchen and update order status.
-                </p>
-              </div>
-
-              <div className="rounded-xl bg-white/10 p-5">
-                <h3 className="font-bold text-[#d4af37]">Reservations</h3>
-                <p className="mt-2 text-sm text-white/75">
-                  Handle table bookings, shift reservations, and guest requests.
                 </p>
               </div>
             </div>
