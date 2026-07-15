@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { getUser, AuthUser } from "@/utils/auth";
-
 import { getEvents, deleteEvent as apiDeleteEvent } from "@/lib/api/eventApi";
 import NewEventPanel from "@/components/events/NewEventPanel";
 import { useSearchParams } from "next/navigation";
+import { CalendarPlus, Trash2, Pencil, CalendarDays } from "lucide-react";
 
 type SavedEvent = {
   id: string;
@@ -36,65 +36,84 @@ type SavedEvent = {
 };
 
 function getStatusClass(status: string) {
-  if (status === "Confirmed") {
-    return "bg-green-100 text-green-700";
-  }
-
-  if (status === "Active") {
-    return "bg-blue-100 text-blue-700";
-  }
-
-  if (status === "Completed") {
-    return "bg-slate-100 text-slate-700";
-  }
-
-  if (status === "Cancelled") {
-    return "bg-red-100 text-red-700";
-  }
+  if (status === "Confirmed") return "bg-green-100 text-green-700";
+  if (status === "Active") return "bg-blue-100 text-blue-700";
+  if (status === "Completed") return "bg-slate-100 text-slate-700";
+  if (status === "Cancelled") return "bg-red-100 text-red-700";
 
   return "bg-yellow-100 text-yellow-700";
 }
 
-import { Suspense } from "react";
-
 function EventsListPageContent() {
   const [events, setEvents] = useState<SavedEvent[]>([]);
   const [user, setUser] = useState<AuthUser | null>(null);
+  const [currentRole, setCurrentRole] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   const searchParams = useSearchParams();
   const [panelOpen, setPanelOpen] = useState(false);
 
+  const canEdit =
+    currentRole === "OWNER" ||
+    currentRole === "MANAGER" ||
+    currentRole === "EVENTS";
+
+  const canDelete =
+    currentRole === "OWNER" ||
+    currentRole === "MANAGER" ||
+    currentRole === "EVENTS";
+
   const loadEvents = async () => {
+    setLoading(true);
+    setError("");
+
     try {
       const data = await getEvents();
-      setEvents(data);
-    } catch (err) {
-      console.error(err);
+      setEvents(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      setError(err.message || "Failed to load events.");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    setUser(getUser());
+    const authUser = getUser();
+    setUser(authUser);
+
+    if (authUser?.role) {
+      setCurrentRole(authUser.role);
+    } else {
+      try {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          setCurrentRole(parsedUser.role || "");
+        }
+      } catch {
+        setCurrentRole("");
+      }
+    }
+
     loadEvents();
+
     if (searchParams.get("openPanel") === "true") {
       setPanelOpen(true);
     }
   }, [searchParams]);
 
   const deleteEvent = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this record?")) return;
+    if (!confirm("Are you sure you want to delete this event?")) return;
+
     try {
       await apiDeleteEvent(id);
-      const updatedEvents = events.filter((event) => event.id !== id);
-      setEvents(updatedEvents);
+      setEvents((prev) => prev.filter((event) => event.id !== id));
       alert("Event deleted successfully.");
-    } catch (err) {
-      console.error(err);
-      alert("Failed to delete event.");
+    } catch (err: any) {
+      alert(err.message || "Failed to delete event.");
     }
   };
-
-  const canEdit = user?.role === "OWNER" || user?.role === "MANAGER" || user?.role === "EVENTS";
-  const canDelete = user?.role === "OWNER" || user?.role === "MANAGER" || user?.role === "EVENTS";
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "EVENTS"]}>
@@ -113,8 +132,8 @@ function EventsListPageContent() {
               </h1>
 
               <p className="mt-2 text-[#4d4635]">
-                View saved weddings, batch parties, hall bookings, menu
-                packages and event ledger totals.
+                View saved weddings, parties, hall bookings and event ledger
+                totals.
               </p>
             </div>
 
@@ -126,37 +145,73 @@ function EventsListPageContent() {
                 Events Dashboard
               </Link>
 
-              <button
-                onClick={() => setPanelOpen(true)}
-                className="rounded-xl bg-[#735c00] px-6 py-3 text-center font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
-              >
-                + New Event
-              </button>
+              {canEdit && (
+                <button
+                  onClick={() => setPanelOpen(true)}
+                  className="flex items-center gap-2 rounded-xl bg-[#735c00] px-6 py-3 text-center font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
+                >
+                  <CalendarPlus size={18} />
+                  New Event
+                </button>
+              )}
             </div>
           </div>
+
+          <section className="mb-8 grid gap-6 md:grid-cols-4">
+            <StatCard label="Total Events" value={String(events.length)} />
+            <StatCard
+              label="Active"
+              value={String(events.filter((e) => e.status === "Active").length)}
+            />
+            <StatCard
+              label="Confirmed"
+              value={String(
+                events.filter((e) => e.status === "Confirmed").length
+              )}
+            />
+            <StatCard
+              label="Total Value"
+              value={`Rs ${events.reduce(
+                (sum, e) => sum + Number(e.grandTotal || 0),
+                0
+              )}`}
+            />
+          </section>
 
           <section className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">
             <div className="border-b border-[#d0c5af] p-6">
               <h2 className="text-2xl font-bold">All Event Bookings</h2>
+              <p className="mt-1 text-sm text-[#4d4635]">
+                Manage created event records.
+              </p>
             </div>
 
-            {events.length === 0 ? (
-              <div className="p-10 text-center">
+            {loading ? (
+              <div className="flex h-64 items-center justify-center text-lg font-bold text-[#806300]">
+                Loading events...
+              </div>
+            ) : error ? (
+              <div className="p-6 font-bold text-red-600">{error}</div>
+            ) : events.length === 0 ? (
+              <div className="flex h-64 flex-col items-center justify-center p-10 text-center">
+                <CalendarDays size={44} className="mb-4 text-[#735c00]" />
+
                 <h3 className="text-xl font-bold text-[#735c00]">
                   No events found
                 </h3>
 
                 <p className="mt-2 text-[#4d4635]">
-                  Create a wedding, batch party, birthday party or hall booking
-                  first.
+                  Create a wedding, party or hall booking first.
                 </p>
 
-                <button
-                  onClick={() => setPanelOpen(true)}
-                  className="mt-6 inline-block rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
-                >
-                  Create First Event
-                </button>
+                {canEdit && (
+                  <button
+                    onClick={() => setPanelOpen(true)}
+                    className="mt-6 rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
+                  >
+                    Create First Event
+                  </button>
+                )}
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -177,19 +232,18 @@ function EventsListPageContent() {
 
                   <tbody className="divide-y divide-[#d0c5af]">
                     {events.map((event) => (
-                      <tr
-                        key={event.id}
-                        className="transition hover:bg-[#fbf9f5]"
-                      >
-                        <td className="px-6 py-5 font-bold">{event.id}</td>
+                      <tr key={event.id} className="transition hover:bg-[#fbf9f5]">
+                        <td className="px-6 py-5 font-bold">
+                          {event.id?.substring(0, 8) || "-"}
+                        </td>
 
                         <td className="px-6 py-5">
-                          <p className="font-bold">{event.eventName}</p>
+                          <p className="font-bold">{event.eventName || "-"}</p>
                           <p className="text-sm text-[#4d4635]">
-                            {event.eventType}
+                            {event.eventType || "-"}
                           </p>
                           <p className="mt-1 text-xs text-[#6d6251]">
-                            {event.organizerName} Â· {event.phone}
+                            {event.organizerName || "-"} · {event.phone || "-"}
                           </p>
                         </td>
 
@@ -198,24 +252,25 @@ function EventsListPageContent() {
                             {event.selectedVenue?.name || "No venue"}
                           </p>
                           <p className="text-sm text-[#4d4635]">
-                            {event.selectedVenue?.type || "-"} Â· Max{" "}
+                            {event.selectedVenue?.type || "-"} · Max{" "}
                             {event.selectedVenue?.capacity || 0}
                           </p>
                         </td>
 
                         <td className="px-6 py-5 text-[#4d4635]">
-                          <p>{event.primaryDate}</p>
-                          <p className="text-xs">{event.startTime}</p>
+                          <p>{event.primaryDate || "-"}</p>
+                          <p className="text-xs">{event.startTime || "-"}</p>
                         </td>
 
                         <td className="px-6 py-5 font-bold">
-                          {event.guestCount}
+                          {event.guestCount || 0}
                         </td>
 
                         <td className="px-6 py-5">
                           <p className="font-bold">
                             {event.selectedPackages?.length || 0} selected
                           </p>
+
                           <p className="max-w-[260px] truncate text-sm text-[#4d4635]">
                             {event.selectedPackages
                               ?.map((item) => item.name)
@@ -224,7 +279,7 @@ function EventsListPageContent() {
                         </td>
 
                         <td className="px-6 py-5 text-lg font-bold text-[#735c00]">
-                          ${event.grandTotal?.toLocaleString() || 0}
+                          Rs {Number(event.grandTotal || 0).toLocaleString()}
                         </td>
 
                         <td className="px-6 py-5">
@@ -233,7 +288,7 @@ function EventsListPageContent() {
                               event.status
                             )}`}
                           >
-                            {event.status}
+                            {event.status || "Active"}
                           </span>
                         </td>
 
@@ -242,8 +297,9 @@ function EventsListPageContent() {
                             {canEdit && (
                               <Link
                                 href={`/events/edit?id=${event.id}`}
-                                className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
+                                className="flex items-center gap-1 rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
                               >
+                                <Pencil size={16} />
                                 Edit
                               </Link>
                             )}
@@ -251,8 +307,9 @@ function EventsListPageContent() {
                             {canDelete && (
                               <button
                                 onClick={() => deleteEvent(event.id)}
-                                className="rounded-lg border border-red-200 px-4 py-2 text-sm font-bold text-red-700 transition hover:bg-red-50"
+                                className="flex items-center gap-1 rounded-lg border border-red-200 px-4 py-2 text-sm font-bold text-red-700 transition hover:bg-red-50"
                               >
+                                <Trash2 size={16} />
                                 Delete
                               </button>
                             )}
@@ -265,11 +322,12 @@ function EventsListPageContent() {
               </div>
             )}
           </section>
-          <NewEventPanel 
-          open={panelOpen} 
-          onClose={() => setPanelOpen(false)} 
-          onSuccess={loadEvents} 
-        />
+
+          <NewEventPanel
+            open={panelOpen}
+            onClose={() => setPanelOpen(false)}
+            onSuccess={loadEvents}
+          />
         </main>
       </div>
     </ProtectedRoute>
@@ -281,5 +339,17 @@ export default function EventsListPage() {
     <Suspense fallback={<div className="p-8">Loading events list...</div>}>
       <EventsListPageContent />
     </Suspense>
+  );
+}
+
+function StatCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
+      <p className="text-sm font-bold uppercase tracking-widest text-[#4d4635]">
+        {label}
+      </p>
+
+      <p className="mt-2 text-3xl font-extrabold text-[#735c00]">{value}</p>
+    </div>
   );
 }
