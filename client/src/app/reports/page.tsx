@@ -4,8 +4,16 @@ import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Link from "next/link";
 import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
-import { useEffect, useState } from "react";
-import { getReportSummary, downloadAllReports } from "@/lib/api/reportsApi";
+import { useEffect, useMemo, useState } from "react";
+import { downloadAllReports, getReportSummary } from "@/lib/api/reportsApi";
+import {
+  BarChart3,
+  Download,
+  Filter,
+  RefreshCw,
+  Search,
+  ShieldCheck,
+} from "lucide-react";
 
 function getCategoryClass(category: string) {
   if (category === "Finance" || category === "Payments") {
@@ -26,27 +34,39 @@ function getCategoryClass(category: string) {
 export default function ReportsPage() {
   const [summary, setSummary] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
+  const [error, setError] = useState("");
+
+  const [searchText, setSearchText] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("All Categories");
+
+  const loadData = async () => {
+    setLoading(true);
+    setError("");
+
+    try {
+      const data = await getReportSummary();
+      setSummary(data);
+    } catch (err: any) {
+      setError(err.message || "Failed to load report summary.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const data = await getReportSummary();
-        setSummary(data);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    }
     loadData();
   }, []);
 
   const handleExportAll = async () => {
+    setExporting(true);
+
     try {
       await downloadAllReports();
-    } catch (err) {
-      alert("Failed to export reports");
-      console.error(err);
+    } catch (err: any) {
+      alert(err.message || "Failed to export reports.");
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -57,7 +77,7 @@ export default function ReportsPage() {
       category: "Finance",
       value: summary?.todayRevenue || "Rs 0",
       note: "Today collection and revenue breakdown.",
-      icon: "$",
+      icon: "Rs",
     },
     {
       title: "Net Profit",
@@ -133,6 +153,24 @@ export default function ReportsPage() {
     },
   ];
 
+  const filteredReports = useMemo(() => {
+    const keyword = searchText.toLowerCase().trim();
+
+    return reports.filter((report) => {
+      const matchesSearch =
+        !keyword ||
+        report.title.toLowerCase().includes(keyword) ||
+        report.category.toLowerCase().includes(keyword) ||
+        report.note.toLowerCase().includes(keyword);
+
+      const matchesCategory =
+        categoryFilter === "All Categories" ||
+        report.category.toLowerCase() === categoryFilter.toLowerCase();
+
+      return matchesSearch && matchesCategory;
+    });
+  }, [reports, searchText, categoryFilter]);
+
   const quickStats = [
     {
       label: "Today Revenue",
@@ -156,19 +194,19 @@ export default function ReportsPage() {
     {
       name: "Daily Revenue Report",
       generatedBy: "MANAGER",
-      time: "Today, 09:30 AM",
+      time: "Today",
       status: "Ready",
     },
     {
       name: "Low Stock Report",
       generatedBy: "Inventory Staff",
-      time: "Today, 08:15 AM",
+      time: "Today",
       status: "Ready",
     },
     {
       name: "Audit History Report",
       generatedBy: "OWNER",
-      time: "Yesterday, 05:40 PM",
+      time: "Latest",
       status: "Reviewed",
     },
   ];
@@ -195,93 +233,143 @@ export default function ReportsPage() {
               </p>
             </div>
 
-            <button 
-              onClick={handleExportAll}
-              className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
-            >
-              Export All Reports
-            </button>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={loadData}
+                className="flex items-center gap-2 rounded-xl border border-[#735c00] bg-white px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
+              >
+                <RefreshCw size={18} />
+                Refresh
+              </button>
+
+              <button
+                onClick={handleExportAll}
+                disabled={exporting}
+                className="flex items-center gap-2 rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
+              >
+                <Download size={18} />
+                {exporting ? "Exporting..." : "Export CSV"}
+              </button>
+            </div>
           </div>
+
+          {error && (
+            <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-5 font-bold text-red-700">
+              {error}
+            </div>
+          )}
 
           <section className="mb-8 grid gap-6 md:grid-cols-4">
             {quickStats.map((stat) => (
-              <StatCard key={stat.label} label={stat.label} value={stat.value} loading={loading} />
+              <StatCard
+                key={stat.label}
+                label={stat.label}
+                value={stat.value}
+                loading={loading}
+              />
             ))}
           </section>
 
           <section className="mb-8 rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-            <div className="grid gap-4 md:grid-cols-4">
-              <input
-                type="text"
-                placeholder="Search report..."
-                className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-              />
+            <div className="grid gap-4 md:grid-cols-[1fr_220px_160px]">
+              <div className="flex items-center gap-3 rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3">
+                <Search size={18} className="text-[#735c00]" />
 
-              <select className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
+                <input
+                  type="text"
+                  value={searchText}
+                  onChange={(event) => setSearchText(event.target.value)}
+                  placeholder="Search report..."
+                  className="w-full bg-transparent outline-none"
+                />
+              </div>
+
+              <select
+                value={categoryFilter}
+                onChange={(event) => setCategoryFilter(event.target.value)}
+                className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+              >
                 <option>All Categories</option>
                 <option>Finance</option>
                 <option>Rooms</option>
-                <option>Inventory</option>
-                <option>Events</option>
+                <option>INVENTORY</option>
+                <option>EVENTS</option>
+                <option>Restaurant</option>
+                <option>PARKING</option>
+                <option>Payments</option>
                 <option>Security</option>
               </select>
 
-              <select className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                <option>This Month</option>
-                <option>Today</option>
-                <option>This Week</option>
-                <option>This Year</option>
-              </select>
-
-              <button className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]">
+              <button
+                type="button"
+                className="flex items-center justify-center gap-2 rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
+              >
+                <Filter size={18} />
                 Filter
               </button>
             </div>
           </section>
 
           <section className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {reports.map((report) => (
-              <Link
-                key={report.href}
-                href={report.href}
-                className="group rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-              >
-                <div className="mb-5 flex items-start justify-between gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#735c00] text-xl font-bold text-white transition group-hover:bg-[#d4af37] group-hover:text-[#241a00]">
-                    {report.icon}
+            {filteredReports.length === 0 ? (
+              <div className="col-span-full rounded-2xl border border-[#d0c5af] bg-white p-10 text-center shadow-sm">
+                <BarChart3 size={46} className="mx-auto mb-4 text-[#735c00]" />
+
+                <p className="text-xl font-bold text-[#735c00]">
+                  No reports found
+                </p>
+
+                <p className="mt-2 text-[#4d4635]">
+                  Try changing search text or category filter.
+                </p>
+              </div>
+            ) : (
+              filteredReports.map((report) => (
+                <Link
+                  key={report.href}
+                  href={report.href}
+                  className="group rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
+                >
+                  <div className="mb-5 flex items-start justify-between gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#735c00] text-xl font-bold text-white transition group-hover:bg-[#d4af37] group-hover:text-[#241a00]">
+                      {report.icon}
+                    </div>
+
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-bold ${getCategoryClass(
+                        report.category
+                      )}`}
+                    >
+                      {report.category}
+                    </span>
                   </div>
 
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-bold ${getCategoryClass(
-                      report.category
-                    )}`}
-                  >
-                    {report.category}
-                  </span>
-                </div>
+                  <h2 className="text-xl font-bold text-[#735c00]">
+                    {report.title}
+                  </h2>
 
-                <h2 className="text-xl font-bold text-[#735c00]">
-                  {report.title}
-                </h2>
+                  <p className="mt-2 text-3xl font-extrabold">
+                    {loading ? "..." : report.value}
+                  </p>
 
-                <p className="mt-2 text-3xl font-extrabold">
-                  {loading ? "..." : report.value}
-                </p>
+                  <p className="mt-3 text-sm leading-6 text-[#4d4635]">
+                    {report.note}
+                  </p>
 
-                <p className="mt-3 text-sm leading-6 text-[#4d4635]">
-                  {report.note}
-                </p>
-
-                <div className="mt-6 rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 text-sm font-bold text-[#735c00] transition group-hover:border-[#735c00] group-hover:bg-[#735c00] group-hover:text-white">
-                  Open Report →
-                </div>
-              </Link>
-            ))}
+                  <div className="mt-6 rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 text-sm font-bold text-[#735c00] transition group-hover:border-[#735c00] group-hover:bg-[#735c00] group-hover:text-white">
+                    Open Report →
+                  </div>
+                </Link>
+              ))
+            )}
           </section>
 
           <section className="mt-8 overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">
             <div className="border-b border-[#d0c5af] p-6">
-              <h2 className="text-2xl font-bold">Recently Generated Reports</h2>
+              <h2 className="flex items-center gap-2 text-2xl font-bold">
+                <ShieldCheck className="text-[#735c00]" />
+                Recently Generated Reports
+              </h2>
 
               <p className="mt-1 text-sm text-[#4d4635]">
                 Latest reports generated by system users.
@@ -302,7 +390,10 @@ export default function ReportsPage() {
 
                 <tbody className="divide-y divide-[#d0c5af]">
                   {recentReports.map((report) => (
-                    <tr key={report.name} className="transition hover:bg-[#fbf9f5]">
+                    <tr
+                      key={report.name}
+                      className="transition hover:bg-[#fbf9f5]"
+                    >
                       <td className="px-6 py-5 font-bold">{report.name}</td>
 
                       <td className="px-6 py-5 text-[#4d4635]">
@@ -324,8 +415,9 @@ export default function ReportsPage() {
                       </td>
 
                       <td className="px-6 py-5 text-right">
-                        <button 
+                        <button
                           onClick={handleExportAll}
+                          disabled={exporting}
                           className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
                         >
                           Download
@@ -343,7 +435,15 @@ export default function ReportsPage() {
   );
 }
 
-function StatCard({ label, value, loading }: { label: string; value: string, loading: boolean }) {
+function StatCard({
+  label,
+  value,
+  loading,
+}: {
+  label: string;
+  value: string;
+  loading: boolean;
+}) {
   return (
     <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
       <p className="text-sm font-bold uppercase tracking-widest text-[#4d4635]">
