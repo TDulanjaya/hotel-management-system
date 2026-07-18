@@ -1,47 +1,91 @@
-import { authenticatedFetch } from "./authApi";
+import { getToken } from "@/utils/auth";
+
+const API_BASE_URL = "http://localhost:8080/api/venues";
+
+function getAuthHeaders() {
+  const token = getToken();
+
+  if (!token) {
+    throw new Error("You are not logged in.");
+  }
+
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+async function handleResponse(response: Response) {
+  if (!response.ok) {
+    let message = "Request failed";
+
+    try {
+      const data = await response.json();
+      message = data.message || data.error || message;
+    } catch {
+      message = await response.text();
+    }
+
+    throw new Error(message);
+  }
+
+  if (response.status === 204) {
+    return null;
+  }
+
+  const text = await response.text();
+
+  if (!text) {
+    return null;
+  }
+
+  return JSON.parse(text);
+}
 
 export async function getVenues() {
-  const response = await authenticatedFetch("/api/venues");
-  if (!response.ok) {
-    throw new Error("Failed to fetch venues");
-  }
-  const data = await response.json();
+  const response = await fetch(API_BASE_URL, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  const data = await handleResponse(response);
   return data?.content !== undefined ? data.content : data;
 }
 
 export async function getVenueById(id: string) {
-  const response = await authenticatedFetch(`/api/venues/${id}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch venue");
-  }
-  return response.json();
+  const response = await fetch(`${API_BASE_URL}/${id}`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  return handleResponse(response);
 }
+
 export async function createVenue(venueData: any) {
-  const response = await authenticatedFetch("/api/venues", {
+  const response = await fetch(API_BASE_URL, {
     method: "POST",
+    headers: getAuthHeaders(),
     body: JSON.stringify(venueData),
   });
-  if (!response.ok) {
-    throw new Error("Failed to create venue");
-  }
-  return response.json();
+
+  return handleResponse(response);
 }
 
 export async function updateVenue(id: string, venueData: any) {
-  const response = await authenticatedFetch(`/api/venues/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/${id}`, {
     method: "PUT",
+    headers: getAuthHeaders(),
     body: JSON.stringify(venueData),
   });
-  if (!response.ok) {
-    throw new Error("Failed to update venue");
-  }
-  return response.json();
+
+  return handleResponse(response);
 }
+
 export async function deleteVenue(id: string) {
-  const response = await authenticatedFetch(`/api/venues/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/${id}`, {
     method: "DELETE",
+    headers: getAuthHeaders(),
   });
-  if (!response.ok) {
-    throw new Error("Failed to delete venue");
-  }
+
+  return handleResponse(response);
 }
