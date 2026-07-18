@@ -1,31 +1,91 @@
-import { authenticatedFetch } from "./authApi";
+import { getToken } from "@/utils/auth";
+
+const API_BASE_URL = "http://localhost:8080/api/games";
+
+function getAuthHeaders() {
+  const token = getToken();
+
+  if (!token) {
+    throw new Error("You are not logged in.");
+  }
+
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${token}`,
+  };
+}
+
+async function handleResponse(response: Response) {
+  if (!response.ok) {
+    let message = "Request failed";
+
+    try {
+      const data = await response.json();
+      message = data.message || data.error || message;
+    } catch {
+      message = await response.text();
+    }
+
+    throw new Error(message);
+  }
+
+  if (response.status === 204) {
+    return null;
+  }
+
+  const text = await response.text();
+
+  if (!text) {
+    return null;
+  }
+
+  return JSON.parse(text);
+}
 
 export async function getGameSessions() {
-  const res = await authenticatedFetch("/api/games");
-  if (!res.ok) throw new Error("Failed to fetch game sessions");
-  const data = await res.json();
+  const response = await fetch(API_BASE_URL, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  const data = await handleResponse(response);
   return data?.content !== undefined ? data.content : data;
 }
 
+export async function getGameSessionById(id: string) {
+  const response = await fetch(`${API_BASE_URL}/${id}`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  return handleResponse(response);
+}
+
 export async function createGameSession(data: any) {
-  const res = await authenticatedFetch("/api/games", {
+  const response = await fetch(API_BASE_URL, {
     method: "POST",
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to create game session");
-  return res.json();
+
+  return handleResponse(response);
 }
 
 export async function updateGameSession(id: string, data: any) {
-  const res = await authenticatedFetch(`/api/games/${id}`, {
+  const response = await fetch(`${API_BASE_URL}/${id}`, {
     method: "PUT",
+    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error("Failed to update game session");
-  return res.json();
+
+  return handleResponse(response);
 }
 
 export async function deleteGameSession(id: string) {
-  const res = await authenticatedFetch(`/api/games/${id}`, { method: "DELETE" });
-  if (!res.ok) throw new Error("Failed to delete game session");
+  const response = await fetch(`${API_BASE_URL}/${id}`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+
+  return handleResponse(response);
 }
