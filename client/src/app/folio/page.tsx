@@ -1,17 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { AuthUser, getUser } from "@/utils/auth";
 import SlidePanel from "@/components/ui/SlidePanel";
 import { getAll, create, remove, update } from "@/lib/api/folioApi";
-import { useAuthContext } from "@/context/AuthContext";
-import { CheckCircle, Eye, FileText, Plus, Trash2 } from "lucide-react";
+import { CheckCircle, ExternalLink, Eye, FileText, Plus, Trash2 } from "lucide-react";
 
 export default function FolioPage() {
-  const { user } = useAuthContext();
-
-  const [currentRole, setCurrentRole] = useState("");
+  const router = useRouter();
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [folios, setFolios] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -32,9 +33,9 @@ export default function FolioPage() {
   });
 
   const canManage =
-    currentRole === "OWNER" ||
-    currentRole === "MANAGER" ||
-    currentRole === "RECEPTIONIST";
+    user?.role === "OWNER" ||
+    user?.role === "MANAGER" ||
+    user?.role === "RECEPTIONIST";
 
   const fetchData = async () => {
     setLoading(true);
@@ -51,23 +52,9 @@ export default function FolioPage() {
   };
 
   useEffect(() => {
+    setUser(getUser());
     fetchData();
-
-    if (user?.role) {
-      setCurrentRole(user.role);
-      return;
-    }
-
-    try {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        const parsedUser = JSON.parse(storedUser);
-        setCurrentRole(parsedUser.role || "");
-      }
-    } catch {
-      setCurrentRole("");
-    }
-  }, [user]);
+  }, []);
 
   const handleOpenView = (folio: any) => {
     setSelectedFolio(folio);
@@ -116,7 +103,7 @@ export default function FolioPage() {
             description: formData.description,
             amount: Number(formData.amount),
             category: formData.category,
-            date: new Date().toISOString(),
+            date: new Date().toISOString().split("T")[0],
           },
         ],
       };
@@ -124,7 +111,6 @@ export default function FolioPage() {
       await create(payload);
       setChargePanelOpen(false);
       await fetchData();
-      alert("Folio charge created successfully.");
     } catch (err: any) {
       setError(err.message || "Failed to add charge.");
     } finally {
@@ -138,7 +124,6 @@ export default function FolioPage() {
     try {
       await remove(id);
       setFolios((prev) => prev.filter((folio) => folio.id !== id));
-      alert("Folio deleted successfully.");
     } catch (err: any) {
       alert(err.message || "Failed to delete folio.");
     }
@@ -154,11 +139,15 @@ export default function FolioPage() {
       });
 
       await fetchData();
-      alert("Folio closed successfully.");
     } catch (err: any) {
       alert(err.message || "Failed to close folio.");
     }
   };
+
+  const totalRevenue = folios.reduce(
+    (sum, f) => sum + Number(f.totalAmount || 0),
+    0
+  );
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "RECEPTIONIST"]}>
@@ -209,10 +198,7 @@ export default function FolioPage() {
 
             <StatCard
               label="Total Revenue"
-              value={`Rs ${folios.reduce(
-                (sum, f) => sum + Number(f.totalAmount || 0),
-                0
-              )}`}
+              value={`Rs ${totalRevenue.toLocaleString()}`}
             />
           </section>
 
@@ -279,7 +265,7 @@ export default function FolioPage() {
                         <td className="p-4">{folio.reservationId || "-"}</td>
 
                         <td className="p-4 font-bold">
-                          Rs {Number(folio.totalAmount || 0)}
+                          Rs {Number(folio.totalAmount || 0).toLocaleString()}
                         </td>
 
                         <td className="p-4">
@@ -301,8 +287,16 @@ export default function FolioPage() {
                               className="flex items-center gap-1 rounded-lg border border-[#735c00] px-3 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
                             >
                               <Eye size={16} />
-                              View
+                              Quick View
                             </button>
+
+                            <Link
+                              href={`/folio/detail?id=${folio.id}`}
+                              className="flex items-center gap-1 rounded-lg border border-[#735c00] bg-[#735c00] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
+                            >
+                              <ExternalLink size={16} />
+                              Full Details
+                            </Link>
 
                             {canManage && folio.status !== "CLOSED" && (
                               <button
@@ -345,8 +339,17 @@ export default function FolioPage() {
                 <div className="mb-6 rounded-xl border border-[#d0c5af] bg-[#f8f5ef] p-4 text-sm font-semibold">
                   <p>Guest: {selectedFolio.guestName}</p>
                   <p>Room: {selectedFolio.roomNumber}</p>
-                  <p>Total: Rs {selectedFolio.totalAmount}</p>
+                  <p>Total: Rs {Number(selectedFolio.totalAmount || 0).toLocaleString()}</p>
                   <p>Status: {selectedFolio.status}</p>
+                  <div className="mt-4">
+                    <Link
+                      href={`/folio/detail?id=${selectedFolio.id}`}
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#735c00] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
+                    >
+                      <ExternalLink size={14} />
+                      Open Full Detail View
+                    </Link>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
@@ -354,21 +357,21 @@ export default function FolioPage() {
                     selectedFolio.lines.map((line: any, idx: number) => (
                       <div
                         key={idx}
-                        className="rounded-xl border border-[#d0c5af] bg-white p-4"
+                        className="rounded-xl border border-[#d0c5af] bg-[#fbf9f5] p-4"
                       >
                         <p className="font-bold">{line.description}</p>
-                        <p className="mt-1 text-sm">Amount: Rs {line.amount}</p>
-                        <p className="text-sm">Category: {line.category}</p>
-                        <p className="text-sm">
+                        <p className="mt-1 text-sm font-semibold text-[#735c00]">Amount: Rs {Number(line.amount || 0).toLocaleString()}</p>
+                        <p className="text-sm text-[#4d4635]">Category: {line.category}</p>
+                        <p className="text-sm text-[#4d4635]">
                           Date:{" "}
                           {line.date
-                            ? new Date(line.date).toLocaleString()
+                            ? new Date(line.date).toLocaleDateString()
                             : "-"}
                         </p>
                       </div>
                     ))
                   ) : (
-                    <p>No line items found.</p>
+                    <p className="text-sm text-gray-500">No line items found.</p>
                   )}
                 </div>
               </div>
@@ -474,6 +477,7 @@ export default function FolioPage() {
                   <option>Parking</option>
                   <option>Room Service</option>
                   <option>Event</option>
+                  <option>Amenity</option>
                   <option>Other</option>
                 </select>
               </div>

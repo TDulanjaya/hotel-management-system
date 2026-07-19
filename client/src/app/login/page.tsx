@@ -168,7 +168,11 @@ export default function LoginPage() {
 
         {/* Error */}
         {error && (
-          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-bold text-red-700 animate-[shake_0.35s_ease-in-out]">
+          <div
+            role="alert"
+            aria-live="polite"
+            className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-center text-sm font-bold text-red-700 animate-[shake_0.35s_ease-in-out]"
+          >
             {error}
           </div>
         )}

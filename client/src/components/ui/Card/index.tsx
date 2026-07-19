@@ -1,5 +1,2 @@
-import React from 'react';
-
-export default function Component(props: any) {
-  return <div>Component</div>;
-}
+export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, type CardProps } from "./Card";
+export { default } from "./Card";

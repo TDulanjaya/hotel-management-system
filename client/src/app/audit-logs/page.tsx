@@ -124,9 +124,9 @@ export default function AuditLogsPage() {
               <h2 className="text-2xl font-bold">Security Alerts</h2>
 
               <div className="mt-6 space-y-4">
-                {alerts.map((alert) => (
+                {alerts.map((alert, index) => (
                   <AlertCard
-                    key={alert.title}
+                    key={`${alert.title}-${index}`}
                     title={alert.title}
                     text={alert.text}
                     type={alert.type as "warning" | "critical" | "info"}

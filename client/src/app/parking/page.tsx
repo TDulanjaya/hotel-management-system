@@ -1,10 +1,10 @@
 "use client";
+import { AuthUser, getUser } from "@/utils/auth";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { useAuthContext } from "@/context/AuthContext";
 import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
 import {
   getParkingBookings,
@@ -15,8 +15,12 @@ import SlidePanel from "@/components/ui/SlidePanel";
 import { Car } from "lucide-react";
 
 export default function ParkingPage() {
-  const { user } = useAuthContext();
-  const [currentRole, setCurrentRole] = useState("");
+  const [user, setUser] = useState<AuthUser | null>(null);
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
+
+    const [currentRole, setCurrentRole] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
   const [parkingSlots, setParkingSlots] = useState<any[]>([]);
 

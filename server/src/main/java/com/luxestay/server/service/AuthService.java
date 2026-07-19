@@ -10,6 +10,8 @@ import com.luxestay.server.model.AppUser;
 import com.luxestay.server.model.Role;
 import com.luxestay.server.repository.AppUserRepository;
 import com.luxestay.server.security.JwtService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -26,6 +28,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final AppUserRepository userRepository;
     
@@ -81,11 +85,6 @@ public class AuthService {
     public Map<String, String> forgotPassword(ForgotPasswordRequest request) {
         Map<String, String> response = new HashMap<>();
 
-        if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
-            response.put("message", "Email is required");
-            return response;
-        }
-
         AppUser user = userRepository.findByEmail(request.getEmail().trim())
                 .orElse(null);
 
@@ -101,24 +100,18 @@ public class AuthService {
 
         userRepository.save(user);
 
-emailService.sendPasswordResetEmail(user.getEmail(), token);
+        try {
+            emailService.sendPasswordResetEmail(user.getEmail(), token);
+        } catch (Exception e) {
+            log.error("Failed to send password reset email to {}: {}", user.getEmail(), e.getMessage(), e);
+        }
 
-response.put("message", "Password reset link has been sent to your email.");
-return response;
+        response.put("message", "If this email exists, a password reset request has been created.");
+        return response;
     }
 
     public Map<String, String> resetPassword(ResetPasswordRequest request) {
         Map<String, String> response = new HashMap<>();
-
-        if (request.getToken() == null || request.getToken().trim().isEmpty()) {
-            response.put("message", "Reset token is required");
-            return response;
-        }
-
-        if (request.getNewPassword() == null || request.getNewPassword().length() < 6) {
-            response.put("message", "Password must be at least 6 characters");
-            return response;
-        }
 
         AppUser user = userRepository.findByResetPasswordToken(request.getToken().trim())
                 .orElse(null);

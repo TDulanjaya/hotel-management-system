@@ -1,19 +1,23 @@
 "use client";
+import { AuthUser, getUser } from "@/utils/auth";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SlidePanel from "@/components/ui/SlidePanel";
 import OrderForm from "@/components/forms/OrderForm";
 import { createKitchenOrder, updateKitchenOrder, deleteKitchenOrder } from "@/lib/api/kitchenApi";
-import { useAuthContext } from "@/context/AuthContext";
 import useSWR from "swr";
 import { swrFetcher } from "@/lib/api/authApi";
 import { useWebSocket } from "@/hooks/useWebSocket";
 
 export default function PageComponent() {
-  const { user } = useAuthContext();
-  const [panelOpen, setPanelOpen] = useState(false);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
+
+    const [panelOpen, setPanelOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
   

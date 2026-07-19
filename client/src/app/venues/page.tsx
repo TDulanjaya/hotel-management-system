@@ -1,10 +1,10 @@
 "use client";
+import { AuthUser, getUser } from "@/utils/auth";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { useAuthContext } from "@/context/AuthContext";
 import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
 import SlidePanel from "@/components/ui/SlidePanel";
 import ImageUpload from "@/components/ui/ImageUpload";
@@ -42,8 +42,12 @@ const fallbackImage =
 const defaultImage = fallbackImage;
 
 export default function VenuesPage() {
-  const { user } = useAuthContext();
+  const [user, setUser] = useState<AuthUser | null>(null);
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
 
+  
   const [currentRole, setCurrentRole] = useState("");
   const [venues, setVenues] = useState<Venue[]>([]);
   const [loading, setLoading] = useState(true);

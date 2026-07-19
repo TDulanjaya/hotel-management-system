@@ -1,6 +1,4 @@
-import { getToken } from "@/utils/auth";
-
-const API_BASE_URL = "http://localhost:8080/api/users";
+import { authenticatedFetch } from "./authApi";
 
 export type UserPayload = {
   name: string;
@@ -10,92 +8,54 @@ export type UserPayload = {
   active?: boolean;
 };
 
-function getAuthHeaders() {
-  const token = getToken();
-
-  if (!token) {
-    throw new Error("You are not logged in.");
-  }
-
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
-}
-
-async function handleResponse(response: Response) {
-  if (!response.ok) {
-    let message = "Request failed";
-
-    try {
-      const data = await response.json();
-      message = data.message || data.error || message;
-    } catch {
-      message = await response.text();
-    }
-
-    throw new Error(message);
-  }
-
-  if (response.status === 204) {
-    return null;
-  }
-
-  return response.json();
-}
-
 export async function getUsers() {
-  const response = await fetch(API_BASE_URL, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-
-  return handleResponse(response);
+  const response = await authenticatedFetch("/api/users");
+  if (!response.ok) throw new Error("Failed to fetch users");
+  const data = await response.json();
+  return data?.content !== undefined ? data.content : data;
 }
 
 export async function getUserById(id: string) {
-  const response = await fetch(`${API_BASE_URL}/${id}`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-
-  return handleResponse(response);
+  const response = await authenticatedFetch(`/api/users/${id}`);
+  if (!response.ok) throw new Error("Failed to fetch user");
+  return response.json();
 }
 
 export async function createUser(payload: UserPayload) {
-  const response = await fetch(API_BASE_URL, {
+  const response = await authenticatedFetch("/api/users", {
     method: "POST",
-    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
-
-  return handleResponse(response);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to create user");
+  }
+  return response.json();
 }
 
 export async function updateUser(id: string, payload: UserPayload) {
-  const response = await fetch(`${API_BASE_URL}/${id}`, {
+  const response = await authenticatedFetch(`/api/users/${id}`, {
     method: "PUT",
-    headers: getAuthHeaders(),
     body: JSON.stringify(payload),
   });
-
-  return handleResponse(response);
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || "Failed to update user");
+  }
+  return response.json();
 }
 
 export async function deactivateUser(id: string) {
-  const response = await fetch(`${API_BASE_URL}/${id}/deactivate`, {
+  const response = await authenticatedFetch(`/api/users/${id}/deactivate`, {
     method: "PUT",
-    headers: getAuthHeaders(),
   });
-
-  return handleResponse(response);
+  if (!response.ok) throw new Error("Failed to deactivate user");
+  return response.json();
 }
 
 export async function deleteUser(id: string) {
-  const response = await fetch(`${API_BASE_URL}/${id}`, {
+  const response = await authenticatedFetch(`/api/users/${id}`, {
     method: "DELETE",
-    headers: getAuthHeaders(),
   });
-
-  return handleResponse(response);
+  if (!response.ok) throw new Error("Failed to delete user");
 }

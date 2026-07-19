@@ -1,4 +1,5 @@
 "use client";
+import { AuthUser, getUser } from "@/utils/auth";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -11,7 +12,6 @@ import {
   deleteInventoryItem as apiDeleteInventory,
   createInventoryItem,
 } from "@/lib/api/inventoryApi";
-import { useAuthContext } from "@/context/AuthContext";
 import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
 
 function getStockPercent(stock: number, minimum: number) {
@@ -20,9 +20,13 @@ function getStockPercent(stock: number, minimum: number) {
 }
 
 export default function InventoryPage() {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
+
   const [inventoryItems, setInventoryItems] = useState<any[]>([]);
-  const { user } = useAuthContext();
-  const [currentRole, setCurrentRole] = useState("");
+    const [currentRole, setCurrentRole] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
 
   const [loading, setLoading] = useState(false);

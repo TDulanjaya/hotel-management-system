@@ -1,4 +1,5 @@
 "use client";
+import { AuthUser, getUser } from "@/utils/auth";
 
 import { useEffect, useState } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
@@ -6,11 +7,14 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SlidePanel from "@/components/ui/SlidePanel";
 import OrderForm from "@/components/forms/OrderForm";
 import { getSpaBookings, createSpaBooking, updateSpaBooking, deleteSpaBooking } from "@/lib/api/spaApi";
-import { useAuthContext } from "@/context/AuthContext";
 
 export default function SpaPage() {
-  const { user } = useAuthContext();
-  const [items, setItems] = useState<any[]>([]);
+  const [user, setUser] = useState<AuthUser | null>(null);
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
+
+    const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);

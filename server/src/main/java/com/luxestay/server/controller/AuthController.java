@@ -6,6 +6,7 @@ import com.luxestay.server.dto.LoginRequest;
 import com.luxestay.server.dto.ResetPasswordRequest;
 import com.luxestay.server.dto.UserResponse;
 import com.luxestay.server.service.AuthService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,14 +29,14 @@ public class AuthController {
 
     @PostMapping("/forgot-password")
     public ResponseEntity<Map<String, String>> forgotPassword(
-            @RequestBody ForgotPasswordRequest request
+            @Valid @RequestBody ForgotPasswordRequest request
     ) {
         return ResponseEntity.ok(authService.forgotPassword(request));
     }
 
     @PostMapping("/reset-password")
     public ResponseEntity<Map<String, String>> resetPassword(
-            @RequestBody ResetPasswordRequest request
+            @Valid @RequestBody ResetPasswordRequest request
     ) {
         return ResponseEntity.ok(authService.resetPassword(request));
     }

@@ -1,5 +1,2 @@
-import React from 'react';
-
-export default function Component(props: any) {
-  return <div>Component</div>;
-}
+export { Badge, type BadgeProps, type BadgeVariant } from "./Badge";
+export { default } from "./Badge";

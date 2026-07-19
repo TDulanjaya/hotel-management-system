@@ -68,5 +68,6 @@ export const swrFetcher = async (url: string) => {
     const errorData = await res.json().catch(() => ({}));
     throw new Error(errorData.message || "An error occurred while fetching the data.");
   }
-  return res.json();
+  const data = await res.json();
+  return data?.content !== undefined ? data.content : data;
 };

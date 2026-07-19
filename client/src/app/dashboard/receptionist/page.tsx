@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AppSidebar from "@/components/layout/Sidebar";

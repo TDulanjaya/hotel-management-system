@@ -1,5 +1,2 @@
-import React from 'react';
-
-export default function Component(props: any) {
-  return <div>Component</div>;
-}
+export { Alert, type AlertProps, type AlertVariant } from "./Alert";
+export { default } from "./Alert";

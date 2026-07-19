@@ -1,4 +1,5 @@
 "use client";
+import { AuthUser, getUser } from "@/utils/auth";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -23,7 +24,6 @@ import {
   getGameSessions,
   updateGameSession,
 } from "@/lib/api/gameApi";
-import { useAuthContext } from "@/context/AuthContext";
 
 function ribbonClass(status: string) {
   if (status === "ACTIVE") return "border-l-4 border-l-[#735c00]";
@@ -40,8 +40,12 @@ function badgeClass(status: string) {
 }
 
 export default function GamesPage() {
-  const { user } = useAuthContext();
+  const [user, setUser] = useState<AuthUser | null>(null);
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
 
+  
   const [currentRole, setCurrentRole] = useState("");
   const [sessions, setSessions] = useState<any[]>([]);
   const [filteredSessions, setFilteredSessions] = useState<any[]>([]);

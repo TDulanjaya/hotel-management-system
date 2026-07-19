@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";

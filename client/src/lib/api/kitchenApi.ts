@@ -1,91 +1,39 @@
-import { getToken } from "@/utils/auth";
-
-const API_BASE_URL = "http://localhost:8080/api/kitchen/orders";
-
-function getAuthHeaders() {
-  const token = getToken();
-
-  if (!token) {
-    throw new Error("You are not logged in.");
-  }
-
-  return {
-    "Content-Type": "application/json",
-    Authorization: `Bearer ${token}`,
-  };
-}
-
-async function handleResponse(response: Response) {
-  if (!response.ok) {
-    let message = "Request failed";
-
-    try {
-      const data = await response.json();
-      message = data.message || data.error || message;
-    } catch {
-      message = await response.text();
-    }
-
-    throw new Error(message);
-  }
-
-  if (response.status === 204) {
-    return null;
-  }
-
-  const text = await response.text();
-
-  if (!text) {
-    return null;
-  }
-
-  return JSON.parse(text);
-}
+import { authenticatedFetch } from "./authApi";
 
 export async function getKitchenOrders() {
-  const response = await fetch(API_BASE_URL, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-
-  const data = await handleResponse(response);
+  const response = await authenticatedFetch("/api/kitchen/orders");
+  if (!response.ok) throw new Error("Failed to fetch kitchen orders");
+  const data = await response.json();
   return data?.content !== undefined ? data.content : data;
 }
 
 export async function getKitchenOrderById(id: string) {
-  const response = await fetch(`${API_BASE_URL}/${id}`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
-
-  return handleResponse(response);
+  const response = await authenticatedFetch(`/api/kitchen/orders/${id}`);
+  if (!response.ok) throw new Error("Failed to fetch kitchen order");
+  return response.json();
 }
 
 export async function createKitchenOrder(data: any) {
-  const response = await fetch(API_BASE_URL, {
+  const response = await authenticatedFetch("/api/kitchen/orders", {
     method: "POST",
-    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
-
-  return handleResponse(response);
+  if (!response.ok) throw new Error("Failed to create kitchen order");
+  return response.json();
 }
 
 export async function updateKitchenOrder(id: string, data: any) {
-  const response = await fetch(`${API_BASE_URL}/${id}`, {
+  const response = await authenticatedFetch(`/api/kitchen/orders/${id}`, {
     method: "PUT",
-    headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
-
-  return handleResponse(response);
+  if (!response.ok) throw new Error("Failed to update kitchen order");
+  return response.json();
 }
 
 export async function deleteKitchenOrder(id: string) {
-  const response = await fetch(`${API_BASE_URL}/${id}`, {
+  const response = await authenticatedFetch(`/api/kitchen/orders/${id}`, {
     method: "DELETE",
-    headers: getAuthHeaders(),
   });
-
-  return handleResponse(response);
+  if (!response.ok) throw new Error("Failed to delete kitchen order");
 }

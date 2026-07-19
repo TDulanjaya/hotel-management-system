@@ -1,10 +1,10 @@
 "use client";
+import { AuthUser, getUser } from "@/utils/auth";
 
 import { useEffect, useState } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { getKitchenOrders, updateKitchenOrder } from "@/lib/api/kitchenApi";
-import { useAuthContext } from "@/context/AuthContext";
 import {
   AlertTriangle,
   CheckCircle,
@@ -15,8 +15,12 @@ import {
 } from "lucide-react";
 
 export default function KitchenPage() {
-  const { user } = useAuthContext();
+  const [user, setUser] = useState<AuthUser | null>(null);
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
 
+  
   const [currentRole, setCurrentRole] = useState("");
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

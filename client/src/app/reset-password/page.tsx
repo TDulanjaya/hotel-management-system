@@ -117,6 +117,8 @@ export default function ResetPasswordPage() {
 
         {message && (
           <div
+            role="alert"
+            aria-live="polite"
             className={`mt-5 rounded-xl border px-4 py-3 text-center text-sm font-bold ${
               success
                 ? "border-green-200 bg-green-50 text-green-700"
@@ -161,6 +163,7 @@ export default function ResetPasswordPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label="Toggle password visibility"
                 className="absolute right-4 text-[#9b7600]"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}

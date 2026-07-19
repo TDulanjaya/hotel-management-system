@@ -1,4 +1,5 @@
 "use client";
+import { AuthUser, getUser } from "@/utils/auth";
 
 import { useEffect, useState } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
@@ -10,12 +11,15 @@ import {
   updateGuest,
   deleteGuest,
 } from "@/lib/api/guestsApi";
-import { useAuthContext } from "@/context/AuthContext";
 import { Pencil, Plus, Trash2, Users } from "lucide-react";
 
 export default function GuestsPage() {
-  const { user } = useAuthContext();
+  const [user, setUser] = useState<AuthUser | null>(null);
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
 
+  
   const [currentRole, setCurrentRole] = useState("");
   const [items, setItems] = useState<any[]>([]);
   const [panelOpen, setPanelOpen] = useState(false);

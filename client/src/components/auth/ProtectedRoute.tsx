@@ -1,47 +1,17 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { getUser, getToken, UserRole, getDashboardByRole } from "@/utils/auth";
+import { ReactNode } from "react";
+import { UserRole } from "@/utils/auth";
 
+/**
+ * Transparent pass-through wrapper for legacy page annotations.
+ * Route protection and role authorization are handled globally by AuthGuard in RootLayout.
+ */
 export default function ProtectedRoute({
   children,
-  allowedRoles,
 }: {
   children: ReactNode;
   allowedRoles?: UserRole[];
 }) {
-  const router = useRouter();
-  const [checking, setChecking] = useState(true);
-  const [allowed, setAllowed] = useState(false);
-
-  useEffect(() => {
-    const token = getToken();
-    const user = getUser();
-
-    if (!token || !user) {
-      router.push("/login");
-      return;
-    }
-
-    if (allowedRoles && !allowedRoles.includes(user.role)) {
-      router.push(getDashboardByRole(user.role));
-      return;
-    }
-
-    setAllowed(true);
-    setChecking(false);
-  }, [router, allowedRoles]);
-
-  if (checking) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#fbf9f5] text-[#735c00]">
-        <p className="text-lg font-bold">Checking access...</p>
-      </div>
-    );
-  }
-
-  if (!allowed) return null;
-
   return <>{children}</>;
 }

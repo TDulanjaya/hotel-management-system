@@ -1,5 +1,2 @@
-import React from 'react';
-
-export default function Component(props: any) {
-  return <div>Component</div>;
-}
+export { Button, type ButtonProps, type ButtonVariant, type ButtonSize } from "./Button";
+export { default } from "./Button";

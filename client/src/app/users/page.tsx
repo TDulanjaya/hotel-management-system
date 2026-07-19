@@ -7,6 +7,7 @@ import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SlidePanel from "@/components/ui/SlidePanel";
+import { Alert } from "@/components/ui";
 import {
   Search,
   Bell,
@@ -27,7 +28,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { getUsers, deleteUser as apiDeleteUser, createUser } from "@/lib/api/userApi";
-import { useAuthContext } from "@/context/AuthContext";
+import { getUser } from "@/utils/auth";
 
 type UserItem = {
   id: string;
@@ -201,16 +202,15 @@ export default function UsersPage() {
           icon={<UserPlus className="h-5 w-5" />}
         >
           {error && (
-            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
+            <Alert variant="error" className="mb-4">
               {error}
-            </div>
+            </Alert>
           )}
 
           {creatorRole === "MANAGER" && (
-            <div className="mb-6 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-              <strong>Note:</strong> As a Manager, you cannot create Owner or
-              Manager accounts.
-            </div>
+            <Alert variant="warning" className="mb-6">
+              As a Manager, you cannot create Owner or Manager accounts.
+            </Alert>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -417,7 +417,7 @@ function UsersTable({
   users: UserItem[];
   setUsers: React.Dispatch<React.SetStateAction<UserItem[]>>;
 }) {
-  const { user: currentUser } = useAuthContext();
+  const currentUser = getUser();
 
   useEffect(() => {
   }, []);

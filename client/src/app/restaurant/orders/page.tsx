@@ -1,4 +1,5 @@
 "use client";
+import { AuthUser, getUser } from "@/utils/auth";
 
 import { useEffect, useState } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
@@ -11,12 +12,15 @@ import {
   updateRestaurantOrder,
   deleteRestaurantOrder,
 } from "@/lib/api/restaurantApi";
-import { useAuthContext } from "@/context/AuthContext";
 import { ClipboardList, Pencil, Plus, Trash2, Utensils } from "lucide-react";
 
 export default function RestaurantOrdersPage() {
-  const { user } = useAuthContext();
+  const [user, setUser] = useState<AuthUser | null>(null);
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
 
+  
   const [currentRole, setCurrentRole] = useState("");
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);

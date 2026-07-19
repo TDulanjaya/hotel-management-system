@@ -3,6 +3,7 @@
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SlidePanel from "@/components/ui/SlidePanel";
+import { Button, Card } from "@/components/ui";
 import { Bed, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   deleteRoom as apiDeleteRoom,
@@ -11,13 +12,16 @@ import {
 } from "@/lib/api/roomApi";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useAuthContext } from "@/context/AuthContext";
+import { AuthUser, getUser } from "@/utils/auth";
 import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
 
 const roomTypesList = ["All Rooms", "Suite", "Deluxe", "Standard"];
 
 export default function RoomsPage() {
-  const { user } = useAuthContext();
+  const [user, setUser] = useState<AuthUser | null>(null);
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
 
   const [currentRole, setCurrentRole] = useState("");
   const [rooms, setRooms] = useState<any[]>([]);
@@ -618,13 +622,13 @@ export default function RoomsPage() {
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
+    <Card className="p-6">
       <p className="text-sm font-bold uppercase tracking-widest text-[#4d4635]">
         {label}
       </p>
 
       <p className="mt-2 text-3xl font-extrabold text-[#735c00]">{value}</p>
-    </div>
+    </Card>
   );
 }
 

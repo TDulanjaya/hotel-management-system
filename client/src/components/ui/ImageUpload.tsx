@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, ChangeEvent, DragEvent } from "react";
+import Image from "next/image";
 import { UploadCloud, X } from "lucide-react";
 
 interface ImageUploadProps {
@@ -73,11 +74,12 @@ export default function ImageUpload({ value, onChange, className = "" }: ImageUp
     <div className={`relative ${className}`}>
       {value ? (
         <div className="group relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-xl border border-[#d0c5af] bg-[#f5f3ef]">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img 
-            src={value} 
-            alt="Uploaded preview" 
-            className="h-full w-full object-cover transition-opacity duration-300 group-hover:opacity-60"
+          <Image
+            src={value}
+            alt="Uploaded preview"
+            fill
+            unoptimized
+            className="object-cover transition-opacity duration-300 group-hover:opacity-60"
           />
           <div className="absolute inset-0 flex items-center justify-center bg-[#101827]/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
             <button
