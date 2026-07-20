@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { Button, Card, Badge } from "@/components/ui";
+import { Button, Badge } from "@/components/ui";
 import { AuthUser, getUser } from "@/utils/auth";
 import { authenticatedFetch } from "@/lib/api/authApi";
 import {
@@ -21,6 +22,13 @@ import {
   Users,
   Utensils,
   Wallet,
+  Activity,
+  ArrowUpRight,
+  Crown,
+  Database,
+  Server,
+  Shield,
+  Wifi,
 } from "lucide-react";
 
 async function fetchRooms() {
@@ -84,10 +92,12 @@ export default function DashboardPage() {
   const [restaurantOrders, setRestaurantOrders] = useState<any[]>([]);
   const [roomServiceOrders, setRoomServiceOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
 
   const loadDashboardData = async () => {
     setLoading(true);
+    setRefreshing(true);
     setError("");
 
     try {
@@ -120,15 +130,29 @@ export default function DashboardPage() {
       setError(err.message || "Failed to load dashboard data.");
     } finally {
       setLoading(false);
+      setTimeout(() => setRefreshing(false), 500);
     }
   };
 
   useEffect(() => {
     loadDashboardData();
+
     const currentUser = getUser();
     if (currentUser) {
       setUser(currentUser);
       setCurrentRole(currentUser.role);
+      return;
+    }
+
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        setCurrentRole(parsedUser.role || "");
+      }
+    } catch {
+      setCurrentRole("");
     }
   }, []);
 
@@ -140,6 +164,10 @@ export default function DashboardPage() {
 
   const occupiedRooms = rooms.filter(
     (room) => room.status === "OCCUPIED" || room.status === "Occupied"
+  ).length;
+
+  const maintenanceRooms = rooms.filter(
+    (room) => room.status === "MAINTENANCE" || room.status === "Maintenance"
   ).length;
 
   const occupancyRate =
@@ -166,69 +194,120 @@ export default function DashboardPage() {
     0
   );
 
+  const healthLabel =
+    occupancyRate >= 90 || maintenanceRooms > 5 ? "Attention" : "Healthy";
+
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "RECEPTIONIST"]}>
-      <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
+      <div className="min-h-screen overflow-hidden bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 
-        <main className="px-8 py-10 lg:ml-[280px]">
-          <header className="mb-8 flex flex-col justify-between gap-5 xl:flex-row xl:items-end">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#735c00]">
-                Operations Suite
-              </p>
+        <main className="relative px-8 py-10 lg:ml-[280px]">
+          <motion.div
+            className="pointer-events-none absolute right-[-140px] top-[-160px] h-96 w-96 rounded-full bg-[#d4af37]/25 blur-3xl"
+            animate={{ scale: [1, 1.15, 1], opacity: [0.45, 0.7, 0.45] }}
+            transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          />
 
-              <h1 className="mt-3 text-4xl font-extrabold text-[#735c00]">
-                Hotel Control Center
-              </h1>
+          <motion.div
+            className="pointer-events-none absolute bottom-[-180px] left-[15%] h-96 w-96 rounded-full bg-[#111827]/10 blur-3xl"
+            animate={{ scale: [1.1, 1, 1.1], opacity: [0.3, 0.55, 0.3] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+          />
 
-              <p className="mt-2 text-[#4d4635]">
-                Real-time operational metrics across rooms, guests, dining and
-                amenities.
-              </p>
+          <motion.header
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.45 }}
+            className="relative mb-8 overflow-hidden rounded-[2rem] border border-[#d0c5af] bg-gradient-to-br from-[#111827] via-[#172033] to-[#2c2100] p-8 text-white shadow-2xl"
+          >
+            <div className="absolute right-8 top-6 opacity-15">
+              <Hotel size={150} />
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <Link
-                href="/reservations/new"
-                className="hidden rounded-xl bg-[#735c00] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00] md:block"
-              >
-                New Reservation
-              </Link>
+            <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-[#d4af37] via-white/60 to-[#735c00]" />
 
-              <div className="hidden h-8 w-px bg-[#ddd5c8] md:block" />
-
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <p className="text-sm font-bold leading-none">
-                    {user?.name || "Loading..."}
-                  </p>
-
-                  <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    {currentRole || user?.role || "..."}
-                  </p>
+            <div className="relative flex flex-col justify-between gap-8 xl:flex-row xl:items-end">
+              <div>
+                <div className="inline-flex items-center gap-2 rounded-full border border-[#d4af37]/40 bg-[#d4af37]/10 px-4 py-2 text-xs font-black uppercase tracking-[0.3em] text-[#f8d75c]">
+                  <Sparkles size={14} />
+                  Operations Suite
                 </div>
 
-                <div className="flex h-11 w-11 items-center justify-center rounded-full border-4 border-[#d8b328] bg-white text-lg font-extrabold uppercase text-[#735c00] shadow-sm">
-                  {user?.name ? user.name.charAt(0) : "•"}
+                <h1 className="mt-5 text-4xl font-black tracking-tight md:text-5xl">
+                  Hotel Control Center
+                </h1>
+
+                <p className="mt-3 max-w-2xl text-sm text-[#f5e9c9] md:text-base">
+                  Real-time operational metrics across rooms, guests, dining,
+                  payments and amenities.
+                </p>
+
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <HeroPill icon={<Activity size={15} />} label="Live Metrics" />
+                  <HeroPill icon={<ShieldCheck size={15} />} label="Secure Access" />
+                  <HeroPill icon={<Wifi size={15} />} label="Online Services" />
                 </div>
               </div>
 
-              <Button
-                onClick={loadDashboardData}
-                leftIcon={<RefreshCw size={16} />}
-              >
-                Refresh
-              </Button>
-            </div>
-          </header>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                <Link
+                  href="/reservations/new"
+                  className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#d4af37] px-5 py-3 text-sm font-black text-[#241a00] shadow-lg shadow-black/20 transition hover:-translate-y-1 hover:bg-white"
+                >
+                  New Reservation
+                  <ArrowUpRight size={16} />
+                </Link>
 
-          <section className="mb-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+                <div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur">
+                  <div className="text-right">
+                    <p className="text-sm font-black leading-none">
+                      {user?.name || "Manager"}
+                    </p>
+
+                    <p className="mt-1 text-[10px] font-black uppercase tracking-wider text-[#f8d75c]">
+                      {currentRole || user?.role || "MANAGER"}
+                    </p>
+                  </div>
+
+                  <motion.div
+                    animate={{ rotate: [0, 5, -5, 0] }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                    className="flex h-12 w-12 items-center justify-center rounded-2xl border-2 border-[#d4af37] bg-white text-lg font-black uppercase text-[#735c00] shadow-lg"
+                  >
+                    {user?.name ? user.name.charAt(0) : "M"}
+                  </motion.div>
+                </div>
+
+                <button
+                  onClick={loadDashboardData}
+                  className="group inline-flex items-center justify-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-5 py-3 text-sm font-black text-white backdrop-blur transition hover:-translate-y-1 hover:bg-white hover:text-[#241a00]"
+                >
+                  <RefreshCw
+                    size={16}
+                    className={refreshing ? "animate-spin" : "transition group-hover:rotate-180"}
+                  />
+                  Refresh
+                </button>
+              </div>
+            </div>
+          </motion.header>
+
+          <motion.section
+            initial="hidden"
+            animate="show"
+            variants={{
+              hidden: {},
+              show: { transition: { staggerChildren: 0.08 } },
+            }}
+            className="relative mb-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4"
+          >
             <StatCard
               title="Total Rooms"
               value={totalRooms.toString()}
               note={`${availableRooms} available • ${occupiedRooms} occupied`}
               icon={<BedDouble />}
+              accent="from-[#d4af37] to-[#735c00]"
             />
 
             <StatCard
@@ -236,6 +315,7 @@ export default function DashboardPage() {
               value={`${occupancyRate}%`}
               note={`${occupiedRooms} of ${totalRooms} rooms occupied`}
               icon={<TrendingUp />}
+              accent="from-green-400 to-emerald-500"
             />
 
             <StatCard
@@ -243,6 +323,7 @@ export default function DashboardPage() {
               value={guests.length.toString()}
               note="Currently checked-in"
               icon={<Users />}
+              accent="from-blue-400 to-cyan-500"
             />
 
             <StatCard
@@ -250,15 +331,25 @@ export default function DashboardPage() {
               value={`Rs ${totalRevenue.toLocaleString()}`}
               note={`${payments.length} transactions`}
               icon={<Wallet />}
+              accent="from-purple-400 to-indigo-500"
             />
-          </section>
+          </motion.section>
 
-          <section className="mb-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          <motion.section
+            initial="hidden"
+            animate="show"
+            variants={{
+              hidden: {},
+              show: { transition: { staggerChildren: 0.08 } },
+            }}
+            className="relative mb-8 grid gap-6 md:grid-cols-2 xl:grid-cols-4"
+          >
             <StatCard
               title="Active Events"
               value={activeEvents.toString()}
               note="Scheduled & ongoing"
               icon={<CalendarDays />}
+              accent="from-orange-400 to-yellow-500"
             />
 
             <StatCard
@@ -266,6 +357,7 @@ export default function DashboardPage() {
               value={activeParking.toString()}
               note="Vehicles parked"
               icon={<Car />}
+              accent="from-slate-500 to-slate-700"
             />
 
             <StatCard
@@ -273,6 +365,7 @@ export default function DashboardPage() {
               value={pendingKitchenOrders.toString()}
               note="Orders being prepared"
               icon={<ChefHat />}
+              accent="from-red-400 to-orange-500"
             />
 
             <StatCard
@@ -280,24 +373,67 @@ export default function DashboardPage() {
               value={pendingRoomServiceOrders.toString()}
               note="Pending deliveries"
               icon={<Utensils />}
+              accent="from-teal-400 to-emerald-500"
             />
-          </section>
+          </motion.section>
 
           {loading ? (
-            <div className="flex h-64 items-center justify-center rounded-2xl border border-[#d0c5af] bg-white text-lg font-bold text-[#806300]">
-              Loading control center metrics...
-            </div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="relative flex h-72 flex-col items-center justify-center rounded-[2rem] border border-[#d0c5af] bg-white/85 shadow-xl backdrop-blur"
+            >
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1.2, repeat: Infinity, ease: "linear" }}
+                className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#d4af37] text-[#4b3a00]"
+              >
+                <RefreshCw size={30} />
+              </motion.div>
+
+              <p className="text-lg font-black text-[#806300]">
+                Loading control center metrics...
+              </p>
+            </motion.div>
           ) : error ? (
-            <div className="rounded-2xl border border-red-200 bg-red-50 p-6 font-bold text-red-700">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative rounded-[2rem] border border-red-200 bg-red-50 p-6 font-bold text-red-700 shadow-lg"
+            >
               {error}
-            </div>
+            </motion.div>
           ) : (
-            <div className="grid gap-8 xl:grid-cols-2">
-              <section className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-                <h2 className="text-xl font-bold">Quick Management Links</h2>
-                <p className="mt-1 text-sm text-[#4d4635]">
-                  Fast navigation to operational modules.
-                </p>
+            <motion.div
+              initial="hidden"
+              animate="show"
+              variants={{
+                hidden: {},
+                show: { transition: { staggerChildren: 0.12 } },
+              }}
+              className="relative grid gap-8 xl:grid-cols-2"
+            >
+              <motion.section
+                variants={{
+                  hidden: { opacity: 0, y: 28 },
+                  show: { opacity: 1, y: 0 },
+                }}
+                className="overflow-hidden rounded-[2rem] border border-[#d0c5af] bg-white/90 p-6 shadow-xl shadow-[#4d3a0010] backdrop-blur"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-black">
+                      Quick Management Links
+                    </h2>
+                    <p className="mt-1 text-sm font-semibold text-[#4d4635]">
+                      Fast navigation to operational modules.
+                    </p>
+                  </div>
+
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#d4af37]/20 text-[#735c00]">
+                    <Crown size={24} />
+                  </div>
+                </div>
 
                 <div className="mt-6 grid gap-4 sm:grid-cols-2">
                   <QuickLink
@@ -325,26 +461,71 @@ export default function DashboardPage() {
                     icon={<Utensils />}
                   />
                 </div>
-              </section>
+              </motion.section>
 
-              <section className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-                <h2 className="text-xl font-bold">System Status</h2>
-                <p className="mt-1 text-sm text-[#4d4635]">
-                  Active services and connection health.
-                </p>
+              <motion.section
+                variants={{
+                  hidden: { opacity: 0, y: 28 },
+                  show: { opacity: 1, y: 0 },
+                }}
+                className="overflow-hidden rounded-[2rem] border border-[#d0c5af] bg-white/90 p-6 shadow-xl shadow-[#4d3a0010] backdrop-blur"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h2 className="text-2xl font-black">System Status</h2>
+                    <p className="mt-1 text-sm font-semibold text-[#4d4635]">
+                      Active services and connection health.
+                    </p>
+                  </div>
+
+                  <div className="rounded-2xl bg-green-100 px-4 py-2 text-xs font-black uppercase tracking-widest text-green-700">
+                    {healthLabel}
+                  </div>
+                </div>
 
                 <div className="mt-6 space-y-4">
-                  <StatusRow label="Backend API Server" status="ONLINE" />
-                  <StatusRow label="Authentication Service" status="ONLINE" />
-                  <StatusRow label="Database Connection" status="ONLINE" />
-                  <StatusRow label="Realtime Updates" status="ONLINE" />
+                  <StatusRow
+                    label="Backend API Server"
+                    status="ONLINE"
+                    icon={<Server size={18} />}
+                  />
+                  <StatusRow
+                    label="Authentication Service"
+                    status="ONLINE"
+                    icon={<Shield size={18} />}
+                  />
+                  <StatusRow
+                    label="Database Connection"
+                    status="ONLINE"
+                    icon={<Database size={18} />}
+                  />
+                  <StatusRow
+                    label="Realtime Updates"
+                    status="ONLINE"
+                    icon={<Activity size={18} />}
+                  />
                 </div>
-              </section>
-            </div>
+              </motion.section>
+            </motion.div>
           )}
         </main>
       </div>
     </ProtectedRoute>
+  );
+}
+
+function HeroPill({
+  icon,
+  label,
+}: {
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold text-white backdrop-blur">
+      {icon}
+      {label}
+    </div>
   );
 }
 
@@ -353,26 +534,44 @@ function StatCard({
   value,
   note,
   icon,
+  accent,
 }: {
   title: string;
   value: string;
   note: string;
   icon: React.ReactNode;
+  accent: string;
 }) {
   return (
-    <Card hoverable className="p-6">
-      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#d4af37] text-[#554300]">
+    <motion.article
+      variants={{
+        hidden: { opacity: 0, y: 24 },
+        show: { opacity: 1, y: 0 },
+      }}
+      whileHover={{ y: -8, scale: 1.02 }}
+      transition={{ duration: 0.25 }}
+      className="group relative overflow-hidden rounded-[1.75rem] border border-[#d0c5af] bg-white p-6 shadow-lg shadow-[#4d3a0010]"
+    >
+      <div className={`absolute inset-x-0 top-0 h-1.5 bg-gradient-to-r ${accent}`} />
+
+      <div className="absolute right-5 top-5 text-[#735c00]/10 transition group-hover:scale-110">
+        <Sparkles size={64} />
+      </div>
+
+      <div
+        className={`mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br ${accent} text-white shadow-lg`}
+      >
         {icon}
       </div>
 
-      <p className="text-sm font-bold uppercase tracking-widest text-[#4d4635]">
+      <p className="text-sm font-black uppercase tracking-widest text-[#4d4635]">
         {title}
       </p>
 
-      <h2 className="mt-3 text-3xl font-extrabold text-[#735c00]">{value}</h2>
+      <h2 className="mt-3 text-4xl font-black text-[#735c00]">{value}</h2>
 
-      <p className="mt-2 text-sm text-[#4d4635]">{note}</p>
-    </Card>
+      <p className="mt-2 text-sm font-semibold text-[#4d4635]">{note}</p>
+    </motion.article>
   );
 }
 
@@ -388,28 +587,59 @@ function QuickLink({
   icon: React.ReactNode;
 }) {
   return (
-    <Link
-      href={href}
-      className="flex items-start gap-4 rounded-xl border border-[#d0c5af] bg-[#fbf9f5] p-4 transition hover:-translate-y-0.5 hover:bg-[#f5eed9] hover:shadow-md"
-    >
-      <div className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#735c00] text-white">
-        {icon}
-      </div>
-      <div>
-        <p className="font-bold text-[#1b1c1a]">{title}</p>
-        <p className="mt-0.5 text-xs text-[#4d4635]">{desc}</p>
-      </div>
-    </Link>
+    <motion.div whileHover={{ y: -4, scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+      <Link
+        href={href}
+        className="group flex items-start gap-4 rounded-2xl border border-[#d0c5af] bg-[#fbf9f5] p-4 transition hover:bg-[#f5eed9] hover:shadow-md"
+      >
+        <div className="mt-0.5 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#735c00] text-white shadow-md transition group-hover:bg-[#d4af37] group-hover:text-[#241a00]">
+          {icon}
+        </div>
+
+        <div className="flex-1">
+          <p className="font-black text-[#1b1c1a]">{title}</p>
+          <p className="mt-0.5 text-xs font-semibold text-[#4d4635]">{desc}</p>
+        </div>
+
+        <ArrowUpRight
+          size={16}
+          className="mt-1 text-[#735c00] opacity-0 transition group-hover:opacity-100"
+        />
+      </Link>
+    </motion.div>
   );
 }
 
-function StatusRow({ label, status }: { label: string; status: string }) {
+function StatusRow({
+  label,
+  status,
+  icon,
+}: {
+  label: string;
+  status: string;
+  icon: React.ReactNode;
+}) {
   return (
-    <div className="flex items-center justify-between rounded-xl bg-[#fbf9f5] p-4 font-semibold">
-      <span className="text-sm text-[#1b1c1a]">{label}</span>
-      <Badge variant="success" dot>
-        {status}
-      </Badge>
-    </div>
+    <motion.div
+      whileHover={{ x: 4 }}
+      className="flex items-center justify-between rounded-2xl bg-[#fbf9f5] p-4 font-semibold"
+    >
+      <div className="flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100 text-green-700">
+          {icon}
+        </div>
+
+        <span className="text-sm font-black text-[#1b1c1a]">{label}</span>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <motion.span
+          className="h-2.5 w-2.5 rounded-full bg-green-500"
+          animate={{ scale: [1, 1.5, 1], opacity: [1, 0.45, 1] }}
+          transition={{ duration: 1.4, repeat: Infinity }}
+        />
+        <Badge variant="success">{status}</Badge>
+      </div>
+    </motion.div>
   );
 }
