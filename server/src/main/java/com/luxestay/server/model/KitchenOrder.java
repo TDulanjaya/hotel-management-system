@@ -16,7 +16,9 @@ public class KitchenOrder {
     private String guestName;
     private List<OrderLineItem> items;
     private String priority;
+    @org.springframework.data.mongodb.core.index.Indexed
     private String status;
     private String notes;
+    @org.springframework.data.mongodb.core.index.Indexed
     private LocalDateTime receivedAt = LocalDateTime.now();
 }

@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import { ReportSummaryCards } from "@/components/reports/ReportSummaryCards";
 import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-import { getPayments } from "@/lib/api/paymentsApi";
+import useSWR from "swr";
 
 function getStatusClass(status: string) {
   if (status === "COMPLETED" || status === "APPROVED" || status === "PAID") {
@@ -17,57 +17,44 @@ function getStatusClass(status: string) {
 }
 
 export default function PaymentSummaryReportPage() {
-  const [payments, setPayments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rawPayments, isLoading } = useSWR<any[]>("/api/payments");
+  const payments = useMemo(() => (Array.isArray(rawPayments) ? rawPayments : []), [rawPayments]);
+  const loading = !rawPayments && isLoading;
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const payData = await getPayments();
-        setPayments(payData || []);
-      } catch (err) {
-        console.error("Failed to load payments", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
+  const totalPayments = useMemo(() => payments.reduce((acc, p) => acc + (p.amount || 0), 0), [payments]);
+  const completedPayments = useMemo(() => payments.filter(p => p.status === "COMPLETED" || p.status === "PAID" || !p.status), [payments]);
+  const pendingPayments = useMemo(() => payments.filter(p => p.status === "PENDING"), [payments]);
+  const failedPayments = useMemo(() => payments.filter(p => p.status === "FAILED"), [payments]);
+  const refundedPayments = useMemo(() => payments.filter(p => p.status === "REFUNDED"), [payments]);
 
-  const totalPayments = payments.reduce((acc, p) => acc + (p.amount || 0), 0);
-  const completedPayments = payments.filter(p => p.status === "COMPLETED" || p.status === "PAID" || !p.status);
-  const pendingPayments = payments.filter(p => p.status === "PENDING");
-  const failedPayments = payments.filter(p => p.status === "FAILED");
-  const refundedPayments = payments.filter(p => p.status === "REFUNDED");
+  const completedTotal = useMemo(() => completedPayments.reduce((acc, p) => acc + (p.amount || 0), 0), [completedPayments]);
+  const pendingTotal = useMemo(() => pendingPayments.reduce((acc, p) => acc + (p.amount || 0), 0), [pendingPayments]);
+  const failedTotal = useMemo(() => failedPayments.reduce((acc, p) => acc + (p.amount || 0), 0), [failedPayments]);
+  const refundedTotal = useMemo(() => refundedPayments.reduce((acc, p) => acc + (p.amount || 0), 0), [refundedPayments]);
+  const netCollection = useMemo(() => completedTotal - refundedTotal, [completedTotal, refundedTotal]);
 
-  const completedTotal = completedPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
-  const pendingTotal = pendingPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
-  const failedTotal = failedPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
-  const refundedTotal = refundedPayments.reduce((acc, p) => acc + (p.amount || 0), 0);
-  const netCollection = completedTotal - refundedTotal;
-
-  const paymentSummary = [
+  const paymentSummary = useMemo(() => [
     {
-      label: "Total Payments",
-      value: `Rs ${totalPayments.toLocaleString()}`,
-      note: "All payment collections",
+      label: "Total Collection",
+      value: `Rs ${netCollection.toLocaleString()}`,
+      note: "Net received payments",
     },
     {
       label: "Completed",
       value: `Rs ${completedTotal.toLocaleString()}`,
-      note: "Successfully settled",
+      note: "Successfully processed payments",
     },
     {
       label: "Pending",
       value: `Rs ${pendingTotal.toLocaleString()}`,
-      note: "Waiting confirmation",
+      note: "Waiting authorization or settlement",
     },
     {
-      label: "Refunds",
+      label: "Refunded",
       value: `Rs ${refundedTotal.toLocaleString()}`,
-      note: "Refund requests today",
+      note: "Amount returned to guests",
     },
-  ];
+  ], [netCollection, completedTotal, pendingTotal, refundedTotal]);
 
   const paymentMethods = useMemo(() => {
     const methods: Record<string, { amount: number; count: number }> = {};

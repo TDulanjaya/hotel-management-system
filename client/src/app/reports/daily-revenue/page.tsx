@@ -1,9 +1,8 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import { ReportSummaryCards } from "@/components/reports/ReportSummaryCards";
 import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-import { getReportSummary } from "@/lib/api/reportsApi";
-import { getPayments } from "@/lib/api/paymentsApi";
+import useSWR from "swr";
 
 function getStatusClass(status: string) {
   if (status === "COMPLETED" || status === "PAID") {
@@ -13,29 +12,12 @@ function getStatusClass(status: string) {
 }
 
 export default function DailyRevenueReportPage() {
-  const [summary, setSummary] = useState<any>(null);
-  const [payments, setPayments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: summary } = useSWR<any>("/api/reports/summary");
+  const { data: rawPayments, isLoading } = useSWR<any[]>("/api/payments");
+  const payments = useMemo(() => (Array.isArray(rawPayments) ? rawPayments : []), [rawPayments]);
+  const loading = !rawPayments && isLoading;
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [sumData, payData] = await Promise.all([
-          getReportSummary(),
-          getPayments()
-        ]);
-        setSummary(sumData);
-        setPayments(payData || []);
-      } catch (err) {
-        console.error("Failed to load daily revenue report", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
-
-  const revenueSummary = [
+  const revenueSummary = useMemo(() => [
     {
       label: "Total Revenue",
       value: summary?.todayRevenue || "Rs 0",
@@ -56,7 +38,7 @@ export default function DailyRevenueReportPage() {
       value: summary?.eventIncome || "Rs 0",
       note: "Venue and event payments",
     },
-  ];
+  ], [summary]);
 
   // Process today's payments
   const todayDateString = new Date().toISOString().split('T')[0];

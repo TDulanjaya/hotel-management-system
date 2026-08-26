@@ -40,7 +40,7 @@ export default function LoginPage() {
       <div
         className="absolute inset-0 scale-105 bg-cover bg-center bg-no-repeat animate-[slowZoom_18s_ease-in-out_infinite_alternate]"
         style={{
-          backgroundImage: "url('/login-bg.jpg')",
+          backgroundImage: "url('/login-bg.webp')",
         }}
       />
 

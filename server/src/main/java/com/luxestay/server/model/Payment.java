@@ -11,11 +11,15 @@ public class Payment {
     @Id private String id;
     private String guestName;
     private String roomNumber;
+    @org.springframework.data.mongodb.core.index.Indexed
     private String referenceType;
+    @org.springframework.data.mongodb.core.index.Indexed
     private String referenceId;
     private double amount;
     private String method;
+    @org.springframework.data.mongodb.core.index.Indexed
     private String status;
     private String notes;
+    @org.springframework.data.mongodb.core.index.Indexed
     private LocalDateTime paidAt = LocalDateTime.now();
 }

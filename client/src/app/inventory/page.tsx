@@ -1,12 +1,13 @@
 "use client";
 import { AuthUser, getUser } from "@/utils/auth";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SlidePanel from "@/components/ui/SlidePanel";
 import { Package } from "lucide-react";
+import useSWR from "swr";
 import {
   getInventoryItems,
   deleteInventoryItem as apiDeleteInventory,
@@ -25,8 +26,9 @@ export default function InventoryPage() {
     setUser(getUser());
   }, []);
 
-  const [inventoryItems, setInventoryItems] = useState<any[]>([]);
-    const [currentRole, setCurrentRole] = useState("");
+  const { data: rawInventory, mutate, isLoading: isSwrLoading } = useSWR<any[]>("/api/inventory");
+  const inventoryItems = useMemo(() => (Array.isArray(rawInventory) ? rawInventory : []), [rawInventory]);
+  const [currentRole, setCurrentRole] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
 
   const [loading, setLoading] = useState(false);
@@ -43,18 +45,7 @@ export default function InventoryPage() {
     status: "In Stock",
   });
 
-  const loadInventory = async () => {
-    try {
-      const data = await getInventoryItems();
-      setInventoryItems(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   useEffect(() => {
-    loadInventory();
-
     if (user?.role) {
       setCurrentRole(user.role);
       return;
@@ -76,7 +67,7 @@ export default function InventoryPage() {
 
     try {
       await apiDeleteInventory(id);
-      setInventoryItems((prev) => prev.filter((item) => item.id !== id));
+      mutate();
       alert("Inventory item deleted successfully.");
     } catch (err) {
       console.error(err);
@@ -104,7 +95,7 @@ export default function InventoryPage() {
       });
 
       setPanelOpen(false);
-      await loadInventory();
+      mutate();
 
       setFormData({
         itemName: "",
@@ -350,220 +341,46 @@ export default function InventoryPage() {
                 </table>
               </div>
             </div>
-
-            <aside className="space-y-8">
-              <section className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-                <h2 className="text-2xl font-bold">Purchase Requests</h2>
-
-                <div className="mt-6 space-y-4">
-                  <div className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-4 text-center text-[#4d4635]">
-                    No pending purchase requests.
-                  </div>
-                </div>
-              </section>
-
-              <section className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-                <h2 className="text-2xl font-bold">Inventory Alerts</h2>
-
-                <div className="mt-6 space-y-4">
-                  {inventoryItems
-                    .filter((i) => i.quantity === 0)
-                    .map((item) => (
-                      <AlertCard
-                        key={`crit-${item.id}`}
-                        title="Critical Stock"
-                        text={`${item.itemName} is out of stock.`}
-                        type="critical"
-                      />
-                    ))}
-
-                  {inventoryItems
-                    .filter((i) => i.quantity > 0 && i.quantity <= i.reorderLevel)
-                    .map((item) => (
-                      <AlertCard
-                        key={`warn-${item.id}`}
-                        title="Low Stock"
-                        text={`${item.itemName} is below minimum stock level.`}
-                        type="warning"
-                      />
-                    ))}
-
-                  {inventoryItems.length > 0 &&
-                    inventoryItems.filter((i) => i.quantity <= i.reorderLevel)
-                      .length === 0 && (
-                      <AlertCard
-                        title="Good Stock"
-                        text="All inventory items are sufficiently stocked."
-                        type="success"
-                      />
-                    )}
-
-                  {inventoryItems.length === 0 && (
-                    <p className="text-sm text-[#4d4635]">
-                      No inventory items to monitor.
-                    </p>
-                  )}
-                </div>
-              </section>
-            </aside>
           </section>
         </main>
 
         <SlidePanel
           open={panelOpen}
           onClose={() => setPanelOpen(false)}
-          title="Add New Inventory Item"
-          subtitle="Add stock, supplies, or amenities to your inventory."
-          icon={<Package className="h-5 w-5" />}
+          title="Add New Item"
         >
-          {error && (
-            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 font-bold text-red-700">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-bold text-[#4d4635]">
-                Item Name
-              </label>
-              <input
-                required
-                type="text"
-                name="itemName"
-                value={formData.itemName}
-                onChange={handleChange}
-                className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-bold text-[#4d4635]">
-                  Category
-                </label>
-                <select
-                  name="category"
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
-                >
-                  <option value="Kitchen">Kitchen</option>
-                  <option value="Housekeeping">Housekeeping</option>
-                  <option value="Restaurant">Restaurant</option>
-                  <option value="Amenities">Amenities</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-[#4d4635]">
-                  Unit Type
-                </label>
-                <input
-                  required
-                  type="text"
-                  name="unit"
-                  placeholder="e.g. pcs, kg, liters"
-                  value={formData.unit}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-bold text-[#4d4635]">
-                  Initial Quantity
-                </label>
-                <input
-                  required
-                  type="number"
-                  name="quantity"
-                  value={formData.quantity}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-[#4d4635]">
-                  Reorder Level
-                </label>
-                <input
-                  required
-                  type="number"
-                  name="reorderLevel"
-                  value={formData.reorderLevel}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-bold text-[#4d4635]">
-                  Purchase Price (Initial)
-                </label>
-                <input
-                  required
-                  type="number"
-                  name="purchasePrice"
-                  value={formData.purchasePrice}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-[#4d4635]">
-                  Supplier Name
-                </label>
-                <input
-                  required
-                  type="text"
-                  name="supplierName"
-                  value={formData.supplierName}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-bold text-[#4d4635]">
-                Status
-              </label>
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
-              >
-                <option value="In Stock">In Stock</option>
-                <option value="Low Stock">Low Stock</option>
-                <option value="Critical">Critical</option>
-              </select>
-            </div>
-
-            <div className="flex gap-4 pt-4">
-              <button
-                type="button"
-                onClick={() => setPanelOpen(false)}
-                className="flex-1 rounded-xl border border-[#d0c5af] px-8 py-4 font-bold text-[#4d4635] transition hover:bg-[#ece9e2]"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 rounded-xl bg-[#735c00] px-8 py-4 font-bold text-white transition hover:bg-[#d4af37]"
-              >
-                {loading ? "Saving..." : "Save Item"}
-              </button>
-            </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+            <input
+              name="itemName"
+              placeholder="Item Name"
+              required
+              className="w-full rounded-xl border border-[#d0c5af] p-3"
+              value={formData.itemName}
+              onChange={handleChange}
+            />
+            <input
+              name="category"
+              placeholder="Category"
+              className="w-full rounded-xl border border-[#d0c5af] p-3"
+              value={formData.category}
+              onChange={handleChange}
+            />
+            <input
+              type="number"
+              name="quantity"
+              placeholder="Quantity"
+              className="w-full rounded-xl border border-[#d0c5af] p-3"
+              value={formData.quantity}
+              onChange={handleChange}
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-xl bg-[#735c00] p-3 text-white font-bold"
+            >
+              {loading ? "Adding..." : "Add Item"}
+            </button>
           </form>
         </SlidePanel>
       </div>

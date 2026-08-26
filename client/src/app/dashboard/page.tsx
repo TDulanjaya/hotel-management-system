@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { Button, Badge } from "@/components/ui";
 import { AuthUser, getUser } from "@/utils/auth";
-import { authenticatedFetch } from "@/lib/api/authApi";
+import useSWR, { mutate as globalMutate } from "swr";
 import {
   BedDouble,
   CalendarDays,
@@ -31,112 +31,45 @@ import {
   Wifi,
 } from "lucide-react";
 
-async function fetchRooms() {
-  const response = await authenticatedFetch("/api/rooms?size=1000");
-  if (!response.ok) return [];
-  const data = await response.json();
-  return data?.content !== undefined ? data.content : data;
-}
-
-async function fetchParkingBookings() {
-  const response = await authenticatedFetch("/api/parking");
-  if (!response.ok) return [];
-  const data = await response.json();
-  return data?.content !== undefined ? data.content : data;
-}
-
-async function fetchEvents() {
-  const response = await authenticatedFetch("/api/events");
-  if (!response.ok) return [];
-  const data = await response.json();
-  return data?.content !== undefined ? data.content : data;
-}
-
-async function fetchGuests() {
-  const response = await authenticatedFetch("/api/guests?size=1000");
-  if (!response.ok) return [];
-  const data = await response.json();
-  return data?.content !== undefined ? data.content : data;
-}
-
-async function fetchPayments() {
-  const response = await authenticatedFetch("/api/payments");
-  if (!response.ok) return [];
-  const data = await response.json();
-  return data?.content !== undefined ? data.content : data;
-}
-
-async function fetchRestaurantOrders() {
-  const response = await authenticatedFetch("/api/restaurant/orders");
-  if (!response.ok) return [];
-  const data = await response.json();
-  return data?.content !== undefined ? data.content : data;
-}
-
-async function fetchRoomServiceOrders() {
-  const response = await authenticatedFetch("/api/room-service");
-  if (!response.ok) return [];
-  const data = await response.json();
-  return data?.content !== undefined ? data.content : data;
-}
-
 export default function DashboardPage() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [currentRole, setCurrentRole] = useState("");
-
-  const [rooms, setRooms] = useState<any[]>([]);
-  const [parkingBookings, setParkingBookings] = useState<any[]>([]);
-  const [events, setEvents] = useState<any[]>([]);
-  const [guests, setGuests] = useState<any[]>([]);
-  const [payments, setPayments] = useState<any[]>([]);
-  const [restaurantOrders, setRestaurantOrders] = useState<any[]>([]);
-  const [roomServiceOrders, setRoomServiceOrders] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState("");
+
+  const { data: rawRooms, mutate: mutateRooms, isLoading: roomsLoading } = useSWR<any[]>("/api/rooms?size=1000");
+  const { data: rawParking, mutate: mutateParking, isLoading: parkingLoading } = useSWR<any[]>("/api/parking");
+  const { data: rawEvents, mutate: mutateEvents, isLoading: eventsLoading } = useSWR<any[]>("/api/events");
+  const { data: rawGuests, mutate: mutateGuests, isLoading: guestsLoading } = useSWR<any[]>("/api/guests?size=1000");
+  const { data: rawPayments, mutate: mutatePayments, isLoading: paymentsLoading } = useSWR<any[]>("/api/payments");
+  const { data: rawRestaurant, mutate: mutateRestaurant, isLoading: restLoading } = useSWR<any[]>("/api/restaurant/orders");
+  const { data: rawRoomService, mutate: mutateRoomService, isLoading: rsLoading } = useSWR<any[]>("/api/room-service");
+
+  const rooms = useMemo(() => (Array.isArray(rawRooms) ? rawRooms : []), [rawRooms]);
+  const parkingBookings = useMemo(() => (Array.isArray(rawParking) ? rawParking : []), [rawParking]);
+  const events = useMemo(() => (Array.isArray(rawEvents) ? rawEvents : []), [rawEvents]);
+  const guests = useMemo(() => (Array.isArray(rawGuests) ? rawGuests : []), [rawGuests]);
+  const payments = useMemo(() => (Array.isArray(rawPayments) ? rawPayments : []), [rawPayments]);
+  const restaurantOrders = useMemo(() => (Array.isArray(rawRestaurant) ? rawRestaurant : []), [rawRestaurant]);
+  const roomServiceOrders = useMemo(() => (Array.isArray(rawRoomService) ? rawRoomService : []), [rawRoomService]);
+
+  const loading = !rawRooms && !rawParking && (roomsLoading || parkingLoading || eventsLoading);
+  const error = "";
 
   const loadDashboardData = async () => {
-    setLoading(true);
     setRefreshing(true);
-    setError("");
-
-    try {
-      const [
-        roomsData,
-        parkingData,
-        eventsData,
-        guestsData,
-        paymentsData,
-        restaurantData,
-        roomServiceData,
-      ] = await Promise.all([
-        fetchRooms(),
-        fetchParkingBookings(),
-        fetchEvents(),
-        fetchGuests(),
-        fetchPayments(),
-        fetchRestaurantOrders(),
-        fetchRoomServiceOrders(),
-      ]);
-
-      setRooms(Array.isArray(roomsData) ? roomsData : []);
-      setParkingBookings(Array.isArray(parkingData) ? parkingData : []);
-      setEvents(Array.isArray(eventsData) ? eventsData : []);
-      setGuests(Array.isArray(guestsData) ? guestsData : []);
-      setPayments(Array.isArray(paymentsData) ? paymentsData : []);
-      setRestaurantOrders(Array.isArray(restaurantData) ? restaurantData : []);
-      setRoomServiceOrders(Array.isArray(roomServiceData) ? roomServiceData : []);
-    } catch (err: any) {
-      setError(err.message || "Failed to load dashboard data.");
-    } finally {
-      setLoading(false);
-      setTimeout(() => setRefreshing(false), 500);
-    }
+    await Promise.all([
+      mutateRooms(),
+      mutateParking(),
+      mutateEvents(),
+      mutateGuests(),
+      mutatePayments(),
+      mutateRestaurant(),
+      mutateRoomService(),
+    ]);
+    setTimeout(() => setRefreshing(false), 500);
   };
 
   useEffect(() => {
-    loadDashboardData();
-
     const currentUser = getUser();
     if (currentUser) {
       setUser(currentUser);
@@ -158,44 +91,55 @@ export default function DashboardPage() {
 
   const totalRooms = rooms.length;
 
-  const availableRooms = rooms.filter(
-    (room) => room.status === "AVAILABLE" || room.status === "Available"
-  ).length;
-
-  const occupiedRooms = rooms.filter(
-    (room) => room.status === "OCCUPIED" || room.status === "Occupied"
-  ).length;
-
-  const maintenanceRooms = rooms.filter(
-    (room) => room.status === "MAINTENANCE" || room.status === "Maintenance"
-  ).length;
-
-  const occupancyRate =
-    totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0;
-
-  const activeEvents = events.filter(
-    (event) => event.status !== "CANCELLED" && event.status !== "Completed"
-  ).length;
-
-  const activeParking = parkingBookings.filter(
-    (parking) => parking.status === "PARKED" || parking.status === "ACTIVE"
-  ).length;
-
-  const pendingKitchenOrders = restaurantOrders.filter(
-    (order) => order.status === "QUEUED" || order.status === "PREPARING"
-  ).length;
-
-  const pendingRoomServiceOrders = roomServiceOrders.filter(
-    (order) => order.status === "PENDING" || order.status === "PREPARING"
-  ).length;
-
-  const totalRevenue = payments.reduce(
-    (sum, payment) => sum + Number(payment.amount || 0),
-    0
+  const availableRooms = useMemo(
+    () => rooms.filter((room) => room.status === "AVAILABLE" || room.status === "Available").length,
+    [rooms]
   );
 
-  const healthLabel =
-    occupancyRate >= 90 || maintenanceRooms > 5 ? "Attention" : "Healthy";
+  const occupiedRooms = useMemo(
+    () => rooms.filter((room) => room.status === "OCCUPIED" || room.status === "Occupied").length,
+    [rooms]
+  );
+
+  const maintenanceRooms = useMemo(
+    () => rooms.filter((room) => room.status === "MAINTENANCE" || room.status === "Maintenance").length,
+    [rooms]
+  );
+
+  const occupancyRate = useMemo(
+    () => (totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) : 0),
+    [totalRooms, occupiedRooms]
+  );
+
+  const activeEvents = useMemo(
+    () => events.filter((event) => event.status !== "CANCELLED" && event.status !== "Completed").length,
+    [events]
+  );
+
+  const activeParking = useMemo(
+    () => parkingBookings.filter((parking) => parking.status === "PARKED" || parking.status === "ACTIVE").length,
+    [parkingBookings]
+  );
+
+  const pendingKitchenOrders = useMemo(
+    () => restaurantOrders.filter((order) => order.status === "QUEUED" || order.status === "PREPARING").length,
+    [restaurantOrders]
+  );
+
+  const pendingRoomServiceOrders = useMemo(
+    () => roomServiceOrders.filter((order) => order.status === "PENDING" || order.status === "PREPARING").length,
+    [roomServiceOrders]
+  );
+
+  const totalRevenue = useMemo(
+    () => payments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0),
+    [payments]
+  );
+
+  const healthLabel = useMemo(
+    () => (occupancyRate >= 90 || maintenanceRooms > 5 ? "Attention" : "Healthy"),
+    [occupancyRate, maintenanceRooms]
+  );
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "RECEPTIONIST"]}>

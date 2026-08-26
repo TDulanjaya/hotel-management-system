@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import { ReportSummaryCards } from "@/components/reports/ReportSummaryCards";
 import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-import { getRooms } from "@/lib/api/roomApi";
+import useSWR from "swr";
 
 function getRateClass(rate: string) {
   const numberRate = Number(rate.replace("%", ""));
@@ -19,53 +19,40 @@ function getRateClass(rate: string) {
 }
 
 export default function OccupancyReportPage() {
-  const [rooms, setRooms] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rawRooms, isLoading } = useSWR<any[]>("/api/rooms");
+  const rooms = useMemo(() => (Array.isArray(rawRooms) ? rawRooms : []), [rawRooms]);
+  const loading = !rawRooms && isLoading;
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const roomData = await getRooms();
-        setRooms(roomData || []);
-      } catch (err) {
-        console.error("Failed to load occupancy data", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
-
-  const totalRooms = rooms.length;
-  const occupiedRooms = rooms.filter(r => r.status === "OCCUPIED").length;
-  const availableRooms = rooms.filter(r => r.status === "AVAILABLE").length;
-  const cleaningRooms = rooms.filter(r => r.status === "CLEANING").length;
-  const maintenanceRooms = rooms.filter(r => r.status === "MAINTENANCE").length;
+  const totalRooms = useMemo(() => rooms.length, [rooms]);
+  const occupiedRooms = useMemo(() => rooms.filter(r => r.status === "OCCUPIED").length, [rooms]);
+  const availableRooms = useMemo(() => rooms.filter(r => r.status === "AVAILABLE").length, [rooms]);
+  const cleaningRooms = useMemo(() => rooms.filter(r => r.status === "CLEANING").length, [rooms]);
+  const maintenanceRooms = useMemo(() => rooms.filter(r => r.status === "MAINTENANCE").length, [rooms]);
   
-  const occupancyRate = totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) + "%" : "0%";
+  const occupancyRate = useMemo(() => totalRooms > 0 ? Math.round((occupiedRooms / totalRooms) * 100) + "%" : "0%", [totalRooms, occupiedRooms]);
 
-  const occupancySummary = [
+  const occupancySummary = useMemo(() => [
     {
       label: "Total Rooms",
       value: totalRooms.toString(),
-      note: "All active rooms",
+      note: "Total inventory of rooms",
     },
     {
       label: "Occupied Rooms",
       value: occupiedRooms.toString(),
-      note: "Currently checked-in",
+      note: "Currently occupied by guests",
     },
     {
       label: "Available Rooms",
       value: availableRooms.toString(),
-      note: "Ready for booking",
+      note: "Ready for check-in / booking",
     },
     {
       label: "Occupancy Rate",
       value: occupancyRate,
-      note: "Today room usage",
+      note: "Current property utilization",
     },
-  ];
+  ], [totalRooms, occupiedRooms, availableRooms, occupancyRate]);
 
   const occupancyTrend = [
     { day: "Mon", value: "68%", height: "68%" },

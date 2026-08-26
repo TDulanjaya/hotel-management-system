@@ -4,6 +4,8 @@ import com.luxestay.server.dto.VenueRequest;
 import com.luxestay.server.model.Venue;
 import com.luxestay.server.repository.VenueRepository;
 import jakarta.annotation.PostConstruct;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,17 +19,18 @@ public class VenueService {
         this.venueRepository = venueRepository;
     }
 
-
-
+    @Cacheable("venues")
     public List<Venue> getAllVenues() {
         return venueRepository.findAll();
     }
 
+    @Cacheable(value = "venue", key = "#id")
     public Venue getVenueById(String id) {
         return venueRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Venue not found with id: " + id));
     }
 
+    @CacheEvict(value = {"venues", "venue"}, allEntries = true)
     public Venue createVenue(VenueRequest request) {
         String id = "VEN-" + System.currentTimeMillis();
 
@@ -47,6 +50,7 @@ public class VenueService {
         return venueRepository.save(venue);
     }
 
+    @CacheEvict(value = {"venues", "venue"}, allEntries = true)
     public Venue updateVenue(String id, VenueRequest request) {
         Venue existingVenue = getVenueById(id);
 
@@ -63,6 +67,7 @@ public class VenueService {
         return venueRepository.save(existingVenue);
     }
 
+    @CacheEvict(value = {"venues", "venue"}, allEntries = true)
     public void deleteVenue(String id) {
         if (!venueRepository.existsById(id)) {
             throw new RuntimeException("Venue not found with id: " + id);

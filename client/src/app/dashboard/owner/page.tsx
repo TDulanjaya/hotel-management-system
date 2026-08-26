@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import useSWR from "swr";
 import {
   Search,
   Bell,
@@ -17,33 +18,18 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
-import { getReportSummary } from "@/lib/api/reportsApi";
-import { getAll as getAudits } from "@/lib/api/auditApi";
-
 export default function OwnerDashboardPage() {
-  const [summary, setSummary] = useState<any>(null);
-  const [auditLogs, setAuditLogs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: summary, isLoading: sumLoading } = useSWR<any>("/api/reports/summary");
+  const { data: rawAudits, isLoading: auditLoading } = useSWR<any[]>("/api/audit-logs?size=1000");
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [sumData, auditData] = await Promise.all([
-          getReportSummary(),
-          getAudits(),
-        ]);
-        setSummary(sumData);
-        setAuditLogs((auditData || []).slice(0, 3));
-      } catch (err) {
-        console.error("Error loading owner dashboard data", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
+  const loading = !summary && !rawAudits && (sumLoading || auditLoading);
 
-  const topMetrics = [
+  const auditLogs = useMemo(() => {
+    const list = Array.isArray(rawAudits) ? rawAudits : [];
+    return list.slice(0, 3);
+  }, [rawAudits]);
+
+  const topMetrics = useMemo(() => [
     {
       title: "Today Revenue",
       value: summary?.todayRevenue || "Rs 0",
@@ -61,14 +47,14 @@ export default function OwnerDashboardPage() {
       noteColor: "text-[#565e74]",
     },
     {
-      title: "Pending Payments",
-      value: summary?.pendingPayments || "Rs 0",
-      note: "Awaiting settlement",
+      title: "Total Bank Balance",
+      value: summary?.totalBankBalance || "Rs 0",
+      note: "Cash & liquid reserves",
       icon: Landmark,
-      ribbon: "bg-[#545f73]",
-      noteColor: "text-[#545f73]",
+      ribbon: "bg-[#181818]",
+      noteColor: "text-[#181818]",
     },
-  ];
+  ], [summary]);
 
   const revenueCards = [
     {

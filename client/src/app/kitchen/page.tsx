@@ -1,11 +1,12 @@
 "use client";
 
 import { AuthUser, getUser } from "@/utils/auth";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { getKitchenOrders, updateKitchenOrder } from "@/lib/api/kitchenApi";
+import useSWR from "swr";
+import { updateKitchenOrder } from "@/lib/api/kitchenApi";
 import {
   AlertTriangle,
   CheckCircle,
@@ -21,10 +22,12 @@ import {
 export default function KitchenPage() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [currentRole, setCurrentRole] = useState("");
-  const [orders, setOrders] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+
+  const { data: rawOrders, mutate, isLoading: isSwrLoading, error: swrError } = useSWR<any[]>("/api/kitchen/orders");
+  const orders = useMemo(() => (Array.isArray(rawOrders) ? rawOrders : []), [rawOrders]);
+  const loading = !rawOrders && isSwrLoading;
+  const error = swrError?.message || "";
 
   const canManage =
     currentRole === "OWNER" ||
@@ -36,24 +39,12 @@ export default function KitchenPage() {
   }, []);
 
   const fetchOrders = async () => {
-    setLoading(true);
     setRefreshing(true);
-    setError("");
-
-    try {
-      const data = await getKitchenOrders();
-      setOrders(Array.isArray(data) ? data : []);
-    } catch (err: any) {
-      setError(err.message || "Failed to load kitchen orders.");
-    } finally {
-      setLoading(false);
-      setTimeout(() => setRefreshing(false), 500);
-    }
+    await mutate();
+    setTimeout(() => setRefreshing(false), 500);
   };
 
   useEffect(() => {
-    fetchOrders();
-
     if (user?.role) {
       setCurrentRole(user.role);
       return;
@@ -70,11 +61,9 @@ export default function KitchenPage() {
     }
   }, [user]);
 
-  const newOrders = orders.filter((order) => order.status === "QUEUED");
-  const preparingOrders = orders.filter(
-    (order) => order.status === "PREPARING"
-  );
-  const readyOrders = orders.filter((order) => order.status === "READY");
+  const newOrders = useMemo(() => orders.filter((order) => order.status === "QUEUED"), [orders]);
+  const preparingOrders = useMemo(() => orders.filter((order) => order.status === "PREPARING"), [orders]);
+  const readyOrders = useMemo(() => orders.filter((order) => order.status === "READY"), [orders]);
 
   const handleUpdateStatus = async (
     id: string,

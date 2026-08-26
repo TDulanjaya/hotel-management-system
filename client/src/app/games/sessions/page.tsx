@@ -1,7 +1,8 @@
 "use client";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
+import useSWR from "swr";
 import { getGameSessions } from "@/lib/api/gameApi";
 
 function getStatusClass(status: string) {
@@ -17,26 +18,13 @@ function getStatusClass(status: string) {
 }
 
 export default function GameSessionsPage() {
-  const [sessions, setSessions] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rawSessions, isLoading } = useSWR<any[]>("/api/games/sessions");
+  const sessions = useMemo(() => (Array.isArray(rawSessions) ? rawSessions : []), [rawSessions]);
+  const loading = !rawSessions && isLoading;
 
-  useEffect(() => {
-    const loadSessions = async () => {
-      try {
-        const data = await getGameSessions();
-        setSessions(data);
-      } catch (err) {
-        console.error("Failed to load sessions:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadSessions();
-  }, []);
-
-  const activeCount = sessions.filter(s => s.status === "ACTIVE").length;
-  const overdueCount = sessions.filter(s => s.status === "OVERDUE").length;
-  const completedCount = sessions.filter(s => s.status === "COMPLETED").length;
+  const activeCount = useMemo(() => sessions.filter((s) => s.status === "ACTIVE").length, [sessions]);
+  const overdueCount = useMemo(() => sessions.filter((s) => s.status === "OVERDUE").length, [sessions]);
+  const completedCount = useMemo(() => sessions.filter((s) => s.status === "COMPLETED").length, [sessions]);
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "GAME_STAFF"]}>

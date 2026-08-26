@@ -1,20 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { AuthUser, getUser } from "@/utils/auth";
 import SlidePanel from "@/components/ui/SlidePanel";
+import useSWR from "swr";
 import { getAll, create, remove, update } from "@/lib/api/folioApi";
 import { CheckCircle, ExternalLink, Eye, FileText, Plus, Trash2 } from "lucide-react";
 
 export default function FolioPage() {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
-  const [folios, setFolios] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rawFolios, mutate, isLoading: isSwrLoading, error: swrError } = useSWR<any[]>("/api/folio");
+  const folios = useMemo(() => (Array.isArray(rawFolios) ? rawFolios : []), [rawFolios]);
+  const loading = !rawFolios && isSwrLoading;
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -37,23 +39,8 @@ export default function FolioPage() {
     user?.role === "MANAGER" ||
     user?.role === "RECEPTIONIST";
 
-  const fetchData = async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      const data = await getAll();
-      setFolios(Array.isArray(data) ? data : []);
-    } catch (err: any) {
-      setError(err.message || "Failed to load folios.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
     setUser(getUser());
-    fetchData();
   }, []);
 
   const handleOpenView = (folio: any) => {
@@ -110,7 +97,7 @@ export default function FolioPage() {
 
       await create(payload);
       setChargePanelOpen(false);
-      await fetchData();
+      mutate();
     } catch (err: any) {
       setError(err.message || "Failed to add charge.");
     } finally {
@@ -123,7 +110,7 @@ export default function FolioPage() {
 
     try {
       await remove(id);
-      setFolios((prev) => prev.filter((folio) => folio.id !== id));
+      mutate();
     } catch (err: any) {
       alert(err.message || "Failed to delete folio.");
     }
@@ -138,7 +125,7 @@ export default function FolioPage() {
         status: "CLOSED",
       });
 
-      await fetchData();
+      mutate();
     } catch (err: any) {
       alert(err.message || "Failed to close folio.");
     }

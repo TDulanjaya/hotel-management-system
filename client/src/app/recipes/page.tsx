@@ -1,10 +1,11 @@
 "use client";
 import { AuthUser, getUser } from "@/utils/auth";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SlidePanel from "@/components/ui/SlidePanel";
+import useSWR from "swr";
 import { getRecipes, createRecipe, updateRecipe, deleteRecipe } from "@/lib/api/recipeApi";
 
 export default function PageComponent() {
@@ -13,29 +14,14 @@ export default function PageComponent() {
     setUser(getUser());
   }, []);
 
-    const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { data: rawItems, mutate, isLoading: isSwrLoading, error: swrError } = useSWR<any[]>("/api/recipes");
+  const items = useMemo(() => (Array.isArray(rawItems) ? rawItems : []), [rawItems]);
+  const loading = !rawItems && isSwrLoading;
+  const error = swrError?.message || "";
   const [panelOpen, setPanelOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
   
   const [formData, setFormData] = useState({ name: "", category: "Main", ingredients: "", instructions: "", prepTime: 0, servings: 1, notes: "" });
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const data = await getRecipes();
-      setItems(data);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   const handleOpenNew = () => {
     setEditItem(null);
@@ -59,7 +45,7 @@ export default function PageComponent() {
     if (window.confirm("Are you sure you want to delete this?")) {
       try {
         await deleteRecipe(id);
-        fetchData();
+        mutate();
       } catch (err: any) {
         alert("Failed to delete");
       }
@@ -75,7 +61,7 @@ export default function PageComponent() {
         await createRecipe(formData);
       }
       setPanelOpen(false);
-      fetchData();
+      mutate();
     } catch (err: any) {
       alert("Failed to save");
     }

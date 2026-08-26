@@ -1,7 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AppSidebar from "@/components/layout/Sidebar";
+import useSWR from "swr";
 import {
   Search,
   HelpCircle,
@@ -26,45 +27,31 @@ import {
   Users,
 } from "lucide-react";
 
-import { getReportSummary } from "@/lib/api/reportsApi";
-import { getReservations } from "@/lib/api/reservationsApi";
-import { getAll as getAudits } from "@/lib/api/auditApi";
-
 export default function ManagerDashboardPage() {
   const [hiddenRequests, setHiddenRequests] = useState<string[]>([]);
   const [fabOpen, setFabOpen] = useState(false);
 
-  const [summary, setSummary] = useState<any>(null);
-  const [pendingReservations, setPendingReservations] = useState<any[]>([]);
-  const [auditLogs, setAuditLogs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: summary, isLoading: sumLoading } = useSWR<any>("/api/reports/summary");
+  const { data: rawReservations, isLoading: resLoading } = useSWR<any[]>("/api/reservations?size=1000");
+  const { data: rawAudits, isLoading: auditLoading } = useSWR<any[]>("/api/audit-logs?size=1000");
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [sumData, resData, auditData] = await Promise.all([
-          getReportSummary(),
-          getReservations(),
-          getAudits(),
-        ]);
+  const loading = !summary && !rawReservations && (sumLoading || resLoading || auditLoading);
 
-        setSummary(sumData);
-        setPendingReservations((resData || []).filter((r: any) => r.paymentStatus === "PENDING" || r.status === "PENDING"));
-        setAuditLogs((auditData || []).slice(0, 5));
-      } catch (err) {
-        console.error("Error loading dashboard data", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
+  const pendingReservations = useMemo(() => {
+    const list = Array.isArray(rawReservations) ? rawReservations : [];
+    return list.filter((r: any) => r.paymentStatus === "PENDING" || r.status === "PENDING");
+  }, [rawReservations]);
+
+  const auditLogs = useMemo(() => {
+    const list = Array.isArray(rawAudits) ? rawAudits : [];
+    return list.slice(0, 5);
+  }, [rawAudits]);
+
+  const handleApproval = useCallback((title: string) => {
+    setHiddenRequests((current) => [...current, title]);
   }, []);
 
-  const handleApproval = (title: string) => {
-    setHiddenRequests((current) => [...current, title]);
-  };
-
-  const snapshotCards = [
+  const snapshotCards = useMemo(() => [
     {
       title: "Room Occupancy",
       value: summary?.occupancyRate || "0%",
@@ -89,15 +76,15 @@ export default function ManagerDashboardPage() {
       note: "Today",
       icon: DollarSign,
     },
-  ];
+  ], [summary]);
 
-  const approvalRequests = pendingReservations.map(r => ({
+  const approvalRequests = useMemo(() => pendingReservations.map(r => ({
     title: r.guestName || "Unknown Guest",
     requestedBy: "Auto-System",
     detail: `Room ${r.roomId} • Payment Status: ${r.paymentStatus} • Total: Rs ${r.totalAmount}`,
     icon: UserSearch,
     originalId: r.id
-  }));
+  })), [pendingReservations]);
 
   const complaints = [
     {
@@ -116,11 +103,11 @@ export default function ManagerDashboardPage() {
     },
   ];
 
-  const revenueItems = [
+  const revenueItems = useMemo(() => [
     { label: "Today Revenue", value: summary?.todayRevenue || "Rs 0" },
     { label: "Food & Beverage", value: summary?.foodSales || "Rs 0" },
     { label: "Event Income", value: summary?.eventIncome || "Rs 0" },
-  ];
+  ], [summary]);
 
   const staffActivities = [
     {

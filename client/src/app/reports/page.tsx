@@ -3,8 +3,9 @@ import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Link from "next/link";
 import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { downloadAllReports, getReportSummary } from "@/lib/api/reportsApi";
+import useSWR from "swr";
 import {
   BarChart3,
   Download,
@@ -31,31 +32,13 @@ function getCategoryClass(category: string) {
 }
 
 export default function ReportsPage() {
-  const [summary, setSummary] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: summary, mutate, isLoading: isSwrLoading, error: swrError } = useSWR<any>("/api/reports/summary");
+  const loading = !summary && isSwrLoading;
+  const error = swrError?.message || "";
   const [exporting, setExporting] = useState(false);
-  const [error, setError] = useState("");
 
   const [searchText, setSearchText] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
-
-  const loadData = async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      const data = await getReportSummary();
-      setSummary(data);
-    } catch (err: any) {
-      setError(err.message || "Failed to load report summary.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   const handleExportAll = async () => {
     setExporting(true);
@@ -69,7 +52,7 @@ export default function ReportsPage() {
     }
   };
 
-  const reports = [
+  const reports = useMemo(() => [
     {
       title: "Daily Revenue",
       href: "/reports/daily-revenue",
@@ -150,7 +133,7 @@ export default function ReportsPage() {
       note: "User actions and system activity logs.",
       icon: "☷",
     },
-  ];
+  ], [summary]);
 
   const filteredReports = useMemo(() => {
     const keyword = searchText.toLowerCase().trim();
@@ -170,7 +153,7 @@ export default function ReportsPage() {
     });
   }, [reports, searchText, categoryFilter]);
 
-  const quickStats = [
+  const quickStats = useMemo(() => [
     {
       label: "Today Revenue",
       value: summary?.todayRevenue || "Rs 0",
@@ -187,7 +170,7 @@ export default function ReportsPage() {
       label: "Low Stock Items",
       value: summary?.lowStockCount || "0",
     },
-  ];
+  ], [summary]);
 
   const recentReports = [
     {
@@ -234,7 +217,7 @@ export default function ReportsPage() {
 
             <div className="flex flex-wrap gap-3">
               <button
-                onClick={loadData}
+                onClick={() => mutate()}
                 className="flex items-center gap-2 rounded-xl border border-[#735c00] bg-white px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
               >
                 <RefreshCw size={18} />

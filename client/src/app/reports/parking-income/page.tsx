@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import { ReportSummaryCards } from "@/components/reports/ReportSummaryCards";
 import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-import { getParkingBookings } from "@/lib/api/parkingApi";
+import useSWR from "swr";
 
 function getStatusClass(status: string) {
   if (status === "COMPLETED" || status === "PAID") {
@@ -27,33 +27,20 @@ function getRateClass(rate: string) {
 }
 
 export default function ParkingIncomeReportPage() {
-  const [bookings, setBookings] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rawBookings, isLoading } = useSWR<any[]>("/api/parking");
+  const bookings = useMemo(() => (Array.isArray(rawBookings) ? rawBookings : []), [rawBookings]);
+  const loading = !rawBookings && isLoading;
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const data = await getParkingBookings();
-        setBookings(data || []);
-      } catch (err) {
-        console.error("Failed to load parking bookings", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
-
-  const totalIncome = bookings.reduce((acc, b) => acc + (b.totalAmount || 0), 0);
-  const occupiedSlots = bookings.filter(b => b.status === "ACTIVE" || b.status === "PARKED").length;
+  const totalIncome = useMemo(() => bookings.reduce((acc, b) => acc + (b.totalAmount || 0), 0), [bookings]);
+  const occupiedSlots = useMemo(() => bookings.filter(b => b.status === "ACTIVE" || b.status === "PARKED").length, [bookings]);
   // Assume a fixed 50 slots for the hotel parking space if not tracked dynamically
   const totalSlots = 50;
   const availableSlots = Math.max(0, totalSlots - occupiedSlots);
-  const additionalServices = bookings.reduce((acc, b) => {
+  const additionalServices = useMemo(() => bookings.reduce((acc, b) => {
     return acc + (b.services ? b.services.reduce((sAcc: number, s: any) => sAcc + (s.price || 0), 0) : 0);
-  }, 0);
+  }, 0), [bookings]);
 
-  const parkingSummary = [
+  const parkingSummary = useMemo(() => [
     {
       label: "Total Parking Income",
       value: `Rs ${totalIncome.toLocaleString()}`,
@@ -74,7 +61,7 @@ export default function ParkingIncomeReportPage() {
       value: `Rs ${additionalServices.toLocaleString()}`,
       note: "Wash and valet income",
     },
-  ];
+  ], [totalIncome, occupiedSlots, availableSlots, additionalServices]);
 
   const parkingRows = bookings.map(b => ({
     id: `PK-${b.id?.substring(0, 6)}`,

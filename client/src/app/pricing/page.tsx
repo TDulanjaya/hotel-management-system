@@ -7,6 +7,8 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { getUser, AuthUser } from "@/utils/auth";
 import SlidePanel from "@/components/ui/SlidePanel";
 import { Tag } from "lucide-react";
+import useSWR from "swr";
+import { getPricingItems, deletePricingItem as apiDeletePricingItem, createPricingItem } from "@/lib/api/pricingApi";
 
 type ChargeItem = {
   id: string;
@@ -28,8 +30,6 @@ type ChargeItem = {
   price: number;
   status: "Active" | "Inactive";
 };
-
-import { getPricingItems, deletePricingItem as apiDeletePricingItem, createPricingItem } from "@/lib/api/pricingApi";
 
 const categories: ChargeItem["category"][] = [
   "Menu",
@@ -75,7 +75,8 @@ function formatPriceType(priceType: string) {
 }
 
 function PricingPageContent() {
-  const [items, setItems] = useState<ChargeItem[]>([]);
+  const { data: rawItems, mutate, isLoading: isSwrLoading } = useSWR<ChargeItem[]>("/api/pricing");
+  const items = useMemo(() => (Array.isArray(rawItems) ? rawItems : []), [rawItems]);
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [searchText, setSearchText] = useState("");
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -93,18 +94,8 @@ function PricingPageContent() {
   const [price, setPrice] = useState(0);
   const [status, setStatus] = useState<ChargeItem["status"]>("Active");
 
-  const fetchItems = async () => {
-    try {
-      const data = await getPricingItems();
-      setItems(data);
-    } catch (error) {
-      console.error("Failed to fetch pricing items", error);
-    }
-  };
-
   useEffect(() => {
     setUser(getUser());
-    fetchItems();
     if (searchParams.get("openPanel") === "true") {
       setPanelOpen(true);
     }
@@ -135,7 +126,7 @@ function PricingPageContent() {
 
     try {
       await apiDeletePricingItem(id);
-      setItems((prev) => prev.filter((item) => item.id !== id));
+      mutate();
     } catch (error) {
       console.error("Failed to delete pricing item", error);
       alert("Unable to delete pricing item.");
@@ -143,7 +134,7 @@ function PricingPageContent() {
   };
 
   const resetDefaultItems = () => {
-    fetchItems();
+    mutate();
   };
 
   const handleCreatePricingItem = async (event: FormEvent<HTMLFormElement>) => {
@@ -161,7 +152,7 @@ function PricingPageContent() {
         status,
       });
       setPanelOpen(false);
-      fetchItems();
+      mutate();
       
       // reset form
       setName("");
@@ -178,9 +169,9 @@ function PricingPageContent() {
     }
   };
 
-  const activeCount = items.filter((item) => item.status === "Active").length;
-  const inactiveCount = items.filter((item) => item.status === "Inactive").length;
-  const totalValue = items.reduce((total, item) => total + item.price, 0);
+  const activeCount = useMemo(() => items.filter((item) => item.status === "Active").length, [items]);
+  const inactiveCount = useMemo(() => items.filter((item) => item.status === "Inactive").length, [items]);
+  const totalValue = useMemo(() => items.reduce((total, item) => total + item.price, 0), [items]);
 
   return (
     <div className="min-h-screen bg-[#f8f5ef] text-[#181818]">

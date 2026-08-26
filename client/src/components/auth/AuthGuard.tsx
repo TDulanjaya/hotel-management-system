@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { getToken, getUser, UserRole, getDashboardByRole } from "@/utils/auth";
+import { SWRConfig } from "swr";
+import { swrFetcher } from "@/lib/api/authApi";
 
 // Centralized role permission map for top-level routes
 const ROUTE_ROLES: Record<string, UserRole[]> = {
@@ -119,5 +121,16 @@ export default function AuthGuard({
     );
   }
 
-  return <>{children}</>;
+  return (
+    <SWRConfig
+      value={{
+        fetcher: swrFetcher,
+        dedupingInterval: 5000,
+        keepPreviousData: true,
+        revalidateOnFocus: false,
+      }}
+    >
+      {children}
+    </SWRConfig>
+  );
 }

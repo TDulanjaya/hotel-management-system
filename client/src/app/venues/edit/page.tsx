@@ -1,6 +1,7 @@
 "use client";
 import { FormEvent, Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
@@ -343,10 +344,13 @@ function EditVenueContent() {
               </section>
 
               <aside className="h-fit overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm xl:sticky xl:top-8">
-                <img
+                <Image
                   src={image || defaultImage}
                   alt={venueName || "Venue preview"}
+                  width={800}
+                  height={400}
                   className="h-72 w-full object-cover"
+                  unoptimized
                 />
 
                 <div className="p-6">

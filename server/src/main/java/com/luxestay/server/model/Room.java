@@ -17,7 +17,9 @@ import org.springframework.data.mongodb.core.index.Indexed;
 public class Room {
     @Id
     private String id;
+    @Indexed(unique = true)
     private String roomNumber;
+    @Indexed
     private String roomType;
     private String floor;
     private Integer capacity;

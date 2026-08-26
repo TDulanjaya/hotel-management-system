@@ -16,8 +16,10 @@ public class RestaurantOrder {
     private String roomNumber;
     private List<OrderLineItem> items;
     private String notes;
+    @org.springframework.data.mongodb.core.index.Indexed
     private String status;
     private double totalAmount;
     private String paymentStatus;
+    @org.springframework.data.mongodb.core.index.Indexed
     private LocalDateTime orderedAt = LocalDateTime.now();
 }

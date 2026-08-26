@@ -1,9 +1,10 @@
 "use client";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { getUser, AuthUser } from "@/utils/auth";
+import useSWR from "swr";
 import { getEvents, deleteEvent as apiDeleteEvent } from "@/lib/api/eventApi";
 import NewEventPanel from "@/components/events/NewEventPanel";
 import { useSearchParams } from "next/navigation";
@@ -44,11 +45,12 @@ function getStatusClass(status: string) {
 }
 
 function EventsListPageContent() {
-  const [events, setEvents] = useState<SavedEvent[]>([]);
+  const { data: rawEvents, mutate, isLoading: isSwrLoading, error: swrError } = useSWR<SavedEvent[]>("/api/events");
+  const events = useMemo(() => (Array.isArray(rawEvents) ? rawEvents : []), [rawEvents]);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [currentRole, setCurrentRole] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const loading = !rawEvents && isSwrLoading;
+  const error = swrError?.message || "";
 
   const searchParams = useSearchParams();
   const [panelOpen, setPanelOpen] = useState(false);
@@ -62,20 +64,6 @@ function EventsListPageContent() {
     currentRole === "OWNER" ||
     currentRole === "MANAGER" ||
     currentRole === "EVENTS";
-
-  const loadEvents = async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      const data = await getEvents();
-      setEvents(Array.isArray(data) ? data : []);
-    } catch (err: any) {
-      setError(err.message || "Failed to load events.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     const authUser = getUser();
@@ -95,8 +83,6 @@ function EventsListPageContent() {
       }
     }
 
-    loadEvents();
-
     if (searchParams.get("openPanel") === "true") {
       setPanelOpen(true);
     }
@@ -107,7 +93,7 @@ function EventsListPageContent() {
 
     try {
       await apiDeleteEvent(id);
-      setEvents((prev) => prev.filter((event) => event.id !== id));
+      mutate();
       alert("Event deleted successfully.");
     } catch (err: any) {
       alert(err.message || "Failed to delete event.");
@@ -242,7 +228,7 @@ function EventsListPageContent() {
                             {event.eventType || "-"}
                           </p>
                           <p className="mt-1 text-xs text-[#6d6251]">
-                            {event.organizerName || "-"} · {event.phone || "-"}
+                            {event.organizerName || "-" } · {event.phone || "-"}
                           </p>
                         </td>
 
@@ -325,7 +311,7 @@ function EventsListPageContent() {
           <NewEventPanel
             open={panelOpen}
             onClose={() => setPanelOpen(false)}
-            onSuccess={loadEvents}
+            onSuccess={() => mutate()}
           />
         </main>
       </div>

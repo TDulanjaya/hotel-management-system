@@ -85,7 +85,7 @@ export default function ResetPasswordPage() {
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: "url('/login-bg.jpg')",
+          backgroundImage: "url('/login-bg.webp')",
         }}
       />
 

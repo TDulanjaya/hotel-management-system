@@ -1,11 +1,12 @@
 "use client";
 import { AuthUser, getUser } from "@/utils/auth";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SlidePanel from "@/components/ui/SlidePanel";
 import OrderForm from "@/components/forms/OrderForm";
+import useSWR from "swr";
 import {
   getRoomServiceOrders,
   createRoomServiceOrder,
@@ -20,10 +21,10 @@ export default function RoomServicePage() {
     setUser(getUser());
   }, []);
 
-  
   const [currentRole, setCurrentRole] = useState("");
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rawItems, mutate, isLoading: isSwrLoading, error: swrError } = useSWR<any[]>("/api/room-service");
+  const items = useMemo(() => (Array.isArray(rawItems) ? rawItems : []), [rawItems]);
+  const loading = !rawItems && isSwrLoading;
   const [error, setError] = useState("");
 
   const [panelOpen, setPanelOpen] = useState(false);
@@ -47,23 +48,7 @@ export default function RoomServicePage() {
 
   const canDelete = currentRole === "OWNER" || currentRole === "MANAGER";
 
-  const fetchData = async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      const data = await getRoomServiceOrders();
-      setItems(Array.isArray(data) ? data : []);
-    } catch (err: any) {
-      setError(err.message || "Failed to load room service orders.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchData();
-
     if (user?.role) {
       setCurrentRole(user.role);
       return;
@@ -123,7 +108,7 @@ export default function RoomServicePage() {
 
     try {
       await deleteRoomServiceOrder(id);
-      await fetchData();
+      mutate();
       alert("Room service order deleted successfully.");
     } catch (err: any) {
       alert(err.message || "Failed to delete room service order.");
@@ -148,7 +133,7 @@ export default function RoomServicePage() {
         status: next,
       });
 
-      await fetchData();
+      mutate();
     } catch (err: any) {
       alert(err.message || "Failed to update status.");
     }
@@ -190,7 +175,7 @@ export default function RoomServicePage() {
       }
 
       setPanelOpen(false);
-      await fetchData();
+      mutate();
     } catch (err: any) {
       setError(err.message || "Failed to save room service order.");
     } finally {

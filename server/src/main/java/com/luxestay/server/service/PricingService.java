@@ -4,6 +4,8 @@ import com.luxestay.server.dto.PricingItemRequest;
 import com.luxestay.server.model.PricingItem;
 import com.luxestay.server.repository.PricingItemRepository;
 import jakarta.annotation.PostConstruct;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,21 +19,23 @@ public class PricingService {
         this.pricingItemRepository = pricingItemRepository;
     }
 
-
-
+    @Cacheable("pricingItems")
     public List<PricingItem> getAllPricingItems() {
         return pricingItemRepository.findAll();
     }
 
+    @Cacheable(value = "pricingItem", key = "#id")
     public PricingItem getPricingItemById(String id) {
         return pricingItemRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Pricing item not found with id: " + id));
     }
 
+    @Cacheable(value = "pricingCategory", key = "#category")
     public List<PricingItem> getPricingItemsByCategory(String category) {
         return pricingItemRepository.findByCategoryIgnoreCase(category);
     }
 
+    @CacheEvict(value = {"pricingItems", "pricingItem", "pricingCategory"}, allEntries = true)
     public PricingItem createPricingItem(PricingItemRequest request) {
         String id = "PR-" + System.currentTimeMillis();
 
@@ -48,6 +52,7 @@ public class PricingService {
         return pricingItemRepository.save(item);
     }
 
+    @CacheEvict(value = {"pricingItems", "pricingItem", "pricingCategory"}, allEntries = true)
     public PricingItem updatePricingItem(String id, PricingItemRequest request) {
         PricingItem existingItem = getPricingItemById(id);
 
@@ -61,6 +66,7 @@ public class PricingService {
         return pricingItemRepository.save(existingItem);
     }
 
+    @CacheEvict(value = {"pricingItems", "pricingItem", "pricingCategory"}, allEntries = true)
     public void deletePricingItem(String id) {
         if (!pricingItemRepository.existsById(id)) {
             throw new RuntimeException("Pricing item not found with id: " + id);

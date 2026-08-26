@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import useSWR from "swr";
 import { getParkingBookings } from "@/lib/api/parkingApi";
 import { getUser, AuthUser } from "@/utils/auth";
 
@@ -14,41 +15,29 @@ function getStatusClass(status: string) {
 }
 
 export default function ParkingHistoryPage() {
-  const [parkingRecords, setParkingRecords] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const { data: rawBookings, isLoading, error: swrError, mutate } = useSWR<any[]>("/api/parking");
+  const parkingRecords = useMemo(() => {
+    if (!Array.isArray(rawBookings)) return [];
+    const completedRecords = rawBookings.filter((p: any) => p.status === "CHECKED_OUT" || p.status === "Completed");
+    completedRecords.sort((a: any, b: any) => {
+      if (!a.expectedCheckOutTime) return 1;
+      if (!b.expectedCheckOutTime) return -1;
+      return new Date(b.expectedCheckOutTime).getTime() - new Date(a.expectedCheckOutTime).getTime();
+    });
+    return completedRecords;
+  }, [rawBookings]);
 
-  const fetchRecords = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const data = await getParkingBookings();
-      // Filter only CHECKED_OUT / completed records
-      const completedRecords = data.filter((p: any) => p.status === "CHECKED_OUT" || p.status === "Completed");
-      // Sort by checkout time descending if available
-      completedRecords.sort((a: any, b: any) => {
-        if (!a.expectedCheckOutTime) return 1;
-        if (!b.expectedCheckOutTime) return -1;
-        return new Date(b.expectedCheckOutTime).getTime() - new Date(a.expectedCheckOutTime).getTime();
-      });
-      setParkingRecords(completedRecords);
-    } catch (err: any) {
-      console.error(err);
-      setError("Failed to load parking records.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = !rawBookings && isLoading;
+  const error = swrError ? "Failed to load parking records." : "";
+  const [user, setUser] = useState<AuthUser | null>(null);
 
   useEffect(() => {
     setUser(getUser());
-    fetchRecords();
   }, []);
 
-  const totalIncome = parkingRecords.reduce((total, p) => total + (Number(p.amount) || 0), 0);
+  const totalIncome = useMemo(() => parkingRecords.reduce((total, p) => total + (Number(p.amount) || 0), 0), [parkingRecords]);
 
-  const recordStats = [
+  const recordStats = useMemo(() => [
     {
       label: "Total History",
       value: String(parkingRecords.length),
@@ -57,7 +46,7 @@ export default function ParkingHistoryPage() {
       label: "Total Income",
       value: `Rs ${totalIncome.toLocaleString()}`,
     },
-  ];
+  ], [parkingRecords.length, totalIncome]);
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "PARKING"]}>
@@ -131,7 +120,7 @@ export default function ParkingHistoryPage() {
             ) : error ? (
               <div className="p-10 text-center">
                 <p className="text-lg font-bold text-red-600">{error}</p>
-                <button onClick={fetchRecords} className="mt-4 rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white">Try Again</button>
+                <button onClick={() => mutate()} className="mt-4 rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white">Try Again</button>
               </div>
             ) : parkingRecords.length === 0 ? (
               <div className="p-10 text-center">

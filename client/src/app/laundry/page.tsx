@@ -1,11 +1,12 @@
 "use client";
 import { AuthUser, getUser } from "@/utils/auth";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SlidePanel from "@/components/ui/SlidePanel";
 import OrderForm from "@/components/forms/OrderForm";
+import useSWR from "swr";
 import { getLaundryOrders, createLaundryOrder, updateLaundryOrder, deleteLaundryOrder } from "@/lib/api/laundryApi";
 
 export default function LaundryPage() {
@@ -14,9 +15,10 @@ export default function LaundryPage() {
     setUser(getUser());
   }, []);
 
-    const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { data: rawItems, mutate, isLoading: isSwrLoading, error: swrError } = useSWR<any[]>("/api/laundry");
+  const items = useMemo(() => (Array.isArray(rawItems) ? rawItems : []), [rawItems]);
+  const loading = !rawItems && isSwrLoading;
+  const error = swrError?.message || "";
   const [panelOpen, setPanelOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -30,22 +32,6 @@ export default function LaundryPage() {
     totalAmount: 0,
     paymentStatus: "PENDING",
   });
-
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const data = await getLaundryOrders();
-      setItems(data);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   const handleOpenNew = () => {
     setEditItem(null);
@@ -69,7 +55,7 @@ export default function LaundryPage() {
     if (window.confirm("Are you sure you want to delete this order?")) {
       try {
         await deleteLaundryOrder(id);
-        fetchData();
+        mutate();
       } catch {
         alert("Failed to delete");
       }
@@ -86,7 +72,7 @@ export default function LaundryPage() {
         await createLaundryOrder(formData);
       }
       setPanelOpen(false);
-      fetchData();
+      mutate();
     } catch {
       alert("Failed to save");
     } finally {

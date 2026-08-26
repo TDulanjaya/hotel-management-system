@@ -17,11 +17,13 @@ import java.util.List;
 public class Venue {
     @Id
     private String id;
+    @org.springframework.data.mongodb.core.index.Indexed
     private String name;
     private String type;
     private Integer capacity;
     private String size;
     private String location;
+    @org.springframework.data.mongodb.core.index.Indexed
     private String status;
     private Double price;
     private String image;

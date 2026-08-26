@@ -2,12 +2,13 @@
 
 type PermissionType = "check" | "view" | "none";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SlidePanel from "@/components/ui/SlidePanel";
 import { Alert } from "@/components/ui";
+import useSWR from "swr";
 import {
   Search,
   Bell,
@@ -69,7 +70,8 @@ function getInitials(name: string) {
 }
 
 export default function UsersPage() {
-  const [users, setUsers] = useState<UserItem[]>([]);
+  const { data: rawUsers, mutate } = useSWR<UserItem[]>("/api/users");
+  const users = useMemo(() => (Array.isArray(rawUsers) ? rawUsers : []), [rawUsers]);
   const [panelOpen, setPanelOpen] = useState(false);
 
   // Form states
@@ -85,17 +87,7 @@ export default function UsersPage() {
     role: "",
   });
 
-  const loadUsers = async () => {
-    try {
-      const data = await getUsers();
-      setUsers(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   useEffect(() => {
-    loadUsers();
     try {
       const userStr = localStorage.getItem("user");
       if (userStr) {
@@ -140,7 +132,7 @@ export default function UsersPage() {
         role: formData.role,
       });
       setPanelOpen(false);
-      loadUsers();
+      mutate();
       setFormData({
         name: "",
         email: "",
@@ -189,7 +181,7 @@ export default function UsersPage() {
             </div>
 
             <StatsGrid users={users} />
-            <UsersTable users={users} setUsers={setUsers} />
+            <UsersTable users={users} onUserDeleted={() => mutate()} />
             <PermissionsMatrix />
           </section>
         </main>
@@ -412,21 +404,18 @@ function StatsGrid({ users }: { users: UserItem[] }) {
 
 function UsersTable({
   users,
-  setUsers,
+  onUserDeleted,
 }: {
   users: UserItem[];
-  setUsers: React.Dispatch<React.SetStateAction<UserItem[]>>;
+  onUserDeleted?: () => void;
 }) {
   const currentUser = getUser();
-
-  useEffect(() => {
-  }, []);
 
   const deleteUserRecord = async (id: string) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
     try {
       await apiDeleteUser(id);
-      setUsers((prev) => prev.filter((u) => u.id !== id));
+      onUserDeleted?.();
       alert("User deleted successfully.");
     } catch (err: any) {
       alert(err.message || "Failed to delete user.");

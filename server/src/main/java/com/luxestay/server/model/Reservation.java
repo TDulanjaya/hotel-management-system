@@ -11,7 +11,9 @@ import org.springframework.data.mongodb.core.index.Indexed;
 public class Reservation {
     @Id private String id;
     private String guestName;
+    @Indexed
     private String guestId;
+    @Indexed
     private String roomNumber;
     @Indexed
     private String checkIn;

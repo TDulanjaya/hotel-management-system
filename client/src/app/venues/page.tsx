@@ -3,11 +3,13 @@ import { AuthUser, getUser } from "@/utils/auth";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
 import SlidePanel from "@/components/ui/SlidePanel";
 import ImageUpload from "@/components/ui/ImageUpload";
+import useSWR from "swr";
 import {
   Building2,
   Edit,
@@ -47,11 +49,11 @@ export default function VenuesPage() {
     setUser(getUser());
   }, []);
 
-  
   const [currentRole, setCurrentRole] = useState("");
-  const [venues, setVenues] = useState<Venue[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { data: rawVenues, mutate, isLoading: isSwrLoading, error: swrError } = useSWR<Venue[]>("/api/venues");
+  const venues = useMemo(() => (Array.isArray(rawVenues) ? rawVenues : []), [rawVenues]);
+  const loading = !rawVenues && isSwrLoading;
+  const error = swrError?.message || "";
 
   const [panelOpen, setPanelOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
@@ -74,23 +76,7 @@ export default function VenuesPage() {
 
   const canDelete = currentRole === "OWNER" || currentRole === "MANAGER";
 
-  const fetchVenues = async () => {
-    try {
-      setLoading(true);
-      setError("");
-
-      const data = await getVenues();
-      setVenues(Array.isArray(data) ? data : []);
-    } catch (err: any) {
-      setError(err.message || "Unable to load venues from server.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchVenues();
-
     if (user?.role) {
       setCurrentRole(user.role);
       return;
@@ -113,29 +99,40 @@ export default function VenuesPage() {
 
     try {
       await apiDeleteVenue(id);
-      await fetchVenues();
+      mutate();
       alert("Venue deleted successfully.");
     } catch (err: any) {
       alert(err.message || "Unable to delete venue.");
     }
   };
 
-  const totalCapacity = venues.reduce(
-    (total, venue) => total + Number(venue.capacity || 0),
-    0
+  const totalCapacity = useMemo(
+    () =>
+      venues.reduce(
+        (total, venue) => total + Number(venue.capacity || 0),
+        0
+      ),
+    [venues]
   );
 
-  const availableCount = venues.filter(
-    (venue) => venue.status?.toLowerCase() === "available"
-  ).length;
+  const availableCount = useMemo(
+    () =>
+      venues.filter(
+        (venue) => venue.status?.toLowerCase() === "available"
+      ).length,
+    [venues]
+  );
 
-  const averagePrice =
-    venues.length > 0
-      ? Math.round(
-          venues.reduce((total, venue) => total + Number(venue.price || 0), 0) /
-            venues.length
-        )
-      : 0;
+  const averagePrice = useMemo(
+    () =>
+      venues.length > 0
+        ? Math.round(
+            venues.reduce((total, venue) => total + Number(venue.price || 0), 0) /
+              venues.length
+          )
+        : 0,
+    [venues]
+  );
 
   const tags = useMemo(
     () =>
@@ -201,7 +198,7 @@ export default function VenuesPage() {
       await createVenue(venueData);
       setPanelOpen(false);
       resetForm();
-      await fetchVenues();
+      mutate();
       alert("Venue created successfully.");
     } catch (err: any) {
       setFormError(err.message || "Failed to create venue.");
@@ -234,7 +231,7 @@ export default function VenuesPage() {
 
             <div className="flex flex-wrap gap-4">
               <button
-                onClick={fetchVenues}
+                onClick={() => mutate()}
                 className="flex items-center gap-2 rounded-xl border border-[#806300] bg-white px-6 py-3 font-bold text-[#806300] transition hover:bg-[#faf8f3]"
               >
                 <RefreshCw size={18} />
@@ -264,7 +261,7 @@ export default function VenuesPage() {
               <p className="text-lg font-bold text-red-700">{error}</p>
 
               <button
-                onClick={fetchVenues}
+                onClick={() => mutate()}
                 className="mt-4 rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white"
               >
                 Try Again
@@ -315,10 +312,13 @@ export default function VenuesPage() {
                       key={venue.id}
                       className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl"
                     >
-                      <img
+                      <Image
                         src={venue.image || fallbackImage}
                         alt={venue.name}
+                        width={800}
+                        height={400}
                         className="h-64 w-full object-cover"
+                        unoptimized
                       />
 
                       <div className="p-6">

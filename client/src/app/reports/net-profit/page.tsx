@@ -1,26 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { ReportSummaryCards } from "@/components/reports/ReportSummaryCards";
 import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-import { getReportSummary } from "@/lib/api/reportsApi";
+import useSWR from "swr";
 
 export default function NetProfitReportPage() {
-  const [summary, setSummary] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const data = await getReportSummary();
-        setSummary(data);
-      } catch (err) {
-        console.error("Failed to load net profit report", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
+  const { data: summary, isLoading } = useSWR<any>("/api/reports/summary");
+  const loading = !summary && isLoading;
 
   const totalIncomeStr = summary?.todayRevenue || "Rs 0";
   const netProfitStr = summary?.netProfit || "Rs 0";
@@ -33,7 +19,7 @@ export default function NetProfitReportPage() {
   const totalExp = totalInc - totalProf;
   const margin = totalInc > 0 ? ((totalProf / totalInc) * 100).toFixed(1) + "%" : "0%";
 
-  const profitSummary = [
+  const profitSummary = useMemo(() => [
     {
       label: "Total Income",
       value: totalIncomeStr,
@@ -47,14 +33,14 @@ export default function NetProfitReportPage() {
     {
       label: "Net Profit",
       value: netProfitStr,
-      note: "Final profit after expenses",
+      note: "Net profit after deducting expenses",
     },
     {
       label: "Profit Margin",
       value: margin,
-      note: "Net profit percentage",
+      note: "Overall profit percentage",
     },
-  ];
+  ], [totalIncomeStr, totalExp, netProfitStr, margin]);
 
   const incomeRows = [
     {

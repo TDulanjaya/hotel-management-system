@@ -1,12 +1,13 @@
 "use client";
 import { AuthUser, getUser } from "@/utils/auth";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SlidePanel from "@/components/ui/SlidePanel";
+import useSWR from "swr";
+import { swrRawFetcher } from "@/lib/api/authApi";
 import {
-  getGuests,
   createGuest,
   updateGuest,
   deleteGuest,
@@ -19,20 +20,15 @@ export default function GuestsPage() {
     setUser(getUser());
   }, []);
 
-  
   const [currentRole, setCurrentRole] = useState("");
-  const [items, setItems] = useState<any[]>([]);
   const [panelOpen, setPanelOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(0);
-  const [size] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalElements, setTotalElements] = useState(0);
+  const [size, setSize] = useState(10);
 
-  const [pageLoading, setPageLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -58,7 +54,7 @@ export default function GuestsPage() {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchTerm);
       setPage(0);
-    }, 500);
+    }, 300);
 
     return () => clearTimeout(handler);
   }, [searchTerm]);
@@ -80,30 +76,20 @@ export default function GuestsPage() {
     }
   }, [user]);
 
-  const fetchGuests = async () => {
-    setPageLoading(true);
-    setError("");
+  const swrKey = `/api/guests?page=${page}&size=${size}${debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : ""}`;
+  const { data: pageData, error: swrError, isLoading: pageLoading, mutate } = useSWR(swrKey, swrRawFetcher, {
+    keepPreviousData: true,
+  });
 
-    try {
-      const data = await getGuests({
-        page,
-        size,
-        keyword: debouncedSearch,
-      });
+  const items = useMemo(() => {
+    if (!pageData) return [];
+    if (Array.isArray(pageData.content)) return pageData.content;
+    if (Array.isArray(pageData)) return pageData;
+    return [];
+  }, [pageData]);
 
-      setItems(Array.isArray(data?.content) ? data.content : []);
-      setTotalPages(data?.totalPages || 1);
-      setTotalElements(data?.totalElements || 0);
-    } catch (err: any) {
-      setError(err.message || "Failed to load guests.");
-    } finally {
-      setPageLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchGuests();
-  }, [page, size, debouncedSearch]);
+  const totalPages = pageData?.totalPages || 1;
+  const totalElements = pageData?.totalElements || (Array.isArray(pageData) ? pageData.length : 0);
 
   const resetForm = () => {
     setFormData({
@@ -148,7 +134,7 @@ export default function GuestsPage() {
 
     try {
       await deleteGuest(id);
-      await fetchGuests();
+      mutate();
       alert("Guest deleted successfully.");
     } catch (err: any) {
       alert(err.message || "Failed to delete guest.");
@@ -187,7 +173,7 @@ export default function GuestsPage() {
       }
 
       setPanelOpen(false);
-      await fetchGuests();
+      mutate();
     } catch (err: any) {
       setError(err.message || "Failed to save guest.");
     } finally {
@@ -247,11 +233,11 @@ export default function GuestsPage() {
             <StatCard label="Loaded Records" value={String(items.length)} />
             <StatCard
               label="With Email"
-              value={String(items.filter((i) => i.email).length)}
+              value={String(items.filter((i: any) => i.email).length)}
             />
             <StatCard
               label="With Phone"
-              value={String(items.filter((i) => i.phone).length)}
+              value={String(items.filter((i: any) => i.phone).length)}
             />
           </section>
 

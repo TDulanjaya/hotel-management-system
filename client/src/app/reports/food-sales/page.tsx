@@ -1,10 +1,8 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import { ReportSummaryCards } from "@/components/reports/ReportSummaryCards";
 import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-import { getRestaurantOrders } from "@/lib/api/restaurantApi";
-import { getRoomServiceOrders } from "@/lib/api/roomServiceApi";
-import { getKitchenOrders } from "@/lib/api/kitchenApi";
+import useSWR from "swr";
 
 function getStatusClass(status: string) {
   if (status === "COMPLETED" || status === "DELIVERED" || status === "SERVED") {
@@ -27,36 +25,19 @@ function getSourceClass(source: string) {
 }
 
 export default function FoodSalesReportPage() {
-  const [restaurantOrders, setRestaurantOrders] = useState<any[]>([]);
-  const [roomServiceOrders, setRoomServiceOrders] = useState<any[]>([]);
-  const [kitchenOrders, setKitchenOrders] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rawRest, isLoading: l1 } = useSWR<any[]>("/api/restaurant/orders");
+  const { data: rawRS, isLoading: l2 } = useSWR<any[]>("/api/room-service");
+  const { data: rawKit, isLoading: l3 } = useSWR<any[]>("/api/kitchen/orders");
+  const restaurantOrders = useMemo(() => (Array.isArray(rawRest) ? rawRest : []), [rawRest]);
+  const roomServiceOrders = useMemo(() => (Array.isArray(rawRS) ? rawRS : []), [rawRS]);
+  const kitchenOrders = useMemo(() => (Array.isArray(rawKit) ? rawKit : []), [rawKit]);
+  const loading = (!rawRest && l1) || (!rawRS && l2) || (!rawKit && l3);
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [restData, rsData, kitData] = await Promise.all([
-          getRestaurantOrders(),
-          getRoomServiceOrders(),
-          getKitchenOrders(),
-        ]);
-        setRestaurantOrders(restData || []);
-        setRoomServiceOrders(rsData || []);
-        setKitchenOrders(kitData || []);
-      } catch (err) {
-        console.error("Failed to load food sales", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
+  const restTotal = useMemo(() => restaurantOrders.reduce((acc, o) => acc + (o.totalAmount || 0), 0), [restaurantOrders]);
+  const rsTotal = useMemo(() => roomServiceOrders.reduce((acc, o) => acc + (o.totalAmount || 0), 0), [roomServiceOrders]);
+  const totalFoodSales = useMemo(() => restTotal + rsTotal, [restTotal, rsTotal]);
 
-  const restTotal = restaurantOrders.reduce((acc, o) => acc + (o.totalAmount || 0), 0);
-  const rsTotal = roomServiceOrders.reduce((acc, o) => acc + (o.totalAmount || 0), 0);
-  const totalFoodSales = restTotal + rsTotal;
-
-  const foodSalesSummary = [
+  const foodSalesSummary = useMemo(() => [
     {
       label: "Total Food Sales",
       value: `Rs ${totalFoodSales.toLocaleString()}`,
@@ -77,7 +58,7 @@ export default function FoodSalesReportPage() {
       value: kitchenOrders.length.toString(),
       note: "Total tracked food orders",
     },
-  ];
+  ], [totalFoodSales, restTotal, rsTotal, kitchenOrders.length]);
 
   const salesRows = useMemo(() => {
     const rRows = restaurantOrders.map(o => ({

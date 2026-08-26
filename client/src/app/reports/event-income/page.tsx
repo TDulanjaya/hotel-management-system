@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import { ReportSummaryCards } from "@/components/reports/ReportSummaryCards";
 import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-import { getEvents } from "@/lib/api/eventApi";
+import useSWR from "swr";
 
 function getStatusClass(status: string) {
   if (status === "CONFIRMED" || status === "COMPLETED") {
@@ -17,29 +17,16 @@ function getStatusClass(status: string) {
 }
 
 export default function EventIncomeReportPage() {
-  const [events, setEvents] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rawEvents, isLoading } = useSWR<any[]>("/api/events");
+  const events = useMemo(() => (Array.isArray(rawEvents) ? rawEvents : []), [rawEvents]);
+  const loading = !rawEvents && isLoading;
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const eventData = await getEvents();
-        setEvents(eventData || []);
-      } catch (err) {
-        console.error("Failed to load events", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
-
-  const totalEventIncome = events.reduce((acc, ev) => acc + (ev.grandTotal || 0), 0);
-  const pendingPayments = events.filter(ev => ev.status === "PENDING").reduce((acc, ev) => acc + (ev.grandTotal || 0), 0);
+  const totalEventIncome = useMemo(() => events.reduce((acc, ev) => acc + (ev.grandTotal || 0), 0), [events]);
+  const pendingPayments = useMemo(() => events.filter(ev => ev.status === "PENDING").reduce((acc, ev) => acc + (ev.grandTotal || 0), 0), [events]);
   // Assume a fixed 40% margin for profit since expense tracking is not available
-  const netProfit = totalEventIncome * 0.4;
+  const netProfit = useMemo(() => totalEventIncome * 0.4, [totalEventIncome]);
 
-  const eventSummary = [
+  const eventSummary = useMemo(() => [
     {
       label: "Total Event Income",
       value: `Rs ${totalEventIncome.toLocaleString()}`,
@@ -48,19 +35,19 @@ export default function EventIncomeReportPage() {
     {
       label: "Booked Events",
       value: events.length.toString().padStart(2, '0'),
-      note: "Confirmed event bookings",
+      note: "Confirmed and completed events",
     },
     {
       label: "Pending Payments",
       value: `Rs ${pendingPayments.toLocaleString()}`,
-      note: "Waiting settlement",
+      note: "Awaiting final settlement",
     },
     {
       label: "Net Event Profit",
       value: `Rs ${netProfit.toLocaleString()}`,
-      note: "Est. Income after costs",
+      note: "Estimated margin from events",
     },
-  ];
+  ], [totalEventIncome, events.length, pendingPayments, netProfit]);
 
   const eventIncomeRows = events.map(ev => {
     const income = ev.grandTotal || 0;

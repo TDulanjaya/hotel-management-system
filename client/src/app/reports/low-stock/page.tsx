@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { ReportSummaryCards } from "@/components/reports/ReportSummaryCards";
 import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-import { getInventoryItems } from "@/lib/api/inventoryApi";
+import useSWR from "swr";
 
 function getStatusClass(status: string) {
   if (status === "Critical" || status === "Urgent") {
@@ -25,38 +25,25 @@ function getPriorityClass(priority: string) {
 }
 
 export default function LowStockReportPage() {
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const invData = await getInventoryItems();
-        setItems(invData || []);
-      } catch (err) {
-        console.error("Failed to load low stock report", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
+  const { data: rawItems, isLoading } = useSWR<any[]>("/api/inventory");
+  const items = useMemo(() => (Array.isArray(rawItems) ? rawItems : []), [rawItems]);
+  const loading = !rawItems && isLoading;
 
   const lowStockThreshold = (item: any) => item.quantity <= item.reorderLevel;
   const criticalThreshold = (item: any) => item.quantity <= item.reorderLevel / 2;
 
-  const lowStockItems = items.filter(lowStockThreshold);
-  const criticalItems = items.filter(criticalThreshold);
+  const lowStockItems = useMemo(() => items.filter(lowStockThreshold), [items]);
+  const criticalItems = useMemo(() => items.filter(criticalThreshold), [items]);
 
   // Since we don't have a purchase request API, we'll mock them based on critical items
-  const purchaseRequests = criticalItems.map((item, idx) => ({
+  const purchaseRequests = useMemo(() => criticalItems.map((item, idx) => ({
     id: `PR-00${idx + 1}`,
     item: item.itemName,
     requestedBy: item.category || "Auto",
     quantity: `${item.reorderLevel * 2} ${item.unit || "units"}`,
     estimatedCost: `Rs ${(item.reorderLevel * 2 * (item.purchasePrice || 100)).toLocaleString()}`,
     status: idx === 0 ? "Urgent" : "Pending Approval",
-  }));
+  })), [criticalItems]);
 
   const estimatedReorderCost = lowStockItems.reduce((acc, item) => {
     return acc + ((item.reorderLevel * 2 - item.quantity) * (item.purchasePrice || 100));

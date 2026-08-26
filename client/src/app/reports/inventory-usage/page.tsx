@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useMemo } from "react";
 import { ReportSummaryCards } from "@/components/reports/ReportSummaryCards";
 import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
-import { getInventoryItems } from "@/lib/api/inventoryApi";
+import useSWR from "swr";
 
 function getStatusClass(status: string) {
   if (status === "Issued") {
@@ -17,25 +17,12 @@ function getStatusClass(status: string) {
 }
 
 export default function InventoryUsageReportPage() {
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const invData = await getInventoryItems();
-        setItems(invData || []);
-      } catch (err) {
-        console.error("Failed to load inventory data", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
+  const { data: rawItems, isLoading } = useSWR<any[]>("/api/inventory");
+  const items = useMemo(() => (Array.isArray(rawItems) ? rawItems : []), [rawItems]);
+  const loading = !rawItems && isLoading;
 
   const lowStockThreshold = (item: any) => item.quantity <= item.reorderLevel;
-  const lowStockItems = items.filter(lowStockThreshold);
+  const lowStockItems = useMemo(() => items.filter(lowStockThreshold), [items]);
 
   // Since we don't have an InventoryUsage model, we'll generate some usage history based on the current items
   const usageRows = useMemo(() => {

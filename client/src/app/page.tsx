@@ -19,7 +19,7 @@ export default function LandingPage() {
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: "url('/landing-bg.jpg')",
+          backgroundImage: "url('/landing-bg.webp')",
         }}
       />
 

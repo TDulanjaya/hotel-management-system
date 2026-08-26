@@ -23,8 +23,10 @@ public class AppUser {
     private String id;
 
     private String name;
+    @org.springframework.data.mongodb.core.index.Indexed(unique = true)
     private String email;
     private String password;
+    @org.springframework.data.mongodb.core.index.Indexed
     private Role role;
     private boolean active;
     private Long createdAt;

@@ -1,8 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import useSWR from "swr";
 import { getParkingBookings, deleteParkingBooking as apiDeleteParkingBooking } from "@/lib/api/parkingApi";
 import { getUser, AuthUser } from "@/utils/auth";
 
@@ -17,35 +18,21 @@ function getStatusClass(status: string) {
 }
 
 export default function ParkingRecordsPage() {
-  const [parkingRecords, setParkingRecords] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { data: rawBookings, isLoading, error: swrError, mutate } = useSWR<any[]>("/api/parking");
+  const parkingRecords = useMemo(() => (Array.isArray(rawBookings) ? rawBookings : []), [rawBookings]);
+  const loading = !rawBookings && isLoading;
+  const error = swrError ? "Failed to load parking records." : "";
   const [user, setUser] = useState<AuthUser | null>(null);
-
-  const fetchRecords = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const data = await getParkingBookings();
-      setParkingRecords(data);
-    } catch (err: any) {
-      console.error(err);
-      setError("Failed to load parking records.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     setUser(getUser());
-    fetchRecords();
   }, []);
 
   const deleteRecord = async (id: string) => {
     if (!confirm("Are you sure you want to delete this parking record?")) return;
     try {
       await apiDeleteParkingBooking(id);
-      setParkingRecords((prev) => prev.filter((p) => p.id !== id));
+      mutate();
       alert("Parking record deleted successfully.");
     } catch (error) {
       console.error(error);
@@ -53,11 +40,11 @@ export default function ParkingRecordsPage() {
     }
   };
 
-  const activeRecords = parkingRecords.filter(p => p.status === "CHECKED_IN" || p.status === "Active" || p.status === "Occupied").length;
-  const completedToday = parkingRecords.filter(p => p.status === "CHECKED_OUT" || p.status === "Completed").length; // simplified logic
-  const todayIncome = parkingRecords.reduce((total, p) => total + (Number(p.amount) || 0), 0);
+  const activeRecords = useMemo(() => parkingRecords.filter(p => p.status === "CHECKED_IN" || p.status === "Active" || p.status === "Occupied").length, [parkingRecords]);
+  const completedToday = useMemo(() => parkingRecords.filter(p => p.status === "CHECKED_OUT" || p.status === "Completed").length, [parkingRecords]);
+  const todayIncome = useMemo(() => parkingRecords.reduce((total, p) => total + (Number(p.amount) || 0), 0), [parkingRecords]);
 
-  const recordStats = [
+  const recordStats = useMemo(() => [
     {
       label: "Total Records",
       value: String(parkingRecords.length),
@@ -74,7 +61,7 @@ export default function ParkingRecordsPage() {
       label: "Total Income",
       value: `Rs ${todayIncome.toLocaleString()}`,
     },
-  ];
+  ], [parkingRecords.length, activeRecords, completedToday, todayIncome]);
 
   const canEdit = user?.role === "OWNER" || user?.role === "MANAGER" || user?.role === "PARKING";
   const canDelete = user?.role === "OWNER" || user?.role === "MANAGER";
@@ -161,7 +148,7 @@ export default function ParkingRecordsPage() {
             ) : error ? (
               <div className="p-10 text-center">
                 <p className="text-lg font-bold text-red-600">{error}</p>
-                <button onClick={fetchRecords} className="mt-4 rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white">Try Again</button>
+                <button onClick={() => mutate()} className="mt-4 rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white">Try Again</button>
               </div>
             ) : parkingRecords.length === 0 ? (
               <div className="p-10 text-center">

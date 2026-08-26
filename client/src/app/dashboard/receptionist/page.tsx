@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AppSidebar from "@/components/layout/Sidebar";
+import useSWR from "swr";
 import {
   Search,
   Bell,
@@ -20,10 +21,6 @@ import {
   Plus,
 } from "lucide-react";
 
-import { getRooms } from "@/lib/api/roomApi";
-import { getReservations } from "@/lib/api/reservationsApi";
-import { getPayments } from "@/lib/api/paymentsApi";
-
 function roomStatusClass(status: string) {
   if (status === "AVAILABLE") {
     return "bg-green-100 text-green-700 border-green-200";
@@ -41,30 +38,15 @@ function roomStatusClass(status: string) {
 }
 
 export default function ReceptionistDashboardPage() {
-  const [rooms, setRooms] = useState<any[]>([]);
-  const [reservations, setReservations] = useState<any[]>([]);
-  const [payments, setPayments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rawRooms, isLoading: roomsLoading } = useSWR<any[]>("/api/rooms?size=1000");
+  const { data: rawRes, isLoading: resLoading } = useSWR<any[]>("/api/reservations?size=1000");
+  const { data: rawPayments, isLoading: payLoading } = useSWR<any[]>("/api/payments");
 
-  useEffect(() => {
-    async function loadData() {
-      try {
-        const [roomsData, resData, payData] = await Promise.all([
-          getRooms(),
-          getReservations(),
-          getPayments()
-        ]);
-        setRooms(roomsData || []);
-        setReservations(resData || []);
-        setPayments(payData || []);
-      } catch (err) {
-        console.error("Error loading receptionist data", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-    loadData();
-  }, []);
+  const rooms = useMemo(() => (Array.isArray(rawRooms) ? rawRooms : []), [rawRooms]);
+  const reservations = useMemo(() => (Array.isArray(rawRes) ? rawRes : []), [rawRes]);
+  const payments = useMemo(() => (Array.isArray(rawPayments) ? rawPayments : []), [rawPayments]);
+
+  const loading = !rawRooms && !rawRes && (roomsLoading || resLoading || payLoading);
 
   // Today's date string for comparison
   const today = new Date().toISOString().split('T')[0];

@@ -1,11 +1,12 @@
 "use client";
 import { AuthUser, getUser } from "@/utils/auth";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SlidePanel from "@/components/ui/SlidePanel";
 import OrderForm from "@/components/forms/OrderForm";
+import useSWR from "swr";
 import {
   getRestaurantOrders,
   createRestaurantOrder,
@@ -20,10 +21,10 @@ export default function RestaurantOrdersPage() {
     setUser(getUser());
   }, []);
 
-  
   const [currentRole, setCurrentRole] = useState("");
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: rawItems, mutate, isLoading: isSwrLoading, error: swrError } = useSWR<any[]>("/api/restaurant/orders");
+  const items = useMemo(() => (Array.isArray(rawItems) ? rawItems : []), [rawItems]);
+  const loading = !rawItems && isSwrLoading;
   const [error, setError] = useState("");
 
   const [panelOpen, setPanelOpen] = useState(false);
@@ -48,23 +49,7 @@ export default function RestaurantOrdersPage() {
 
   const canDelete = currentRole === "OWNER" || currentRole === "MANAGER";
 
-  const fetchData = async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      const data = await getRestaurantOrders();
-      setItems(Array.isArray(data) ? data : []);
-    } catch (err: any) {
-      setError(err.message || "Failed to load restaurant orders.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchData();
-
     if (user?.role) {
       setCurrentRole(user.role);
       return;
@@ -124,7 +109,7 @@ export default function RestaurantOrdersPage() {
 
     try {
       await deleteRestaurantOrder(id);
-      await fetchData();
+      mutate();
       alert("Order deleted successfully.");
     } catch (err: any) {
       alert(err.message || "Failed to delete order.");
@@ -142,7 +127,7 @@ export default function RestaurantOrdersPage() {
         status: next,
       });
 
-      await fetchData();
+      mutate();
     } catch (err: any) {
       alert(err.message || "Failed to update status.");
     }
@@ -185,7 +170,7 @@ export default function RestaurantOrdersPage() {
       }
 
       setPanelOpen(false);
-      await fetchData();
+      mutate();
     } catch (err: any) {
       setError(err.message || "Failed to save order.");
     } finally {

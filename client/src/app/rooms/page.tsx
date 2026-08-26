@@ -10,8 +10,10 @@ import {
   createRoom,
   getRooms,
 } from "@/lib/api/roomApi";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import useSWR from "swr";
+import { swrRawFetcher } from "@/lib/api/authApi";
 import { AuthUser, getUser } from "@/utils/auth";
 import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
 
@@ -24,7 +26,6 @@ export default function RoomsPage() {
   }, []);
 
   const [currentRole, setCurrentRole] = useState("");
-  const [rooms, setRooms] = useState<any[]>([]);
   const [panelOpen, setPanelOpen] = useState(false);
 
   const [selectedStatus, setSelectedStatus] = useState<string>("");
@@ -33,12 +34,8 @@ export default function RoomsPage() {
 
   const [page, setPage] = useState(0);
   const [size] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalElements, setTotalElements] = useState(0);
-
   const [loading, setLoading] = useState(false);
-  const [pageLoading, setPageLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [formError, setError] = useState("");
 
   const [formData, setFormData] = useState({
     roomNumber: "",
@@ -69,7 +66,7 @@ export default function RoomsPage() {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchTerm);
       setPage(0);
-    }, 500);
+    }, 300);
 
     return () => clearTimeout(handler);
   }, [searchTerm]);
@@ -91,32 +88,22 @@ export default function RoomsPage() {
     }
   }, [user]);
 
-  const fetchRooms = async () => {
-    setPageLoading(true);
-    setError("");
+  const searchValue = debouncedSearch || selectedStatus;
+  const swrKey = `/api/rooms?page=${page}&size=${size}${searchValue ? `&search=${encodeURIComponent(searchValue)}` : ""}`;
+  const { data: pageData, error: swrError, isLoading: pageLoading, mutate } = useSWR(swrKey, swrRawFetcher, {
+    keepPreviousData: true,
+  });
 
-    try {
-      const searchValue = debouncedSearch || selectedStatus;
+  const rooms = useMemo(() => {
+    if (!pageData) return [];
+    if (Array.isArray(pageData.content)) return pageData.content;
+    if (Array.isArray(pageData)) return pageData;
+    return [];
+  }, [pageData]);
 
-      const data = await getRooms({
-        page,
-        size,
-        search: searchValue,
-      });
-
-      setRooms(Array.isArray(data?.content) ? data.content : []);
-      setTotalPages(data?.totalPages || 1);
-      setTotalElements(data?.totalElements || 0);
-    } catch (err: any) {
-      setError(err.message || "Failed to load rooms.");
-    } finally {
-      setPageLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchRooms();
-  }, [page, size, debouncedSearch, selectedStatus]);
+  const totalPages = pageData?.totalPages || 1;
+  const totalElements = pageData?.totalElements || (Array.isArray(pageData) ? pageData.length : 0);
+  const error = formError || swrError?.message || "";
 
   const resetForm = () => {
     setFormData({
@@ -136,7 +123,7 @@ export default function RoomsPage() {
 
     try {
       await apiDeleteRoom(id);
-      await fetchRooms();
+      mutate();
       alert("Room deleted successfully.");
     } catch (err: any) {
       alert(err.message || "Failed to delete room.");
@@ -185,7 +172,7 @@ export default function RoomsPage() {
 
       setPanelOpen(false);
       resetForm();
-      await fetchRooms();
+      mutate();
       alert("Room created successfully.");
     } catch (err: any) {
       setError(err.message || "Failed to add room.");
@@ -270,13 +257,13 @@ export default function RoomsPage() {
               <StatCard
                 label="Available"
                 value={String(
-                  rooms.filter((r) => r.status === "AVAILABLE").length
+                  rooms.filter((r: any) => r.status === "AVAILABLE").length
                 )}
               />
               <StatCard
                 label="Occupied"
                 value={String(
-                  rooms.filter((r) => r.status === "OCCUPIED").length
+                  rooms.filter((r: any) => r.status === "OCCUPIED").length
                 )}
               />
             </div>

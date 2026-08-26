@@ -16,9 +16,11 @@ public class PricingItem {
     @Id
     private String id;
     private String name;
+    @org.springframework.data.mongodb.core.index.Indexed
     private String category;
     private String description;
     private String priceType;
     private Double price;
+    @org.springframework.data.mongodb.core.index.Indexed
     private String status;
 }

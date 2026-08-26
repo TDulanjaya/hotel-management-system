@@ -1,35 +1,23 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import Link from "next/link";
-
-const days = Array.from({ length: 31 }, (_, index) => index + 1);
-
-
-
+import useSWR from "swr";
 import { getEvents } from "@/lib/api/eventApi";
 import NewEventPanel from "@/components/events/NewEventPanel";
 import { useSearchParams } from "next/navigation";
-
 import { Suspense } from "react";
 
+const days = Array.from({ length: 31 }, (_, index) => index + 1);
+
 function EventsPageContent() {
-  const [eventsData, setEventsData] = useState<any[]>([]);
+  const { data: rawEvents, mutate } = useSWR<any[]>("/api/events");
+  const eventsData = useMemo(() => (Array.isArray(rawEvents) ? rawEvents : []), [rawEvents]);
   const searchParams = useSearchParams();
   const [panelOpen, setPanelOpen] = useState(false);
 
-  const loadEvents = async () => {
-    try {
-      const data = await getEvents();
-      setEventsData(data);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
   useEffect(() => {
-    loadEvents();
     if (searchParams.get("openPanel") === "true") {
       setPanelOpen(true);
     }
@@ -41,6 +29,7 @@ function EventsPageContent() {
       return new Date(event.primaryDate).getDate() === day;
     });
   }
+
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "EVENTS"]}>
       <div className="min-h-screen bg-[#f8f5ef] text-[#181818]">
@@ -273,7 +262,7 @@ function EventsPageContent() {
           <NewEventPanel 
           open={panelOpen} 
           onClose={() => setPanelOpen(false)} 
-          onSuccess={loadEvents} 
+          onSuccess={() => mutate()} 
         />
         </main>
       </div>

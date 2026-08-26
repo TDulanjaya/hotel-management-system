@@ -20,7 +20,7 @@ public class GuestController {
     public Page<Guest> getAll(
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "1000") int size,
             @RequestParam(defaultValue = "createdAt,desc") String[] sort) {
         
         org.springframework.data.domain.Sort.Direction direction = org.springframework.data.domain.Sort.Direction.DESC;

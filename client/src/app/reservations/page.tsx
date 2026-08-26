@@ -1,12 +1,13 @@
 "use client";
 import { AuthUser, getUser } from "@/utils/auth";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SlidePanel from "@/components/ui/SlidePanel";
+import useSWR from "swr";
+import { swrRawFetcher } from "@/lib/api/authApi";
 import {
-  getReservations,
   createReservation,
   updateReservation,
   deleteReservation,
@@ -19,10 +20,7 @@ export default function ReservationsPage() {
     setUser(getUser());
   }, []);
 
-  
   const [currentRole, setCurrentRole] = useState("");
-  const [items, setItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -32,9 +30,7 @@ export default function ReservationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [page, setPage] = useState(0);
-  const [size] = useState(10);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalElements, setTotalElements] = useState(0);
+  const [size, setSize] = useState(10);
 
   const [formData, setFormData] = useState({
     guestName: "",
@@ -61,35 +57,10 @@ export default function ReservationsPage() {
     const handler = setTimeout(() => {
       setDebouncedSearch(searchTerm);
       setPage(0);
-    }, 500);
+    }, 300);
 
     return () => clearTimeout(handler);
   }, [searchTerm]);
-
-  const fetchData = async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      const data = await getReservations({
-        page,
-        size,
-        search: debouncedSearch,
-      });
-
-      setItems(Array.isArray(data?.content) ? data.content : []);
-      setTotalPages(data?.totalPages || 1);
-      setTotalElements(data?.totalElements || 0);
-    } catch (err: any) {
-      setError(err.message || "Failed to load reservations.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, [page, size, debouncedSearch]);
 
   useEffect(() => {
     if (user?.role) {
@@ -107,6 +78,21 @@ export default function ReservationsPage() {
       setCurrentRole("");
     }
   }, [user]);
+
+  const swrKey = `/api/reservations?page=${page}&size=${size}${debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : ""}`;
+  const { data: pageData, error: swrError, isLoading: loading, mutate } = useSWR(swrKey, swrRawFetcher, {
+    keepPreviousData: true,
+  });
+
+  const items = useMemo(() => {
+    if (!pageData) return [];
+    if (Array.isArray(pageData.content)) return pageData.content;
+    if (Array.isArray(pageData)) return pageData;
+    return [];
+  }, [pageData]);
+
+  const totalPages = pageData?.totalPages || 1;
+  const totalElements = pageData?.totalElements || (Array.isArray(pageData) ? pageData.length : 0);
 
   const handleOpenNew = () => {
     setEditItem(null);
@@ -155,7 +141,7 @@ export default function ReservationsPage() {
 
     try {
       await deleteReservation(id);
-      await fetchData();
+      mutate();
       alert("Reservation deleted successfully.");
     } catch (err: any) {
       alert(err.message || "Failed to delete reservation.");
@@ -208,7 +194,7 @@ export default function ReservationsPage() {
       }
 
       setPanelOpen(false);
-      await fetchData();
+      mutate();
     } catch (err: any) {
       setError(err.message || "Failed to save reservation.");
     } finally {
@@ -271,12 +257,12 @@ export default function ReservationsPage() {
             />
             <StatCard
               label="Confirmed"
-              value={String(items.filter((i) => i.status === "CONFIRMED").length)}
+              value={String(items.filter((i: any) => i.status === "CONFIRMED").length)}
             />
             <StatCard
               label="Total Amount"
               value={`Rs ${items
-                .reduce((sum, i) => sum + Number(i.totalAmount || 0), 0)
+                .reduce((sum: number, i: any) => sum + Number(i.totalAmount || 0), 0)
                 .toLocaleString()}`}
             />
           </section>

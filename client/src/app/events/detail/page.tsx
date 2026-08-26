@@ -1,11 +1,9 @@
 "use client";
-import { useSearchParams } from "next/navigation";
-
-
-import { useEffect, useState } from "react";
+import { useSearchParams, useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import useSWR from "swr";
 import { getEventById } from "@/lib/api/eventApi";
-import { useParams } from "next/navigation";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
@@ -54,20 +52,7 @@ export default function EventDetailsPage() {
   const params = useParams();
   const eventId = id as string;
 
-  const [event, setEvent] = useState<SavedEvent | null>(null);
-
-  useEffect(() => {
-    async function loadEvent() {
-      if (!eventId) return;
-      try {
-        const data = await getEventById(eventId);
-        setEvent(data);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    loadEvent();
-  }, [eventId]);
+  const { data: event } = useSWR<SavedEvent>(eventId ? `/api/events/${eventId}` : null, () => getEventById(eventId));
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "EVENTS"]}>
@@ -128,10 +113,13 @@ export default function EventDetailsPage() {
               <div className="grid gap-8 xl:grid-cols-[1.35fr_0.65fr]">
                 <section className="space-y-8">
                   <section className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">
-                    <img
+                    <Image
                       src={event.selectedVenue.image}
                       alt={event.selectedVenue.name}
+                      width={800}
+                      height={400}
                       className="h-72 w-full object-cover"
+                      unoptimized
                     />
 
                     <div className="p-6">

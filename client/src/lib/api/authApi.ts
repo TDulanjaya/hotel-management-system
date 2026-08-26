@@ -71,3 +71,13 @@ export const swrFetcher = async (url: string) => {
   const data = await res.json();
   return data?.content !== undefined ? data.content : data;
 };
+
+export const swrRawFetcher = async (url: string) => {
+  const res = await authenticatedFetch(url);
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    throw new Error(errorData.message || "An error occurred while fetching the data.");
+  }
+  return res.json();
+};
+
