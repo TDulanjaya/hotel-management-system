@@ -22,7 +22,6 @@ type ChargeItem = {
   | "Amenity"
   | "Room Service"
   | "Laundry"
-  | "Spa"
   | "Event Service"
   | "Other";
   description: string;
@@ -40,7 +39,6 @@ const categories: ChargeItem["category"][] = [
   "Amenity",
   "Room Service",
   "Laundry",
-  "Spa",
   "Event Service",
   "Other",
 ];

@@ -1,5 +1,6 @@
 package com.luxestay.server.controller;
 
+import com.luxestay.server.dto.EventOccupancyImpactDto;
 import com.luxestay.server.dto.EventRequest;
 import com.luxestay.server.model.EventBooking;
 import com.luxestay.server.service.EventService;
@@ -20,6 +21,11 @@ public class EventController {
     @GetMapping
     public ResponseEntity<List<EventBooking>> getAllEvents() {
         return ResponseEntity.ok(eventService.getAllEvents());
+    }
+
+    @GetMapping("/occupancy-impact")
+    public ResponseEntity<EventOccupancyImpactDto> getOccupancyImpact() {
+        return ResponseEntity.ok(eventService.getOccupancyImpact());
     }
 
     @GetMapping("/{id}")

@@ -25,7 +25,6 @@ const ROUTE_ROLES: Record<string, UserRole[]> = {
   "/recipes": ["OWNER", "MANAGER", "COOK"],
   "/room-service": ["OWNER", "MANAGER", "ROOM_SERVICE"],
   "/laundry": ["OWNER", "MANAGER", "LAUNDRY"],
-  "/spa": ["OWNER", "MANAGER", "SPA"],
   "/games": ["OWNER", "MANAGER", "GAME_STAFF"],
   "/pricing": ["OWNER", "MANAGER"],
   "/reports": ["OWNER", "MANAGER"],

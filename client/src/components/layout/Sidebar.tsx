@@ -31,7 +31,6 @@ const menuItems: MenuItem[] = [
   { name: "Recipes",           href: "/recipes",            icon: "▤", allowedRoles: ["OWNER", "MANAGER", "COOK"] },
   { name: "Room Service",      href: "/room-service",       icon: "⌂", allowedRoles: ["OWNER", "MANAGER", "ROOM_SERVICE"] },
   { name: "Laundry",           href: "/laundry",            icon: "◎", allowedRoles: ["OWNER", "MANAGER", "LAUNDRY"] },
-  { name: "Spa & Wellness",    href: "/spa",                icon: "❋", allowedRoles: ["OWNER", "MANAGER", "SPA"] },
   { name: "Games",             href: "/games",              icon: "◇", allowedRoles: ["OWNER", "MANAGER", "GAME_STAFF"] },
   { name: "Service Pricing",   href: "/pricing",            icon: "₨", allowedRoles: ["OWNER", "MANAGER"] },
   { name: "Reports",           href: "/reports",            icon: "▨", allowedRoles: ["OWNER", "MANAGER"] },

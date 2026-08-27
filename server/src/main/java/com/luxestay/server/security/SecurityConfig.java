@@ -116,16 +116,22 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/games/**").hasAnyRole("OWNER", "MANAGER", "GAME_STAFF")
 
                         // Restaurant orders - WAITER access
-                        .requestMatchers("/api/restaurant/orders/**").hasAnyRole("OWNER", "MANAGER", "WAITER")
+                        .requestMatchers("/api/restaurant/**", "/api/restaurant").hasAnyRole("OWNER", "MANAGER", "WAITER")
 
                         // Room service - ROOM_SERVICE access
-                        .requestMatchers("/api/room-service/**").hasAnyRole("OWNER", "MANAGER", "ROOM_SERVICE")
+                        .requestMatchers("/api/room-service/**", "/api/room-service").hasAnyRole("OWNER", "MANAGER", "ROOM_SERVICE")
 
                         // Kitchen orders - COOK access
-                        .requestMatchers("/api/kitchen/orders/**").hasAnyRole("OWNER", "MANAGER", "COOK")
+                        .requestMatchers("/api/kitchen/**", "/api/kitchen").hasAnyRole("OWNER", "MANAGER", "COOK")
 
                         // Recipes - COOK access
-                        .requestMatchers("/api/recipes/**").hasAnyRole("OWNER", "MANAGER", "COOK")
+                        .requestMatchers("/api/recipes/**", "/api/recipes").hasAnyRole("OWNER", "MANAGER", "COOK")
+
+                        // Laundry - LAUNDRY access
+                        .requestMatchers("/api/laundry/**", "/api/laundry").hasAnyRole("OWNER", "MANAGER", "LAUNDRY")
+
+                        // Audits - OWNER, MANAGER access
+                        .requestMatchers("/api/audits/**", "/api/audits", "/api/audit-logs/**", "/api/audit-logs").hasAnyRole("OWNER", "MANAGER")
 
                         .anyRequest().authenticated()
                 );

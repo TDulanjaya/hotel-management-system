@@ -1,9 +1,8 @@
 "use client";
 import { useSearchParams } from "next/navigation";
-
 import { FormEvent, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { getPricingItemById, updatePricingItem } from "@/lib/api/pricingApi";
@@ -11,9 +10,7 @@ import { getPricingItemById, updatePricingItem } from "@/lib/api/pricingApi";
 export default function EditPricingPage() {
   const searchParams = useSearchParams();
   const rawId = searchParams.get("id");
-
   const router = useRouter();
-  const params = useParams();
   const id = rawId as string;
 
   const [loading, setLoading] = useState(false);
@@ -29,6 +26,7 @@ export default function EditPricingPage() {
 
   useEffect(() => {
     async function loadItem() {
+      if (!id) return;
       try {
         const data = await getPricingItemById(id);
         setName(data.name || "");
@@ -95,31 +93,60 @@ export default function EditPricingPage() {
                 <div className="mt-6 grid gap-5 md:grid-cols-2">
                   <div className="md:col-span-2">
                     <label className="text-sm font-bold text-[#4d4635]">Item Name</label>
-                    <input type="text" required value={name} onChange={(e) => setName(e.target.value)} className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30" />
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                    />
                   </div>
 
                   <div>
                     <label className="text-sm font-bold text-[#4d4635]">Category</label>
-                    <select value={category} onChange={(e) => setCategory(e.target.value)} className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                      {["Menu", "Bites", "Drinks", "Bar", "PARKING", "Amenity", "Room Service", "Laundry", "Spa", "Event Service", "Other"].map(c => <option key={c}>{c}</option>)}
+                    <select
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                    >
+                      {["Menu", "Bites", "Drinks", "Bar", "PARKING", "Amenity", "Room Service", "Laundry", "Event Service", "Other"].map((c) => (
+                        <option key={c}>{c}</option>
+                      ))}
                     </select>
                   </div>
 
                   <div>
                     <label className="text-sm font-bold text-[#4d4635]">Price Type</label>
-                    <select value={priceType} onChange={(e) => setPriceType(e.target.value)} className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                      {["fixed", "perPerson", "perHour", "perDay", "perVehicle"].map(p => <option key={p} value={p}>{p}</option>)}
+                    <select
+                      value={priceType}
+                      onChange={(e) => setPriceType(e.target.value)}
+                      className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                    >
+                      {["fixed", "perPerson", "perHour", "perDay", "perVehicle"].map((p) => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
                     </select>
                   </div>
 
                   <div>
                     <label className="text-sm font-bold text-[#4d4635]">Price</label>
-                    <input type="number" required min={0} value={price} onChange={(e) => setPrice(Number(e.target.value))} className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30" />
+                    <input
+                      type="number"
+                      required
+                      min={0}
+                      value={price}
+                      onChange={(e) => setPrice(Number(e.target.value))}
+                      className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                    />
                   </div>
 
                   <div>
                     <label className="text-sm font-bold text-[#4d4635]">Status</label>
-                    <select value={status} onChange={(e) => setStatus(e.target.value)} className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
+                    <select
+                      value={status}
+                      onChange={(e) => setStatus(e.target.value)}
+                      className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                    >
                       <option>Active</option>
                       <option>Inactive</option>
                     </select>
@@ -127,7 +154,13 @@ export default function EditPricingPage() {
 
                   <div className="md:col-span-2">
                     <label className="text-sm font-bold text-[#4d4635]">Description</label>
-                    <textarea required rows={5} value={description} onChange={(e) => setDescription(e.target.value)} className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30" />
+                    <textarea
+                      required
+                      rows={5}
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                    />
                   </div>
                 </div>
 

@@ -10,5 +10,6 @@ public enum Role {
     INVENTORY,
     EVENTS,
     PARKING,
-    GAME_STAFF
+    GAME_STAFF,
+    LAUNDRY
 }

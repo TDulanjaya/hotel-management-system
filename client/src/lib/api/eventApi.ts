@@ -42,6 +42,15 @@ async function handleResponse(response: Response) {
   return JSON.parse(text);
 }
 
+export interface EventOccupancyImpact {
+  committedRooms: number;
+  totalCapacity: number;
+  percentage: number;
+  forecastText: string;
+  activeEventsCount: number;
+  totalGuests: number;
+}
+
 export async function getEvents() {
   const response = await fetch(API_BASE_URL, {
     method: "GET",
@@ -50,6 +59,15 @@ export async function getEvents() {
 
   const data = await handleResponse(response);
   return data?.content !== undefined ? data.content : data;
+}
+
+export async function getOccupancyImpact(): Promise<EventOccupancyImpact> {
+  const response = await fetch(`${API_BASE_URL}/occupancy-impact`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  return handleResponse(response);
 }
 
 export async function getEventById(id: string) {
