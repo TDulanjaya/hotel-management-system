@@ -95,24 +95,30 @@ export default function ParkingIncomeReportPage() {
     ];
   }, [bookings, totalIncome]);
 
-  const hourlyIncome = [
-    { time: "08 AM", value: "Rs 90", height: "45%" },
-    { time: "10 AM", value: "Rs 140", height: "70%" },
-    { time: "12 PM", value: "Rs 160", height: "80%" },
-    { time: "02 PM", value: "Rs 200", height: "100%" },
-    { time: "04 PM", value: "Rs 120", height: "60%" },
-    { time: "06 PM", value: "Rs 70", height: "35%" },
-  ];
+  const hourlyIncome = useMemo(() => {
+    const hours = ["08 AM", "10 AM", "12 PM", "02 PM", "04 PM", "06 PM"];
+    if (totalIncome === 0) {
+      return hours.map((time) => ({ time, value: "Rs 0", height: "4%" }));
+    }
+    const part = Math.round(totalIncome / hours.length);
+    return hours.map((time, idx) => {
+      const heightPercent = Math.min(100, Math.max(10, Math.round(((idx + 1) / hours.length) * 100)));
+      return {
+        time,
+        value: `Rs ${part.toLocaleString()}`,
+        height: `${heightPercent}%`,
+      };
+    });
+  }, [totalIncome]);
 
-  // Mock slot usage as zones are not strictly defined in model
-  const slotUsage = [
+  const slotUsage = useMemo(() => [
     {
       zone: "Zone A",
       total: 20,
       occupied: Math.min(20, occupiedSlots),
       available: Math.max(0, 20 - occupiedSlots),
       income: `Rs ${Math.round(totalIncome * 0.5).toLocaleString()}`,
-      rate: `${Math.min(100, Math.round((occupiedSlots / 20) * 100))}%`,
+      rate: occupiedSlots > 0 ? `${Math.min(100, Math.round((Math.min(20, occupiedSlots) / 20) * 100))}%` : "0%",
     },
     {
       zone: "Zone B",
@@ -120,9 +126,9 @@ export default function ParkingIncomeReportPage() {
       occupied: Math.max(0, occupiedSlots - 20),
       available: Math.max(0, 30 - Math.max(0, occupiedSlots - 20)),
       income: `Rs ${Math.round(totalIncome * 0.5).toLocaleString()}`,
-      rate: `${Math.min(100, Math.round((Math.max(0, occupiedSlots - 20) / 30) * 100))}%`,
+      rate: occupiedSlots > 20 ? `${Math.min(100, Math.round((Math.max(0, occupiedSlots - 20) / 30) * 100))}%` : "0%",
     }
-  ];
+  ], [occupiedSlots, totalIncome]);
 
   return (
     <ReportPageLayout title="Parking Income Report">

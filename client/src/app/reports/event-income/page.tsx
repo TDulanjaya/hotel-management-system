@@ -96,14 +96,21 @@ export default function EventIncomeReportPage() {
     },
   ];
 
-  const monthlyEventIncome = [
-    { month: "Jan", value: "Rs 8k", height: "42%" },
-    { month: "Feb", value: "Rs 10k", height: "50%" },
-    { month: "Mar", value: "Rs 14k", height: "70%" },
-    { month: "Apr", value: "Rs 11k", height: "55%" },
-    { month: "May", value: "Rs 18k", height: "90%" },
-    { month: "Jun", value: `Rs ${(totalEventIncome / 1000).toFixed(1)}k`, height: "100%" },
-  ];
+  const monthlyEventIncome = useMemo(() => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun"];
+    if (totalEventIncome === 0) {
+      return months.map((month) => ({ month, value: "Rs 0", height: "4%" }));
+    }
+    const part = Math.round(totalEventIncome / months.length);
+    return months.map((month, idx) => {
+      const heightPercent = Math.min(100, Math.max(10, Math.round(((idx + 1) / months.length) * 100)));
+      return {
+        month,
+        value: `Rs ${(part / 1000).toFixed(1)}k`,
+        height: `${heightPercent}%`,
+      };
+    });
+  }, [totalEventIncome]);
 
   const upcomingPayments = events.filter(ev => ev.status === "PENDING" || ev.status === "ADVANCE_PAID").map(ev => ({
     id: `DUE-${ev.id.substring(0, 6)}`,

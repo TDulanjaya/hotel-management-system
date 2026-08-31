@@ -16,7 +16,6 @@ import {
   UserPlus,
   Users,
   ShieldCheck,
-  ShieldAlert,
   KeyRound,
   Filter,
   Pencil,
@@ -341,7 +340,6 @@ function TopBar() {
 function StatsGrid({ users }: { users: UserItem[] }) {
   const totalRoles = new Set(users.map(u => u.role)).size;
   const systemUsers = users.length;
-  const protectedModules = 14;
 
   const dynamicStats = [
     {
@@ -357,12 +355,6 @@ function StatsGrid({ users }: { users: UserItem[] }) {
       color: "text-[#565e74]",
     },
     {
-      title: "Protected Modules",
-      value: String(protectedModules),
-      icon: ShieldAlert,
-      color: "text-[#ba1a1a]",
-    },
-    {
       title: "MFA Adoption",
       value: "-",
       icon: KeyRound,
@@ -371,7 +363,7 @@ function StatsGrid({ users }: { users: UserItem[] }) {
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
       {dynamicStats.map((stat) => {
         const Icon = stat.icon;
 

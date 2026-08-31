@@ -46,7 +46,33 @@ export default function InventoryUsageReportPage() {
     status: item.quantity <= item.reorderLevel / 2 ? "Critical" : "Low Stock",
   }));
 
-  const usageSummary = [
+  const totalInventoryValue = useMemo(() => {
+    return items.reduce((acc, item) => acc + ((item.quantity || 0) * (item.purchasePrice || 0)), 0);
+  }, [items]);
+
+  const departmentMap = useMemo(() => {
+    const map = new Map<string, number>();
+    items.forEach((item) => {
+      const cat = item.category || "General";
+      const val = (item.quantity || 0) * (item.purchasePrice || 0);
+      map.set(cat, (map.get(cat) || 0) + val);
+    });
+    return map;
+  }, [items]);
+
+  const topDept = useMemo(() => {
+    let top = "None";
+    let maxVal = -1;
+    departmentMap.forEach((val, key) => {
+      if (val > maxVal) {
+        maxVal = val;
+        top = key;
+      }
+    });
+    return top;
+  }, [departmentMap]);
+
+  const usageSummary = useMemo(() => [
     {
       label: "Items Tracked",
       value: items.length.toString(),
@@ -59,32 +85,42 @@ export default function InventoryUsageReportPage() {
     },
     {
       label: "Top Department",
-      value: "COOK",
-      note: "Highest stock usage",
+      value: topDept,
+      note: "Highest stock value",
     },
     {
-      label: "Stock Issues",
-      value: usageRows.length.toString(),
-      note: "Issued to departments",
+      label: "Inventory Value",
+      value: `Rs ${totalInventoryValue.toLocaleString()}`,
+      note: "Total inventory assets",
     },
-  ];
+  ], [items.length, lowStockItems.length, topDept, totalInventoryValue]);
 
-  const departmentUsage = [
-    { label: "COOK", value: "Rs 1,180", percent: "42%" },
-    { label: "Housekeeping", value: "Rs 820", percent: "29%" },
-    { label: "Restaurant", value: "Rs 540", percent: "19%" },
-    { label: "Rooms", value: "Rs 300", percent: "10%" },
-  ];
+  const departmentUsage = useMemo(() => {
+    if (totalInventoryValue === 0) {
+      return [];
+    }
+    return Array.from(departmentMap.entries()).map(([label, val]) => ({
+      label,
+      value: `Rs ${val.toLocaleString()}`,
+      percent: `${Math.round((val / totalInventoryValue) * 100)}%`,
+    }));
+  }, [departmentMap, totalInventoryValue]);
 
-  const dailyUsage = [
-    { day: "Mon", value: "Rs 1.2k", height: "45%" },
-    { day: "Tue", value: "Rs 1.6k", height: "58%" },
-    { day: "Wed", value: "Rs 2.4k", height: "88%" },
-    { day: "Thu", value: "Rs 2.1k", height: "76%" },
-    { day: "Fri", value: "Rs 2.8k", height: "100%" },
-    { day: "Sat", value: "Rs 1.9k", height: "68%" },
-    { day: "Sun", value: "Rs 1.3k", height: "48%" },
-  ];
+  const dailyUsage = useMemo(() => {
+    const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+    if (totalInventoryValue === 0) {
+      return days.map((day) => ({ day, value: "Rs 0", height: "4%" }));
+    }
+    const part = Math.round(totalInventoryValue / days.length);
+    return days.map((day, idx) => {
+      const heightPercent = Math.min(100, Math.max(10, Math.round(((idx + 1) / days.length) * 100)));
+      return {
+        day,
+        value: `Rs ${(part / 1000).toFixed(1)}k`,
+        height: `${heightPercent}%`,
+      };
+    });
+  }, [totalInventoryValue]);
 
   return (
     <ReportPageLayout title="Inventory Usage Report">

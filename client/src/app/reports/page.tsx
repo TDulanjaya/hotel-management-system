@@ -172,26 +172,19 @@ export default function ReportsPage() {
     },
   ], [summary]);
 
-  const recentReports = [
-    {
-      name: "Daily Revenue Report",
-      generatedBy: "MANAGER",
-      time: "Today",
-      status: "Ready",
-    },
-    {
-      name: "Low Stock Report",
-      generatedBy: "Inventory Staff",
-      time: "Today",
-      status: "Ready",
-    },
-    {
-      name: "Audit History Report",
-      generatedBy: "OWNER",
-      time: "Latest",
-      status: "Reviewed",
-    },
-  ];
+  const { data: rawLogs } = useSWR<any[]>("/api/audit-logs");
+  const recentReports = useMemo(() => {
+    if (!Array.isArray(rawLogs)) return [];
+    return rawLogs
+      .filter((log) => log.module === "REPORTS" || log.action?.includes("REPORT"))
+      .slice(0, 5)
+      .map((log) => ({
+        name: log.details || "Generated System Report",
+        generatedBy: log.userName || log.userId || "System Staff",
+        time: log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : "Recently",
+        status: "Ready",
+      }));
+  }, [rawLogs]);
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER"]}>
@@ -371,42 +364,50 @@ export default function ReportsPage() {
                 </thead>
 
                 <tbody className="divide-y divide-[#d0c5af]">
-                  {recentReports.map((report) => (
-                    <tr
-                      key={report.name}
-                      className="transition hover:bg-[#fbf9f5]"
-                    >
-                      <td className="px-6 py-5 font-bold">{report.name}</td>
-
-                      <td className="px-6 py-5 text-[#4d4635]">
-                        {report.generatedBy}
-                      </td>
-
-                      <td className="px-6 py-5 text-[#4d4635]">
-                        {report.time}
-                      </td>
-
-                      <td className="px-6 py-5">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusBadgeClass(
-                            report.status
-                          )}`}
-                        >
-                          {report.status}
-                        </span>
-                      </td>
-
-                      <td className="px-6 py-5 text-right">
-                        <button
-                          onClick={handleExportAll}
-                          disabled={exporting}
-                          className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
-                        >
-                          Download
-                        </button>
+                  {recentReports.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="py-8 text-center text-sm text-[#4d4635]">
+                        No recently generated reports recorded.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    recentReports.map((report) => (
+                      <tr
+                        key={report.name}
+                        className="transition hover:bg-[#fbf9f5]"
+                      >
+                        <td className="px-6 py-5 font-bold">{report.name}</td>
+
+                        <td className="px-6 py-5 text-[#4d4635]">
+                          {report.generatedBy}
+                        </td>
+
+                        <td className="px-6 py-5 text-[#4d4635]">
+                          {report.time}
+                        </td>
+
+                        <td className="px-6 py-5">
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-bold ${getStatusBadgeClass(
+                              report.status
+                            )}`}
+                          >
+                            {report.status}
+                          </span>
+                        </td>
+
+                        <td className="px-6 py-5 text-right">
+                          <button
+                            onClick={handleExportAll}
+                            disabled={exporting}
+                            className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
+                          >
+                            Download
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

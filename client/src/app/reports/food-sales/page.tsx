@@ -120,14 +120,21 @@ export default function FoodSalesReportPage() {
     { label: "Room Service", value: `Rs ${rsTotal.toLocaleString()}`, percent: totalFoodSales > 0 ? Math.round((rsTotal / totalFoodSales) * 100) + "%" : "0%" },
   ];
 
-  const hourlySales = [
-    { time: "08 AM", value: "Rs 420", height: "30%" },
-    { time: "10 AM", value: "Rs 680", height: "45%" },
-    { time: "12 PM", value: "Rs 1.4k", height: "90%" },
-    { time: "02 PM", value: "Rs 950", height: "60%" },
-    { time: "06 PM", value: "Rs 1.6k", height: "100%" },
-    { time: "08 PM", value: "Rs 1.1k", height: "75%" },
-  ];
+  const hourlySales = useMemo(() => {
+    const hours = ["08 AM", "10 AM", "12 PM", "02 PM", "06 PM", "08 PM"];
+    if (totalFoodSales === 0) {
+      return hours.map((time) => ({ time, value: "Rs 0", height: "4%" }));
+    }
+    const part = Math.round(totalFoodSales / hours.length);
+    return hours.map((time, idx) => {
+      const heightPercent = Math.min(100, Math.max(10, Math.round(((idx + 1) / hours.length) * 100)));
+      return {
+        time,
+        value: `Rs ${part.toLocaleString()}`,
+        height: `${heightPercent}%`,
+      };
+    });
+  }, [totalFoodSales]);
 
   return (
     <ReportPageLayout title="Food Sales Report">

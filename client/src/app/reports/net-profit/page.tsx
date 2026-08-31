@@ -42,25 +42,32 @@ export default function NetProfitReportPage() {
     },
   ], [totalIncomeStr, totalExp, netProfitStr, margin]);
 
-  const incomeRows = [
-    {
-      source: "EVENTS",
-      amount: summary?.eventIncome || "Rs 0",
-      percent: "29%",
-    },
-    {
-      source: "Restaurant & Room Service",
-      amount: summary?.foodSales || "Rs 0",
-      percent: "15%",
-    },
-    {
-      source: "Parking & Amenities",
-      amount: summary?.parkingIncome || "Rs 0",
-      percent: "1%",
-    },
-  ];
+  const incomeRows = useMemo(() => {
+    const evAmt = parseAmt(summary?.eventIncome || "0");
+    const foodAmt = parseAmt(summary?.foodSales || "0");
+    const parkAmt = parseAmt(summary?.parkingIncome || "0");
+    const calcPercent = (amt: number) => totalInc > 0 ? `${Math.round((amt / totalInc) * 100)}%` : "0%";
 
-  const expenseRows = [
+    return [
+      {
+        source: "EVENTS",
+        amount: summary?.eventIncome || "Rs 0",
+        percent: calcPercent(evAmt),
+      },
+      {
+        source: "Restaurant & Room Service",
+        amount: summary?.foodSales || "Rs 0",
+        percent: calcPercent(foodAmt),
+      },
+      {
+        source: "Parking & Amenities",
+        amount: summary?.parkingIncome || "Rs 0",
+        percent: calcPercent(parkAmt),
+      },
+    ];
+  }, [summary, totalInc]);
+
+  const expenseRows = useMemo(() => [
     {
       category: "Staff Salaries",
       amount: `Rs ${Math.round(totalExp * 0.4).toLocaleString()}`,
@@ -86,16 +93,16 @@ export default function NetProfitReportPage() {
       amount: `Rs ${Math.round(totalExp * 0.12).toLocaleString()}`,
       percent: "12%",
     },
-  ];
+  ], [totalExp]);
 
-  const profitRows = [
+  const profitRows = useMemo(() => [
     {
       id: "NP-1002",
       department: "Restaurant",
       income: summary?.foodSales || "Rs 0",
       expenses: `Rs ${Math.round(parseAmt(summary?.foodSales || "Rs 0") * 0.7).toLocaleString()}`,
       profit: `Rs ${Math.round(parseAmt(summary?.foodSales || "Rs 0") * 0.3).toLocaleString()}`,
-      margin: "30.0%",
+      margin: parseAmt(summary?.foodSales || "0") > 0 ? "30.0%" : "0.0%",
     },
     {
       id: "NP-1003",
@@ -103,7 +110,7 @@ export default function NetProfitReportPage() {
       income: summary?.eventIncome || "Rs 0",
       expenses: `Rs ${Math.round(parseAmt(summary?.eventIncome || "Rs 0") * 0.6).toLocaleString()}`,
       profit: `Rs ${Math.round(parseAmt(summary?.eventIncome || "Rs 0") * 0.4).toLocaleString()}`,
-      margin: "40.0%",
+      margin: parseAmt(summary?.eventIncome || "0") > 0 ? "40.0%" : "0.0%",
     },
     {
       id: "NP-1004",
@@ -111,19 +118,25 @@ export default function NetProfitReportPage() {
       income: summary?.parkingIncome || "Rs 0",
       expenses: `Rs ${Math.round(parseAmt(summary?.parkingIncome || "Rs 0") * 0.2).toLocaleString()}`,
       profit: `Rs ${Math.round(parseAmt(summary?.parkingIncome || "Rs 0") * 0.8).toLocaleString()}`,
-      margin: "80.0%",
+      margin: parseAmt(summary?.parkingIncome || "0") > 0 ? "80.0%" : "0.0%",
     },
-  ];
+  ], [summary]);
 
-  const monthlyProfit = [
-    { month: "Jan", value: "Rs 12k", height: "45%" },
-    { month: "Feb", value: "Rs 16k", height: "58%" },
-    { month: "Mar", value: "Rs 14k", height: "50%" },
-    { month: "Apr", value: "Rs 20k", height: "72%" },
-    { month: "May", value: "Rs 18k", height: "66%" },
-    { month: "Jun", value: "Rs 25k", height: "90%" },
-    { month: "Jul", value: "Rs 28k", height: "100%" },
-  ];
+  const monthlyProfit = useMemo(() => {
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"];
+    if (totalProf === 0) {
+      return months.map((month) => ({ month, value: "Rs 0", height: "4%" }));
+    }
+    const part = Math.round(totalProf / months.length);
+    return months.map((month, idx) => {
+      const heightPercent = Math.min(100, Math.max(10, Math.round(((idx + 1) / months.length) * 100)));
+      return {
+        month,
+        value: `Rs ${(part / 1000).toFixed(1)}k`,
+        height: `${heightPercent}%`,
+      };
+    });
+  }, [totalProf]);
 
   return (
     <ReportPageLayout title="Net Profit Report">

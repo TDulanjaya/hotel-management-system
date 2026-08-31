@@ -22,12 +22,9 @@ import {
   Users,
   Utensils,
   Wallet,
-  Activity,
   ArrowUpRight,
   Crown,
-  Database,
-  Server,
-  Shield,
+  Activity,
   Wifi,
 } from "lucide-react";
 
@@ -136,10 +133,7 @@ export default function DashboardPage() {
     [payments]
   );
 
-  const healthLabel = useMemo(
-    () => (occupancyRate >= 90 || maintenanceRooms > 5 ? "Attention" : "Healthy"),
-    [occupancyRate, maintenanceRooms]
-  );
+
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "RECEPTIONIST"]}>
@@ -355,7 +349,7 @@ export default function DashboardPage() {
                 hidden: {},
                 show: { transition: { staggerChildren: 0.12 } },
               }}
-              className="relative grid gap-8 xl:grid-cols-2"
+              className="relative"
             >
               <motion.section
                 variants={{
@@ -379,7 +373,7 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                   <QuickLink
                     href="/rooms"
                     title="Room Management"
@@ -403,50 +397,6 @@ export default function DashboardPage() {
                     title="Restaurant & Dining"
                     desc="Table orders & billing"
                     icon={<Utensils />}
-                  />
-                </div>
-              </motion.section>
-
-              <motion.section
-                variants={{
-                  hidden: { opacity: 0, y: 28 },
-                  show: { opacity: 1, y: 0 },
-                }}
-                className="overflow-hidden rounded-[2rem] border border-[#d0c5af] bg-white/90 p-6 shadow-xl shadow-[#4d3a0010] backdrop-blur"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h2 className="text-2xl font-black">System Status</h2>
-                    <p className="mt-1 text-sm font-semibold text-[#4d4635]">
-                      Active services and connection health.
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl bg-green-100 px-4 py-2 text-xs font-black uppercase tracking-widest text-green-700">
-                    {healthLabel}
-                  </div>
-                </div>
-
-                <div className="mt-6 space-y-4">
-                  <StatusRow
-                    label="Backend API Server"
-                    status="ONLINE"
-                    icon={<Server size={18} />}
-                  />
-                  <StatusRow
-                    label="Authentication Service"
-                    status="ONLINE"
-                    icon={<Shield size={18} />}
-                  />
-                  <StatusRow
-                    label="Database Connection"
-                    status="ONLINE"
-                    icon={<Database size={18} />}
-                  />
-                  <StatusRow
-                    label="Realtime Updates"
-                    status="ONLINE"
-                    icon={<Activity size={18} />}
                   />
                 </div>
               </motion.section>
@@ -550,40 +500,6 @@ function QuickLink({
           className="mt-1 text-[#735c00] opacity-0 transition group-hover:opacity-100"
         />
       </Link>
-    </motion.div>
-  );
-}
-
-function StatusRow({
-  label,
-  status,
-  icon,
-}: {
-  label: string;
-  status: string;
-  icon: React.ReactNode;
-}) {
-  return (
-    <motion.div
-      whileHover={{ x: 4 }}
-      className="flex items-center justify-between rounded-2xl bg-[#fbf9f5] p-4 font-semibold"
-    >
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-green-100 text-green-700">
-          {icon}
-        </div>
-
-        <span className="text-sm font-black text-[#1b1c1a]">{label}</span>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <motion.span
-          className="h-2.5 w-2.5 rounded-full bg-green-500"
-          animate={{ scale: [1, 1.5, 1], opacity: [1, 0.45, 1] }}
-          transition={{ duration: 1.4, repeat: Infinity }}
-        />
-        <Badge variant="success">{status}</Badge>
-      </div>
     </motion.div>
   );
 }

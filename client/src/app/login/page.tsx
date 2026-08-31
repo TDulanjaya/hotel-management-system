@@ -10,8 +10,8 @@ import { Eye, EyeOff, Lock, Sparkles, UserRound } from "lucide-react";
 export default function LoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] = useState("owner@luxestay.com");
-  const [password, setPassword] = useState("Owner12345");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");

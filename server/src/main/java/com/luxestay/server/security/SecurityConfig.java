@@ -115,8 +115,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/games/**").hasAnyRole("OWNER", "MANAGER", "GAME_STAFF")
                         .requestMatchers(HttpMethod.DELETE, "/api/games/**").hasAnyRole("OWNER", "MANAGER", "GAME_STAFF")
 
-                        // Restaurant orders - WAITER access
-                        .requestMatchers("/api/restaurant/**", "/api/restaurant").hasAnyRole("OWNER", "MANAGER", "WAITER")
+                        // Restaurant orders & tables - WAITER access
+                        .requestMatchers("/api/restaurant/**", "/api/restaurant", "/api/tables/**", "/api/tables").hasAnyRole("OWNER", "MANAGER", "WAITER")
 
                         // Room service - ROOM_SERVICE access
                         .requestMatchers("/api/room-service/**", "/api/room-service").hasAnyRole("OWNER", "MANAGER", "ROOM_SERVICE")

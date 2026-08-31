@@ -86,22 +86,7 @@ export default function ManagerDashboardPage() {
     originalId: r.id
   })), [pendingReservations]);
 
-  const complaints = [
-    {
-      title: "Room 201 • Leak",
-      time: "12m ago",
-      message:
-        "Water dripping from bathroom ceiling. Guest is very frustrated, requested a suite upgrade.",
-      urgent: true,
-    },
-    {
-      title: "Valet Delay • Mr. Chen",
-      time: "45m ago",
-      message:
-        "Waited 20 minutes for car. Expressed disappointment during check-out process.",
-      urgent: false,
-    },
-  ];
+  const complaints: any[] = [];
 
   const revenueItems = useMemo(() => [
     { label: "Today Revenue", value: summary?.todayRevenue || "Rs 0" },
@@ -109,26 +94,14 @@ export default function ManagerDashboardPage() {
     { label: "Event Income", value: summary?.eventIncome || "Rs 0" },
   ], [summary]);
 
-  const staffActivities = [
-    {
-      name: "Mark J.",
-      action: "logged in",
-      role: "Front Desk • 2m ago",
-      avatar: "MJ",
-    },
-    {
-      name: "Elena R.",
-      action: "completed check-in",
-      role: "Concierge • 15m ago",
-      avatar: "ER",
-    },
-    {
-      name: "Maint_Bot",
-      action: "resolved ticket #421",
-      role: "Engineering • 1h ago",
-      avatar: "BOT",
-    },
-  ];
+  const staffActivities: any[] = useMemo(() => {
+    return auditLogs.slice(0, 4).map((audit) => ({
+      name: audit.userName || audit.userEmail || "Staff Member",
+      action: audit.action?.toLowerCase() || "performed action",
+      role: `${audit.module || "System"} • ${new Date(audit.timestamp).toLocaleTimeString()}`,
+      avatar: (audit.userName || "ST").substring(0, 2).toUpperCase(),
+    }));
+  }, [auditLogs]);
 
   const auditTrail = auditLogs.map(audit => ({
     icon: ShieldCheck,
@@ -319,34 +292,40 @@ export default function ManagerDashboardPage() {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-1 gap-4 p-6 md:grid-cols-2">
-                    {complaints.map((complaint) => (
-                      <div
-                        key={complaint.title}
-                        className={`rounded-lg border p-4 ${
-                          complaint.urgent
-                            ? "border-[#ba1a1a]/10 bg-[#ffdad6]/40"
-                            : "border-[#d0c5af] bg-[#f5f3ef]"
-                        }`}
-                      >
-                        <div className="mb-2 flex justify-between">
-                          <span className="font-bold">{complaint.title}</span>
-                          <span
-                            className={`text-xs font-bold ${
+                  <div className="p-6">
+                    {complaints.length === 0 ? (
+                      <p className="text-center text-sm text-[#4d4635]">No high priority feedback or complaints.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        {complaints.map((complaint) => (
+                          <div
+                            key={complaint.title}
+                            className={`rounded-lg border p-4 ${
                               complaint.urgent
-                                ? "text-[#ba1a1a]"
-                                : "text-[#4d4635]"
+                                ? "border-[#ba1a1a]/10 bg-[#ffdad6]/40"
+                                : "border-[#d0c5af] bg-[#f5f3ef]"
                             }`}
                           >
-                            {complaint.time}
-                          </span>
-                        </div>
+                            <div className="mb-2 flex justify-between">
+                              <span className="font-bold">{complaint.title}</span>
+                              <span
+                                className={`text-xs font-bold ${
+                                  complaint.urgent
+                                    ? "text-[#ba1a1a]"
+                                    : "text-[#4d4635]"
+                                }`}
+                              >
+                                {complaint.time}
+                              </span>
+                            </div>
 
-                        <p className="text-sm italic text-[#4d4635]">
-                          &quot;{complaint.message}&quot;
-                        </p>
+                            <p className="text-sm italic text-[#4d4635]">
+                              &quot;{complaint.message}&quot;
+                            </p>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                 </section>
               </div>
@@ -391,30 +370,34 @@ export default function ManagerDashboardPage() {
                   </div>
 
                   <div className="space-y-4 p-4">
-                    {staffActivities.map((staff) => (
-                      <div key={staff.name} className="flex gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#efeeea] text-xs font-bold text-[#735c00]">
-                          {staff.name === "Maint_Bot" ? (
-                            <Wrench size={18} />
-                          ) : (
-                            staff.avatar
-                          )}
-                        </div>
+                    {staffActivities.length === 0 ? (
+                      <p className="p-2 text-center text-sm text-[#4d4635]">No recent staff activity.</p>
+                    ) : (
+                      staffActivities.map((staff) => (
+                        <div key={staff.name} className="flex gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#efeeea] text-xs font-bold text-[#735c00]">
+                            {staff.name === "Maint_Bot" ? (
+                              <Wrench size={18} />
+                            ) : (
+                              staff.avatar
+                            )}
+                          </div>
 
-                        <div>
-                          <p className="text-sm font-bold">
-                            {staff.name}{" "}
-                            <span className="font-normal text-[#4d4635]">
-                              {staff.action}
-                            </span>
-                          </p>
+                          <div>
+                            <p className="text-sm font-bold">
+                              {staff.name}{" "}
+                              <span className="font-normal text-[#4d4635]">
+                                {staff.action}
+                              </span>
+                            </p>
 
-                          <p className="text-xs text-[#7f7663]">
-                            {staff.role}
-                          </p>
+                            <p className="text-xs text-[#7f7663]">
+                              {staff.role}
+                            </p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </section>
 
