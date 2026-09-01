@@ -95,7 +95,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/guests/**").hasAnyRole("OWNER", "MANAGER", "RECEPTIONIST")
                         .requestMatchers("/api/payments/**").hasAnyRole("OWNER", "MANAGER", "RECEPTIONIST")
                         .requestMatchers("/api/reservations/**").hasAnyRole("OWNER", "MANAGER", "RECEPTIONIST")
-                        .requestMatchers("/api/folios/**").hasAnyRole("OWNER", "MANAGER", "RECEPTIONIST")
+                        .requestMatchers("/api/folios/**", "/api/folio/**").hasAnyRole("OWNER", "MANAGER", "RECEPTIONIST")
 
                         // OWNER + MANAGER + INVENTORY
                         .requestMatchers(HttpMethod.GET, "/api/inventory/**").hasAnyRole("OWNER", "MANAGER", "INVENTORY")

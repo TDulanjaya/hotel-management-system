@@ -29,7 +29,8 @@ public class JwtService {
     public JwtService() {
         String secret = getEnvValue("JWT_SECRET");
         if (secret == null || secret.length() < 32) {
-            throw new IllegalStateException("JWT_SECRET is missing or shorter than 32 characters. Add it to server/.env.local");
+            throw new IllegalStateException(
+                    "JWT_SECRET is missing or shorter than 32 characters. Add it to server/.env.local");
         }
         SECRET_KEY = secret;
 

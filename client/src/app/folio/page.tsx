@@ -9,12 +9,12 @@ import { AuthUser, getUser } from "@/utils/auth";
 import SlidePanel from "@/components/ui/SlidePanel";
 import useSWR from "swr";
 import { getAll, create, remove, update } from "@/lib/api/folioApi";
-import { CheckCircle, ExternalLink, Eye, FileText, Plus, Trash2 } from "lucide-react";
+import { CheckCircle, ExternalLink, Eye, FileText, Lock, Plus, Trash2 } from "lucide-react";
 
 export default function FolioPage() {
   const router = useRouter();
   const [user, setUser] = useState<AuthUser | null>(null);
-  const { data: rawFolios, mutate, isLoading: isSwrLoading, error: swrError } = useSWR<any[]>("/api/folio");
+  const { data: rawFolios, mutate, isLoading: isSwrLoading, error: swrError } = useSWR<any[]>("/api/folios");
   const folios = useMemo(() => (Array.isArray(rawFolios) ? rawFolios : []), [rawFolios]);
   const loading = !rawFolios && isSwrLoading;
   const [saving, setSaving] = useState(false);
@@ -22,6 +22,25 @@ export default function FolioPage() {
 
   const [viewPanelOpen, setViewPanelOpen] = useState(false);
   const [selectedFolio, setSelectedFolio] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ALL");
+
+  const filteredFolios = useMemo(() => {
+    return folios.filter((f: any) => {
+      const matchesSearch =
+        !searchQuery ||
+        f.guestName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        f.roomNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        f.reservationId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        f.id?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesStatus =
+        statusFilter === "ALL" ||
+        f.status?.toUpperCase() === statusFilter.toUpperCase();
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [folios, searchQuery, statusFilter]);
 
   const [chargePanelOpen, setChargePanelOpen] = useState(false);
   const [formData, setFormData] = useState({
@@ -105,11 +124,15 @@ export default function FolioPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this folio?")) return;
+  const handleDelete = async (folio: any) => {
+    if (folio.status === "CLOSED") {
+      alert("Settled folios cannot be deleted to preserve financial audit records.");
+      return;
+    }
+    if (!confirm(`Are you sure you want to delete the folio for ${folio.guestName || "this guest"}?`)) return;
 
     try {
-      await remove(id);
+      await remove(folio.id);
       mutate();
     } catch (err: any) {
       alert(err.message || "Failed to delete folio.");
@@ -189,13 +212,55 @@ export default function FolioPage() {
             />
           </section>
 
-          <section className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">
-            <div className="border-b border-[#d0c5af] p-6">
-              <h2 className="text-2xl font-bold">Folio Records</h2>
+          <section className="mb-8 rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
+            <div className="grid gap-4 md:grid-cols-3">
+              <input
+                type="text"
+                placeholder="Search by guest name, room, reservation ID..."
+                value={searchQuery ?? ""}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+              />
 
-              <p className="mt-1 text-sm text-[#4d4635]">
-                View guest folio totals and line item details.
-              </p>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+              >
+                <option value="ALL">All Statuses</option>
+                <option value="OPEN">Open</option>
+                <option value="CLOSED">Closed</option>
+              </select>
+
+              {(searchQuery || statusFilter !== "ALL") ? (
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setStatusFilter("ALL");
+                  }}
+                  className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00]/10"
+                >
+                  Clear Filters
+                </button>
+              ) : (
+                <div className="flex items-center justify-center text-sm font-medium text-[#735c00]">
+                  Showing {filteredFolios.length} of {folios.length} folios
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">
+            <div className="flex flex-col justify-between gap-2 border-b border-[#d0c5af] p-6 sm:flex-row sm:items-center">
+              <div>
+                <h2 className="text-2xl font-bold">Folio Records</h2>
+                <p className="mt-1 text-sm text-[#4d4635]">
+                  View guest folio totals and line item details.
+                </p>
+              </div>
+              <span className="text-sm font-bold text-[#735c00]">
+                {filteredFolios.length} folio{filteredFolios.length === 1 ? "" : "s"}
+              </span>
             </div>
 
             {loading ? (
@@ -204,7 +269,7 @@ export default function FolioPage() {
               </div>
             ) : error ? (
               <div className="p-6 font-bold text-red-600">{error}</div>
-            ) : folios.length === 0 ? (
+            ) : filteredFolios.length === 0 ? (
               <div className="flex h-64 flex-col items-center justify-center">
                 <FileText size={42} className="mb-4 text-[#735c00]" />
 
@@ -222,87 +287,115 @@ export default function FolioPage() {
                 )}
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[900px] text-left text-sm">
-                  <thead className="bg-[#f5eed9] text-[#4c4032]">
+              <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                <table className="w-full text-left text-sm">
+                  <thead className="border-b border-[#d0c5af] bg-[#f5eed9]/70 text-[#4c4032]">
                     <tr>
-                      <th className="p-4 font-bold">Folio ID</th>
-                      <th className="p-4 font-bold">Guest</th>
-                      <th className="p-4 font-bold">Room</th>
-                      <th className="p-4 font-bold">Reservation</th>
-                      <th className="p-4 font-bold">Total Amount</th>
-                      <th className="p-4 font-bold">Status</th>
-                      <th className="p-4 text-right font-bold">Actions</th>
+                      <th className="px-3.5 py-3.5 text-center font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">Folio ID</th>
+                      <th className="px-3.5 py-3.5 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">Guest</th>
+                      <th className="px-3.5 py-3.5 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">Room / Location</th>
+                      <th className="px-3.5 py-3.5 text-center font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">Reservation</th>
+                      <th className="px-3.5 py-3.5 font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">Total Amount</th>
+                      <th className="px-3.5 py-3.5 text-center font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">Status</th>
+                      <th className="px-3.5 py-3.5 text-center font-bold uppercase tracking-wider text-[11px] whitespace-nowrap">Actions</th>
                     </tr>
                   </thead>
 
-                  <tbody className="divide-y divide-[#d9cfbd]">
-                    {folios.map((folio: any) => (
-                      <tr key={folio.id} className="hover:bg-[#fbf9f5]">
-                        <td className="p-4 font-bold">
-                          {folio.id?.substring(0, 8) || "-"}
+                  <tbody className="divide-y divide-[#e8e2d5]">
+                    {filteredFolios.map((folio: any) => (
+                      <tr key={folio.id} className="transition-colors hover:bg-[#faf7f0]">
+                        <td className="px-3.5 py-3.5 whitespace-nowrap text-center">
+                          <span className="font-mono text-xs font-bold text-[#735c00] bg-[#735c00]/10 border border-[#735c00]/20 px-2 py-0.5 rounded-md">
+                            #{folio.id ? folio.id.slice(-6).toUpperCase() : "N/A"}
+                          </span>
                         </td>
 
-                        <td className="p-4 font-semibold">
-                          {folio.guestName || "-"}
+                        <td className="px-3.5 py-3.5 whitespace-nowrap">
+                          <div className="flex items-center gap-2.5">
+                            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#735c00]/10 text-xs font-bold text-[#735c00] shrink-0">
+                              {folio.guestName ? folio.guestName.charAt(0) : "G"}
+                            </div>
+                            <div>
+                              <p className="font-bold text-[#1b1c1a] text-sm leading-tight">{folio.guestName || "Unknown Guest"}</p>
+                              <p className="text-[11px] text-[#735c00]/70">
+                                {folio.lines?.length || 0} charge item{folio.lines?.length === 1 ? "" : "s"}
+                              </p>
+                            </div>
+                          </div>
                         </td>
 
-                        <td className="p-4">{folio.roomNumber || "-"}</td>
+                        <td className="px-3.5 py-3.5 whitespace-nowrap">
+                          <span className="inline-flex items-center rounded-md bg-[#f5f3ef] border border-[#d0c5af]/60 px-2 py-0.5 text-xs font-semibold text-[#4d4635]">
+                            {folio.roomNumber?.startsWith("Venue") ? folio.roomNumber : `Room ${folio.roomNumber || "-"}`}
+                          </span>
+                        </td>
 
-                        <td className="p-4">{folio.reservationId || "-"}</td>
+                        <td className="px-3.5 py-3.5 whitespace-nowrap text-center">
+                          {folio.reservationId ? (
+                            <span className="font-mono text-xs font-medium text-[#735c00] bg-[#d4af37]/15 border border-[#d4af37]/30 px-2 py-0.5 rounded-md">
+                              #{folio.reservationId.slice(-6).toUpperCase()}
+                            </span>
+                          ) : (
+                            <span className="inline-block rounded-md bg-gray-100 px-2 py-0.5 text-xs text-gray-500 font-medium">
+                              Direct Stay
+                            </span>
+                          )}
+                        </td>
 
-                        <td className="p-4 font-bold">
+                        <td className="px-3.5 py-3.5 whitespace-nowrap font-extrabold text-[#735c00] text-sm">
                           Rs {Number(folio.totalAmount || 0).toLocaleString()}
                         </td>
 
-                        <td className="p-4">
+                        <td className="px-3.5 py-3.5 whitespace-nowrap text-center">
                           <span
-                            className={`rounded-full px-3 py-1 text-xs font-bold ${
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold ${
                               folio.status === "CLOSED"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-yellow-100 text-yellow-700"
+                                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                : "bg-amber-50 text-amber-700 border border-amber-200"
                             }`}
                           >
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${
+                                folio.status === "CLOSED" ? "bg-emerald-500" : "bg-amber-500"
+                              }`}
+                            />
                             {folio.status || "OPEN"}
                           </span>
                         </td>
 
-                        <td className="p-4">
-                          <div className="flex justify-end gap-2">
+                        <td className="px-3.5 py-3.5 whitespace-nowrap text-center">
+                          <div className="inline-flex items-center justify-center gap-1.5">
                             <button
                               onClick={() => handleOpenView(folio)}
-                              className="flex items-center gap-1 rounded-lg border border-[#735c00] px-3 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
+                              className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-[#735c00] bg-white px-2.5 py-1 text-xs font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white shrink-0 shadow-sm"
                             >
-                              <Eye size={16} />
-                              Quick View
+                              <Eye size={12} />
+                              <span>Quick View</span>
                             </button>
 
                             <Link
                               href={`/folio/detail?id=${folio.id}`}
-                              className="flex items-center gap-1 rounded-lg border border-[#735c00] bg-[#735c00] px-3 py-2 text-sm font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
+                              className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg bg-[#735c00] px-2.5 py-1 text-xs font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00] shrink-0 shadow-sm"
                             >
-                              <ExternalLink size={16} />
-                              Full Details
+                              <ExternalLink size={12} />
+                              <span>Full Details</span>
                             </Link>
 
-                            {canManage && folio.status !== "CLOSED" && (
-                              <button
-                                onClick={() => handleCloseFolio(folio)}
-                                className="flex items-center gap-1 rounded-lg border border-green-200 px-3 py-2 text-sm font-bold text-green-700 transition hover:bg-green-50"
-                              >
-                                <CheckCircle size={16} />
-                                Close
-                              </button>
-                            )}
-
                             {canManage && (
-                              <button
-                                onClick={() => handleDelete(folio.id)}
-                                className="flex items-center gap-1 rounded-lg border border-red-200 px-3 py-2 text-sm font-bold text-red-700 transition hover:bg-red-50"
-                              >
-                                <Trash2 size={16} />
-                                Delete
-                              </button>
+                              folio.status !== "CLOSED" ? (
+                                <button
+                                  onClick={() => handleCloseFolio(folio)}
+                                  className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 transition hover:bg-emerald-100 shrink-0 shadow-sm"
+                                >
+                                  <CheckCircle size={12} />
+                                  <span>Close</span>
+                                </button>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-lg border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs font-bold text-gray-400 cursor-not-allowed shrink-0">
+                                  <CheckCircle size={12} />
+                                  <span>Settled</span>
+                                </span>
+                              )
                             )}
                           </div>
                         </td>
@@ -318,48 +411,79 @@ export default function FolioPage() {
             open={viewPanelOpen}
             onClose={() => setViewPanelOpen(false)}
             title="Folio Line Items"
-            subtitle="View all charges attached to this folio."
+            subtitle="Itemized breakdown of all charges for this stay."
             icon={<FileText className="h-5 w-5" />}
           >
             {selectedFolio && (
-              <div>
-                <div className="mb-6 rounded-xl border border-[#d0c5af] bg-[#f8f5ef] p-4 text-sm font-semibold">
-                  <p>Guest: {selectedFolio.guestName}</p>
-                  <p>Room: {selectedFolio.roomNumber}</p>
-                  <p>Total: Rs {Number(selectedFolio.totalAmount || 0).toLocaleString()}</p>
-                  <p>Status: {selectedFolio.status}</p>
-                  <div className="mt-4">
+              <div className="space-y-6">
+                <div className="rounded-2xl border border-[#d0c5af] bg-[#f8f5ef] p-5">
+                  <div className="grid grid-cols-2 gap-4 text-xs font-semibold">
+                    <div>
+                      <p className="text-[#4d4635] uppercase tracking-wider text-[10px]">Guest Name</p>
+                      <p className="text-sm font-bold text-[#1b1c1a] mt-0.5">{selectedFolio.guestName}</p>
+                    </div>
+                    <div>
+                      <p className="text-[#4d4635] uppercase tracking-wider text-[10px]">Room / Venue</p>
+                      <p className="text-sm font-bold text-[#1b1c1a] mt-0.5">{selectedFolio.roomNumber}</p>
+                    </div>
+                    <div>
+                      <p className="text-[#4d4635] uppercase tracking-wider text-[10px]">Status</p>
+                      <p className="text-sm font-bold text-[#735c00] mt-0.5">{selectedFolio.status}</p>
+                    </div>
+                    <div>
+                      <p className="text-[#4d4635] uppercase tracking-wider text-[10px]">Total Balance</p>
+                      <p className="text-sm font-extrabold text-[#735c00] mt-0.5">
+                        Rs {Number(selectedFolio.totalAmount || 0).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 pt-4 border-t border-[#d0c5af]/50">
                     <Link
                       href={`/folio/detail?id=${selectedFolio.id}`}
-                      className="inline-flex items-center gap-2 rounded-xl bg-[#735c00] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
+                      className="inline-flex items-center gap-2 rounded-xl bg-[#735c00] px-4 py-2 text-xs font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00] shadow-sm"
                     >
                       <ExternalLink size={14} />
-                      Open Full Detail View
+                      Open Full Breakdown Page
                     </Link>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  {selectedFolio.lines && selectedFolio.lines.length > 0 ? (
-                    selectedFolio.lines.map((line: any, idx: number) => (
-                      <div
-                        key={idx}
-                        className="rounded-xl border border-[#d0c5af] bg-[#fbf9f5] p-4"
-                      >
-                        <p className="font-bold">{line.description}</p>
-                        <p className="mt-1 text-sm font-semibold text-[#735c00]">Amount: Rs {Number(line.amount || 0).toLocaleString()}</p>
-                        <p className="text-sm text-[#4d4635]">Category: {line.category}</p>
-                        <p className="text-sm text-[#4d4635]">
-                          Date:{" "}
-                          {line.date
-                            ? new Date(line.date).toLocaleDateString()
-                            : "-"}
-                        </p>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-500">No line items found.</p>
-                  )}
+                <div>
+                  <h3 className="text-sm font-bold uppercase tracking-wider text-[#4d4635] mb-3">
+                    Itemized Charges ({selectedFolio.lines?.length || 0})
+                  </h3>
+
+                  <div className="space-y-3">
+                    {selectedFolio.lines && selectedFolio.lines.length > 0 ? (
+                      selectedFolio.lines.map((line: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className="flex items-start justify-between gap-4 rounded-xl border border-[#d0c5af] bg-[#fbf9f5] p-4 transition hover:bg-white"
+                        >
+                          <div className="space-y-1">
+                            <p className="font-bold text-sm text-[#1b1c1a]">{line.description}</p>
+                            <div className="flex items-center gap-2">
+                              <span className="rounded-md bg-[#d4af37]/20 px-2 py-0.5 text-[10px] font-bold text-[#735c00]">
+                                {line.category || "GENERAL"}
+                              </span>
+                              <span className="text-xs text-[#4d4635]">
+                                {line.date ? new Date(line.date).toLocaleDateString() : "-"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="text-right shrink-0">
+                            <span className="text-sm font-extrabold text-[#735c00]">
+                              Rs {Number(line.amount || 0).toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-gray-500 italic p-4 text-center">No line items attached.</p>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

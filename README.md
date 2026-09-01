@@ -31,6 +31,7 @@ A full-stack Hotel Management System built with Next.js, Spring Boot, and MongoD
 ## Roles
 
 The system supports role-based access control for:
+
 - OWNER
 - MANAGER
 - RECEPTIONIST
@@ -57,11 +58,13 @@ The system supports role-based access control for:
 ### 1. Backend Setup
 
 1. Open a terminal and navigate to the `server` directory:
+
    ```bash
    cd server
    ```
 
 2. Create a `.env.local` file in the `server` directory with the following configuration:
+
    ```env
    PORT=8080
    MONGODB_URI=mongodb://localhost:27017/luxestay_db
@@ -73,6 +76,7 @@ The system supports role-based access control for:
    ```
 
 3. Start the Spring Boot backend:
+
    ```bash
    # Windows
    .\mvnw.cmd spring-boot:run
@@ -80,6 +84,7 @@ The system supports role-based access control for:
    # Linux / macOS
    ./mvnw spring-boot:run
    ```
+
    The backend API will run at `http://localhost:8080`.
 
 ---
@@ -87,11 +92,13 @@ The system supports role-based access control for:
 ### 2. Frontend Setup
 
 1. Open a new terminal and navigate to the `client` directory:
+
    ```bash
    cd client
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    ```

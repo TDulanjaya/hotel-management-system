@@ -31,6 +31,10 @@ public class FolioService {
     }
 
     public void delete(String id) {
+        Folio existing = repository.findById(id).orElse(null);
+        if (existing != null && "CLOSED".equalsIgnoreCase(existing.getStatus())) {
+            throw new IllegalStateException("Cannot delete a settled/closed folio. Records must be preserved for audit purposes.");
+        }
         repository.deleteById(id);
     }
 }

@@ -30,6 +30,34 @@ export default function InventoryPage() {
   const inventoryItems = useMemo(() => (Array.isArray(rawInventory) ? rawInventory : []), [rawInventory]);
   const [currentRole, setCurrentRole] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedStatus, setSelectedStatus] = useState("All");
+
+  const categories = useMemo(() => {
+    const cats = new Set(inventoryItems.map((i: any) => i.category).filter(Boolean));
+    return ["All", ...Array.from(cats)];
+  }, [inventoryItems]);
+
+  const filteredItems = useMemo(() => {
+    return inventoryItems.filter((item: any) => {
+      const matchesSearch =
+        !searchQuery ||
+        item.itemName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.supplierName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.id?.toLowerCase().includes(searchQuery.toLowerCase());
+
+      const matchesCategory =
+        selectedCategory === "All" || item.category === selectedCategory;
+
+      const matchesStatus =
+        selectedStatus === "All" ||
+        item.status?.toLowerCase().replace(/_/g, " ") === selectedStatus.toLowerCase().replace(/_/g, " ") ||
+        item.status === selectedStatus;
+
+      return matchesSearch && matchesCategory && matchesStatus;
+    });
+  }, [inventoryItems, searchQuery, selectedCategory, selectedStatus]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -189,44 +217,70 @@ export default function InventoryPage() {
             <div className="grid gap-4 md:grid-cols-4">
               <input
                 type="text"
-                placeholder="Search item..."
+                placeholder="Search by name, supplier, ID..."
+                value={searchQuery ?? ""}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
               />
 
-              <select className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                <option>All Categories</option>
-                <option>Kitchen</option>
-                <option>Housekeeping</option>
-                <option>Restaurant</option>
-                <option>Amenities</option>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+              >
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat === "All" ? "All Categories" : cat}
+                  </option>
+                ))}
               </select>
 
-              <select className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                <option>All Status</option>
-                <option>In Stock</option>
-                <option>Low Stock</option>
-                <option>Critical</option>
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+              >
+                <option value="All">All Status</option>
+                <option value="IN_STOCK">In Stock</option>
+                <option value="LOW_STOCK">Low Stock</option>
+                <option value="OUT_OF_STOCK">Out of Stock / Critical</option>
               </select>
 
-              <button className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]">
-                Filter
-              </button>
+              {(searchQuery || selectedCategory !== "All" || selectedStatus !== "All") ? (
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSelectedCategory("All");
+                    setSelectedStatus("All");
+                  }}
+                  className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00]/10"
+                >
+                  Clear Filters
+                </button>
+              ) : (
+                <div className="flex items-center justify-center text-sm font-medium text-[#735c00]">
+                  Showing {filteredItems.length} of {inventoryItems.length} items
+                </div>
+              )}
             </div>
           </section>
 
-          <section className="grid gap-8 xl:grid-cols-[1.3fr_0.7fr]">
+          <section className="w-full">
             <div className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">
-              <div className="border-b border-[#d0c5af] p-6">
-                <h2 className="text-2xl font-bold">Inventory Stock List</h2>
-
-                <p className="mt-1 text-sm text-[#4d4635]">
-                  Track stock quantity, reorder level, supplier, and item
-                  status.
-                </p>
+              <div className="flex flex-col justify-between gap-2 border-b border-[#d0c5af] p-6 sm:flex-row sm:items-center">
+                <div>
+                  <h2 className="text-2xl font-bold">Inventory Stock List</h2>
+                  <p className="mt-1 text-sm text-[#4d4635]">
+                    Track stock quantity, reorder level, supplier, and item status.
+                  </p>
+                </div>
+                <span className="text-sm font-bold text-[#735c00]">
+                  {filteredItems.length} item{filteredItems.length === 1 ? "" : "s"}
+                </span>
               </div>
 
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[1000px] text-left">
+                <table className="w-full min-w-full text-left">
                   <thead>
                     <tr className="border-b border-[#d0c5af] bg-[#f5f3ef] text-xs uppercase tracking-widest text-[#4d4635]">
                       <th className="px-6 py-4">Item ID</th>
@@ -241,7 +295,7 @@ export default function InventoryPage() {
                   </thead>
 
                   <tbody className="divide-y divide-[#d0c5af]">
-                    {inventoryItems.length === 0 ? (
+                    {filteredItems.length === 0 ? (
                       <tr>
                         <td
                           colSpan={8}
@@ -253,7 +307,7 @@ export default function InventoryPage() {
                         </td>
                       </tr>
                     ) : (
-                      inventoryItems.map((item) => (
+                      filteredItems.map((item: any) => (
                         <tr
                           key={item.id}
                           className="transition hover:bg-[#fbf9f5]"
