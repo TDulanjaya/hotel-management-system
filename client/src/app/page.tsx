@@ -1,15 +1,11 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import {
-  Bell,
   ChevronRight,
   Clock,
   Mail,
   Phone,
-  ShieldCheck,
   Sparkles,
-  Star,
-  Users,
 } from "lucide-react";
 
 export default function LandingPage() {
@@ -76,34 +72,6 @@ export default function LandingPage() {
               This is your hub to manage, serve and create memorable experiences
               for our guests.
             </p>
-
-            {/* Feature box */}
-            <div className="mt-8 max-w-lg rounded-3xl border border-[#d3a13b]/40 bg-black/45 p-5 shadow-2xl backdrop-blur-md md:p-6">
-              <FeatureItem
-                icon={<ShieldCheck />}
-                title="Secure Access"
-                description="Your secure gateway to internal systems"
-              />
-
-              <FeatureItem
-                icon={<Users />}
-                title="Team Collaboration"
-                description="Work together. Serve better."
-              />
-
-              <FeatureItem
-                icon={<Bell />}
-                title="Stay Updated"
-                description="Important updates and announcements"
-              />
-
-              <FeatureItem
-                icon={<Star />}
-                title="Excellence in Service"
-                description="Deliver luxury. Every time."
-                last
-              />
-            </div>
           </div>
 
           {/* Right login call */}
@@ -163,35 +131,6 @@ export default function LandingPage() {
         </footer>
       </section>
     </main>
-  );
-}
-
-function FeatureItem({
-  icon,
-  title,
-  description,
-  last = false,
-}: {
-  icon: ReactNode;
-  title: string;
-  description: string;
-  last?: boolean;
-}) {
-  return (
-    <div
-      className={`flex gap-4 py-3 ${
-        last ? "" : "border-b border-[#d3a13b]/20"
-      }`}
-    >
-      <div className="flex h-10 w-10 shrink-0 items-center justify-center text-[#d3a13b]">
-        <div className="[&>svg]:h-7 [&>svg]:w-7">{icon}</div>
-      </div>
-
-      <div>
-        <h4 className="text-base font-bold text-white md:text-lg">{title}</h4>
-        <p className="mt-1 text-sm text-white/80">{description}</p>
-      </div>
-    </div>
   );
 }
 
