@@ -12,8 +12,8 @@ export function useWebSocket(topic: string, onMessageCallback?: (message: any) =
 
   useEffect(() => {
     let subscription: StompSubscription | null = null;
-
-    const socket = new SockJS("http://localhost:8080/ws");
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+    const socket = new SockJS(`${baseUrl}/ws`);
     const client = new Client({
       webSocketFactory: () => socket,
       reconnectDelay: 5000,

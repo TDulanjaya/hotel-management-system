@@ -5,7 +5,7 @@ import { FormEvent, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Eye, EyeOff, Lock, Sparkles } from "lucide-react";
 
-const API_BASE_URL = "http://localhost:8080/api/auth";
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"}/api/auth`;
 
 export default function ResetPasswordPage() {
   const router = useRouter();

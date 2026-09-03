@@ -1,6 +1,5 @@
 import { getToken } from "@/utils/auth";
-
-const API_BASE_URL = "http://localhost:8080/api/payments";
+const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"}/api/payments`;
 
 function getAuthHeaders() {
   const token = getToken();
