@@ -11,31 +11,41 @@ type MenuItem = {
   href: string;
   icon: string;
   allowedRoles: UserRole[];
+  category?: string;
 };
 
 const menuItems: MenuItem[] = [
-  { name: "Dashboard",         href: "/dashboard",          icon: "▦", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"] },
-  { name: "Users",             href: "/users",              icon: "♙", allowedRoles: ["OWNER", "MANAGER"] },
-  { name: "Guests",            href: "/guests",             icon: "♟", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"] },
-  { name: "Reservations",      href: "/reservations",       icon: "▤", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"] },
-  { name: "Rooms",             href: "/rooms",              icon: "▰", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"] },
-  { name: "Checkout",          href: "/checkout",           icon: "✓", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"] },
-  { name: "Folio",             href: "/folio",              icon: "▤", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"] },
-  { name: "Payments",          href: "/payments",           icon: "₨", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"] },
-  { name: "Events",            href: "/events",             icon: "▣", allowedRoles: ["OWNER", "MANAGER", "EVENTS"] },
-  { name: "Venues",            href: "/venues",             icon: "▥", allowedRoles: ["OWNER", "MANAGER", "EVENTS"] },
-  { name: "Inventory",         href: "/inventory",          icon: "▧", allowedRoles: ["OWNER", "MANAGER", "INVENTORY"] },
-  { name: "Parking",           href: "/parking",            icon: "P", allowedRoles: ["OWNER", "MANAGER", "PARKING"] },
-  { name: "Restaurant",        href: "/restaurant",         icon: "R", allowedRoles: ["OWNER", "MANAGER", "WAITER"] },
-  { name: "Kitchen",           href: "/kitchen",            icon: "K", allowedRoles: ["OWNER", "MANAGER", "COOK"] },
-  { name: "Recipes",           href: "/recipes",            icon: "▤", allowedRoles: ["OWNER", "MANAGER", "COOK"] },
-  { name: "Room Service",      href: "/room-service",       icon: "⌂", allowedRoles: ["OWNER", "MANAGER", "ROOM_SERVICE"] },
-  { name: "Laundry",           href: "/laundry",            icon: "◎", allowedRoles: ["OWNER", "MANAGER", "LAUNDRY"] },
-  { name: "Games",             href: "/games",              icon: "◇", allowedRoles: ["OWNER", "MANAGER", "GAME_STAFF"] },
-  { name: "Service Pricing",   href: "/pricing",            icon: "₨", allowedRoles: ["OWNER", "MANAGER"] },
-  { name: "Reports",           href: "/reports",            icon: "▨", allowedRoles: ["OWNER", "MANAGER"] },
-  { name: "Audit Logs",        href: "/audit-logs",         icon: "A", allowedRoles: ["OWNER", "MANAGER"] },
-  { name: "Settings",          href: "/settings",           icon: "⚙", allowedRoles: ["OWNER"] },
+  // 1. OVERVIEW
+  { name: "Dashboard",         href: "/dashboard",          icon: "▦", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "OVERVIEW" },
+
+  // 2. FRONT DESK & GUESTS
+  { name: "Guests",            href: "/guests",             icon: "♟", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "FRONT DESK" },
+  { name: "Reservations",      href: "/reservations",       icon: "▤", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "FRONT DESK" },
+  { name: "Rooms",             href: "/rooms",              icon: "▰", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "FRONT DESK" },
+  { name: "Folio",             href: "/folio",              icon: "▤", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "FRONT DESK" },
+  { name: "Checkout",          href: "/checkout",           icon: "✓", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "FRONT DESK" },
+  { name: "Payments",          href: "/payments",           icon: "₨", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "FRONT DESK" },
+
+  // 3. DINING & SERVICES
+  { name: "Restaurant",        href: "/restaurant",         icon: "R", allowedRoles: ["OWNER", "MANAGER", "WAITER"], category: "FOOD & SERVICES" },
+  { name: "Kitchen",           href: "/kitchen",            icon: "K", allowedRoles: ["OWNER", "MANAGER", "COOK"], category: "FOOD & SERVICES" },
+  { name: "Recipes",           href: "/recipes",            icon: "▤", allowedRoles: ["OWNER", "MANAGER", "COOK"], category: "FOOD & SERVICES" },
+  { name: "Room Service",      href: "/room-service",       icon: "⌂", allowedRoles: ["OWNER", "MANAGER", "ROOM_SERVICE"], category: "FOOD & SERVICES" },
+  { name: "Laundry",           href: "/laundry",            icon: "◎", allowedRoles: ["OWNER", "MANAGER", "LAUNDRY"], category: "FOOD & SERVICES" },
+
+  // 4. EVENTS & RECREATION
+  { name: "Events",            href: "/events",             icon: "▣", allowedRoles: ["OWNER", "MANAGER", "EVENTS"], category: "EVENTS & RECREATION" },
+  { name: "Event Bookings",    href: "/events/list",        icon: "▤", allowedRoles: ["OWNER", "MANAGER", "EVENTS"], category: "EVENTS & RECREATION" },
+  { name: "Venues",            href: "/venues",             icon: "▥", allowedRoles: ["OWNER", "MANAGER", "EVENTS"], category: "EVENTS & RECREATION" },
+  { name: "Games",             href: "/games",              icon: "◇", allowedRoles: ["OWNER", "MANAGER", "GAME_STAFF"], category: "EVENTS & RECREATION" },
+
+  // 5. MANAGEMENT & ADMIN
+  { name: "Inventory",         href: "/inventory",          icon: "▧", allowedRoles: ["OWNER", "MANAGER", "INVENTORY"], category: "MANAGEMENT" },
+  { name: "Parking",           href: "/parking",            icon: "P", allowedRoles: ["OWNER", "MANAGER", "PARKING"], category: "MANAGEMENT" },
+  { name: "Service Pricing",   href: "/pricing",            icon: "₨", allowedRoles: ["OWNER", "MANAGER"], category: "MANAGEMENT" },
+  { name: "Reports",           href: "/reports",            icon: "▨", allowedRoles: ["OWNER", "MANAGER"], category: "MANAGEMENT" },
+  { name: "Audit Logs",        href: "/audit-logs",         icon: "A", allowedRoles: ["OWNER", "MANAGER"], category: "MANAGEMENT" },
+  { name: "Users",             href: "/users",              icon: "♙", allowedRoles: ["OWNER", "MANAGER"], category: "MANAGEMENT" },
 ];
 
 export default function AppSidebar() {
@@ -58,12 +68,14 @@ export default function AppSidebar() {
     router.push("/login");
   };
 
+  const visibleItems = menuItems.filter(item => user && item.allowedRoles.includes(user.role));
+
   return (
     <>
       {/* Mobile Hamburger Button */}
       <button 
         onClick={() => setIsOpen(true)}
-        className="fixed left-5 top-4 z-30 flex h-10 w-10 items-center justify-center rounded-lg bg-[#101827] text-[#d8b328] shadow-lg transition-transform hover:scale-105 lg:hidden"
+        className="fixed left-4 top-4 z-50 flex h-10 w-10 items-center justify-center rounded-lg bg-[#101827] text-[#d8b328] shadow-lg transition-transform hover:scale-105 lg:hidden"
         aria-label="Open Menu"
       >
         <Menu size={24} />
@@ -71,7 +83,7 @@ export default function AppSidebar() {
 
       {/* Backdrop for Mobile */}
       <div 
-        className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
+        className={`fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity duration-300 lg:hidden ${
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
         onClick={() => setIsOpen(false)}
@@ -79,16 +91,16 @@ export default function AppSidebar() {
 
       {/* Sidebar Content */}
       <aside 
-        className={`fixed left-0 top-0 z-50 flex h-screen w-[280px] flex-col bg-[#101827] text-white shadow-2xl transition-transform duration-300 ease-in-out lg:translate-x-0 ${
+        className={`fixed left-0 top-0 z-[60] flex h-screen w-[280px] flex-col bg-[#101827] text-white shadow-2xl transition-transform duration-300 ease-in-out lg:translate-x-0 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between px-8 py-10">
+        <div className="flex items-center justify-between px-8 py-8">
           <div>
-            <h1 className="text-4xl font-extrabold tracking-tight text-[#d8b328]">
+            <h1 className="text-3xl font-extrabold tracking-tight text-[#d8b328]">
               LuxeStay
             </h1>
-            <p className="mt-2 text-lg text-[#677386]">Elite Operations</p>
+            <p className="mt-1 text-sm text-[#677386]">Elite Operations</p>
           </div>
           
           <button 
@@ -99,54 +111,50 @@ export default function AppSidebar() {
           </button>
         </div>
 
-        <nav className="sidebar-scroll flex-1 space-y-2 overflow-y-auto px-5 pb-5">
-          {menuItems.filter(item => user && item.allowedRoles.includes(user.role)).map((item) => {
+        <nav className="sidebar-scroll flex-1 space-y-1.5 overflow-y-auto px-4 pb-6">
+          {visibleItems.map((item, index) => {
             const isDashboard = item.name === "Dashboard";
             const currentHref = isDashboard && user ? getDashboardByRole(user.role) : item.href;
             
-            const active =
-              pathname === currentHref || pathname.startsWith(currentHref + "/");
+            const active = item.href.includes("?")
+              ? pathname === "/pricing" && item.name === "Add Price Item"
+              : pathname === currentHref || (currentHref !== "/dashboard" && pathname.startsWith(currentHref + "/"));
+
+            const showCategoryHeader =
+              item.category &&
+              (index === 0 || visibleItems[index - 1].category !== item.category);
 
             return (
-              <Link
-                key={item.href}
-                href={currentHref}
-                className={`lux-sidebar-link flex items-center gap-5 rounded-xl px-5 py-4 text-lg transition-all hover:translate-x-1 ${
-                  active
-                    ? "border-l-4 border-[#d8b328] bg-[#263248] text-[#f2c426]"
-                    : "text-[#a6adba] hover:bg-[#263248] hover:text-[#f2c426]"
-                }`}
-              >
-                <span className="flex h-8 w-8 shrink-0 items-center justify-center text-2xl font-bold">
-                  {item.icon}
-                </span>
+              <div key={item.href + item.name}>
+                {showCategoryHeader && (
+                  <div className="pt-3 pb-1 px-3 text-[11px] font-bold uppercase tracking-wider text-[#677386]">
+                    {item.category}
+                  </div>
+                )}
 
-                <span className="leading-tight">{item.name}</span>
-              </Link>
+                <Link
+                  href={currentHref}
+                  className={`lux-sidebar-link flex items-center gap-4 rounded-xl px-4 py-3 text-base transition-all hover:translate-x-1 ${
+                    active
+                      ? "border-l-4 border-[#d8b328] bg-[#263248] text-[#f2c426]"
+                      : "text-[#a6adba] hover:bg-[#263248] hover:text-[#f2c426]"
+                  }`}
+                >
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center text-xl font-bold">
+                    {item.icon}
+                  </span>
+
+                  <span className="leading-tight font-medium">{item.name}</span>
+                </Link>
+              </div>
             );
           })}
         </nav>
 
-        <div className="border-t border-white/10 p-6">
-          <button className="mb-4 flex w-full items-center gap-4 rounded-xl px-4 py-3 text-lg text-slate-300 transition hover:bg-white/10 hover:text-white">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-white/30">
-              ?
-            </span>
-            Support
-          </button>
-
-          {user && ["OWNER", "MANAGER"].includes(user.role) && (
-            <Link
-              href="/pricing?openPanel=true"
-              className="block w-full rounded-xl bg-[#d8b328] px-5 py-4 text-center text-lg font-bold text-[#4c3a00] transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl"
-            >
-              Add Price Item
-            </Link>
-          )}
-
+        <div className="border-t border-white/10 p-5">
           <button
             onClick={handleLogout}
-            className="mt-3 w-full rounded-xl border border-white/20 px-5 py-3 text-sm font-bold text-slate-300 transition hover:bg-white/10 hover:text-white"
+            className="w-full rounded-xl border border-white/20 px-5 py-2.5 text-sm font-bold text-slate-300 transition hover:bg-white/10 hover:text-white"
           >
             Logout
           </button>

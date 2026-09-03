@@ -138,18 +138,16 @@ export default function NewGameSessionPage() {
         ...formData,
         gameType: selectedGame.gameType,
         location: selectedGame.location,
-        hourlyRate: Number(formData.hourlyRate),
         totalAmount,
-        startTime: formData.startTime
-          ? `${today}T${formData.startTime}:00`
-          : new Date().toISOString(),
+        sessionDate: today,
+        startTime: formData.startTime || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
       await createGameSession(sessionPayload);
       alert("Game session started successfully.");
       router.push("/games");
     } catch (err: any) {
-      setError(err.message || "Failed to create session.");
+      setError(err.message || "Failed to start game session.");
     } finally {
       setLoading(false);
     }
@@ -160,26 +158,27 @@ export default function NewGameSessionPage() {
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 
-        <main className="px-8 py-10 lg:ml-[280px]">
-          <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+        <main className="min-h-screen px-4 py-6 pt-16 sm:px-8 sm:py-10 lg:pt-10 lg:ml-[280px]">
+          <div className="mb-6 sm:mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#735c00]">
+              <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.3em] text-[#735c00]">
                 Games Module
               </p>
 
-              <h1 className="mt-3 text-4xl font-bold text-[#735c00]">
-                New Game Session
+              <h1 className="mt-1 sm:mt-3 text-2xl sm:text-4xl font-bold text-[#735c00]">
+                Start New Game Session
               </h1>
 
-              <p className="mt-2 text-[#4d4635]">
-                Start a new amenity rental or game session.
+              <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-[#4d4635]">
+                Issue recreational amenities to guests and start automatic time
+                tracking.
               </p>
             </div>
 
             <button
               type="button"
               onClick={() => router.push("/games")}
-              className="flex items-center gap-2 rounded-xl border border-[#735c00] bg-white px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl border border-[#735c00] bg-white px-5 py-3 text-sm sm:text-base font-bold text-[#735c00] transition hover:bg-[#735c00]/5 text-center"
             >
               <ArrowLeft size={18} />
               Back to Games
@@ -187,22 +186,22 @@ export default function NewGameSessionPage() {
           </div>
 
           {error && (
-            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 font-bold text-red-700">
+            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
               {error}
             </div>
           )}
 
           <form
             onSubmit={handleSubmit}
-            className="grid gap-8 xl:grid-cols-[1.3fr_0.7fr]"
+            className="grid gap-6 sm:gap-8 xl:grid-cols-[1.3fr_0.7fr]"
           >
-            <section className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-              <h2 className="flex items-center gap-2 text-2xl font-bold">
+            <section className="rounded-2xl border border-[#d0c5af] bg-white p-4 sm:p-6 shadow-sm">
+              <h2 className="flex items-center gap-2 text-xl sm:text-2xl font-bold">
                 <Gamepad2 className="text-[#735c00]" />
                 Session Details
               </h2>
 
-              <div className="mt-6 grid gap-5 md:grid-cols-2">
+              <div className="mt-5 sm:mt-6 grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2">
                 <InputField
                   label="Guest Name"
                   name="guestName"
@@ -289,20 +288,20 @@ export default function NewGameSessionPage() {
                     value={formData.notes}
                     onChange={handleChange}
                     placeholder="Special request, equipment condition, guest instruction..."
-                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 text-base outline-none focus:ring-2 focus:ring-[#735c00]/30"
                   />
                 </div>
               </div>
             </section>
 
-            <aside className="space-y-8">
-              <section className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-                <h2 className="flex items-center gap-2 text-2xl font-bold">
+            <aside className="space-y-6 sm:space-y-8">
+              <section className="rounded-2xl border border-[#d0c5af] bg-white p-4 sm:p-6 shadow-sm">
+                <h2 className="flex items-center gap-2 text-xl sm:text-2xl font-bold">
                   <ClipboardCheck className="text-[#735c00]" />
                   Equipment Checklist
                 </h2>
 
-                <div className="mt-6 space-y-4">
+                <div className="mt-5 sm:mt-6 space-y-3 sm:space-y-4">
                   <CheckBoxField
                     name="equipmentChecked"
                     checked={formData.equipmentChecked}
@@ -329,10 +328,10 @@ export default function NewGameSessionPage() {
                 </div>
               </section>
 
-              <section className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-                <h2 className="text-2xl font-bold">Session Summary</h2>
+              <section className="rounded-2xl border border-[#d0c5af] bg-white p-4 sm:p-6 shadow-sm">
+                <h2 className="text-xl sm:text-2xl font-bold">Session Summary</h2>
 
-                <div className="mt-6 space-y-4">
+                <div className="mt-5 sm:mt-6 space-y-3 sm:space-y-4">
                   <SummaryRow label="Game Type" value={selectedGame.gameType} />
                   <SummaryRow label="Location" value={selectedGame.location} />
                   <SummaryRow label="Duration" value={formData.duration} />
@@ -344,11 +343,11 @@ export default function NewGameSessionPage() {
                 </div>
               </section>
 
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <button
                   type="button"
                   onClick={() => router.push("/games")}
-                  className="flex-1 rounded-xl border border-[#735c00] px-6 py-4 text-center font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
+                  className="w-full sm:flex-1 rounded-xl border border-[#735c00] px-6 py-3.5 text-center text-sm sm:text-base font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
                 >
                   Cancel
                 </button>
@@ -356,7 +355,7 @@ export default function NewGameSessionPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="flex-1 rounded-xl bg-[#735c00] px-6 py-4 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
+                  className="w-full sm:flex-1 rounded-xl bg-[#735c00] px-6 py-3.5 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00] text-center"
                 >
                   {loading ? "Starting..." : "Start Session"}
                 </button>
@@ -394,7 +393,7 @@ function InputField({
         value={value}
         onChange={onChange}
         placeholder={placeholder}
-        className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+        className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 text-base outline-none focus:ring-2 focus:ring-[#735c00]/30"
       />
     </div>
   );
@@ -421,7 +420,7 @@ function SelectField({
         name={name}
         value={value}
         onChange={onChange}
-        className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+        className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 text-base outline-none focus:ring-2 focus:ring-[#735c00]/30"
       >
         {options.map((option) => (
           <option key={option} value={option}>
@@ -447,18 +446,18 @@ function CheckBoxField({
   description: string;
 }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-4">
+    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-3.5 sm:p-4">
       <input
         type="checkbox"
         name={name}
         checked={checked}
         onChange={onChange}
-        className="mt-1 h-5 w-5"
+        className="mt-1 h-5 w-5 shrink-0"
       />
 
       <div>
-        <p className="font-bold">{title}</p>
-        <p className="text-sm text-[#4d4635]">{description}</p>
+        <p className="font-bold text-sm sm:text-base">{title}</p>
+        <p className="text-xs sm:text-sm text-[#4d4635]">{description}</p>
       </div>
     </label>
   );
@@ -466,7 +465,7 @@ function CheckBoxField({
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between rounded-xl bg-[#f5f3ef] p-4">
+    <div className="flex items-center justify-between rounded-xl bg-[#f5f3ef] p-3.5 sm:p-4 text-xs sm:text-sm">
       <span className="font-bold text-[#4d4635]">{label}</span>
       <span className="font-bold text-[#735c00]">{value}</span>
     </div>

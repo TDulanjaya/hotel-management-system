@@ -105,27 +105,27 @@ function EventsListPageContent() {
       <div className="min-h-screen bg-[#f8f5ef] text-[#181818]">
         <AppSidebar />
 
-        <main className="px-8 py-10 lg:ml-[280px]">
-          <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+        <main className="px-4 py-6 pt-16 sm:px-8 sm:py-10 lg:pt-10 lg:ml-[280px]">
+          <div className="mb-6 sm:mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#806300]">
+              <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.3em] text-[#806300]">
                 Events Module
               </p>
 
-              <h1 className="mt-3 text-4xl font-bold text-[#735c00]">
+              <h1 className="mt-1 sm:mt-3 text-2xl sm:text-4xl font-bold text-[#735c00]">
                 Event List
               </h1>
 
-              <p className="mt-2 text-[#4d4635]">
+              <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-[#4d4635]">
                 View saved weddings, parties, hall bookings and event ledger
                 totals.
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 w-full sm:w-auto">
               <Link
                 href="/events"
-                className="rounded-xl border border-[#806300] bg-white px-6 py-3 text-center font-bold text-[#806300] transition hover:bg-[#faf8f3]"
+                className="w-full sm:w-auto rounded-xl border border-[#806300] bg-white px-5 py-3 text-center text-sm sm:text-base font-bold text-[#806300] transition hover:bg-[#faf8f3]"
               >
                 Events Dashboard
               </Link>
@@ -133,7 +133,7 @@ function EventsListPageContent() {
               {canEdit && (
                 <button
                   onClick={() => setPanelOpen(true)}
-                  className="flex items-center gap-2 rounded-xl bg-[#735c00] px-6 py-3 text-center font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
+                  className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-[#735c00] px-5 py-3 text-center text-sm sm:text-base font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
                 >
                   <CalendarPlus size={18} />
                   New Event
@@ -142,7 +142,7 @@ function EventsListPageContent() {
             </div>
           </div>
 
-          <section className="mb-8 grid gap-6 md:grid-cols-4">
+          <section className="mb-6 sm:mb-8 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
             <StatCard label="Total Events" value={String(events.length)} />
             <StatCard
               label="Active"
@@ -164,9 +164,9 @@ function EventsListPageContent() {
           </section>
 
           <section className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">
-            <div className="border-b border-[#d0c5af] p-6">
-              <h2 className="text-2xl font-bold">All Event Bookings</h2>
-              <p className="mt-1 text-sm text-[#4d4635]">
+            <div className="border-b border-[#d0c5af] p-4 sm:p-6">
+              <h2 className="text-xl sm:text-2xl font-bold">All Event Bookings</h2>
+              <p className="mt-1 text-xs sm:text-sm text-[#4d4635]">
                 Manage created event records.
               </p>
             </div>

@@ -1,4 +1,5 @@
 "use client";
+
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -148,24 +149,24 @@ export default function EditUserPage() {
         <AppSidebar />
 
         <main className="min-h-screen lg:ml-[280px]">
-          <section className="mx-auto max-w-3xl p-8">
+          <section className="mx-auto max-w-3xl p-4 sm:p-6 lg:p-8 pt-16 sm:pt-20 lg:pt-8">
             <Link
               href="/users"
-              className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-[#735c00] hover:underline"
+              className="mb-4 sm:mb-6 inline-flex items-center gap-2 text-sm font-bold text-[#735c00] hover:underline"
             >
               <ArrowLeft size={18} />
               Back to Users
             </Link>
 
-            <div className="rounded-3xl border border-[#d0c5af] bg-white p-8 shadow-sm">
-              <div className="mb-8 flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#735c00]/10 text-[#735c00]">
-                  <UserCog size={28} />
+            <div className="rounded-2xl sm:rounded-3xl border border-[#d0c5af] bg-white p-5 sm:p-8 shadow-sm">
+              <div className="mb-6 sm:mb-8 flex items-center gap-3 sm:gap-4">
+                <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-2xl bg-[#735c00]/10 text-[#735c00]">
+                  <UserCog size={24} className="sm:w-7 sm:h-7" />
                 </div>
 
                 <div>
-                  <h1 className="text-3xl font-bold">Edit User</h1>
-                  <p className="mt-1 text-sm text-[#4d4635]">
+                  <h1 className="text-2xl sm:text-3xl font-bold">Edit User</h1>
+                  <p className="mt-1 text-xs sm:text-sm text-[#4d4635]">
                     Update staff details, role, status or password.
                   </p>
                 </div>
@@ -184,13 +185,13 @@ export default function EditUserPage() {
                   )}
 
                   {currentRole === "MANAGER" && (
-                    <div className="mb-6 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+                    <div className="mb-6 rounded-xl border border-yellow-200 bg-yellow-50 p-4 text-xs sm:text-sm text-yellow-800">
                       <strong>Note:</strong> Managers cannot update Owner or
                       Manager accounts.
                     </div>
                   )}
 
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
                     <div>
                       <label className="block text-sm font-bold text-[#4d4635]">
                         Full Name
@@ -200,7 +201,7 @@ export default function EditUserPage() {
                         name="name"
                         value={formData.name}
                         onChange={handleChange}
-                        className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 outline-none focus:ring-2 focus:ring-[#d4af37]/30"
+                        className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 text-base outline-none focus:ring-2 focus:ring-[#d4af37]/30"
                       />
                     </div>
 
@@ -214,7 +215,7 @@ export default function EditUserPage() {
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
-                        className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 outline-none focus:ring-2 focus:ring-[#d4af37]/30"
+                        className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 text-base outline-none focus:ring-2 focus:ring-[#d4af37]/30"
                       />
                     </div>
 
@@ -228,7 +229,7 @@ export default function EditUserPage() {
                         placeholder="Leave empty to keep old password"
                         value={formData.password}
                         onChange={handleChange}
-                        className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 outline-none focus:ring-2 focus:ring-[#d4af37]/30"
+                        className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 text-base outline-none focus:ring-2 focus:ring-[#d4af37]/30"
                       />
                       <p className="mt-1 text-xs text-[#6d6251]">
                         Leave this empty if you do not want to change password.
@@ -243,7 +244,7 @@ export default function EditUserPage() {
                         name="role"
                         value={formData.role}
                         onChange={handleChange}
-                        className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 outline-none focus:ring-2 focus:ring-[#d4af37]/30"
+                        className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 text-base outline-none focus:ring-2 focus:ring-[#d4af37]/30"
                       >
                         {availableRoles.map((role) => (
                           <option key={role} value={role}>
@@ -261,17 +262,17 @@ export default function EditUserPage() {
                         name="active"
                         value={String(formData.active)}
                         onChange={handleChange}
-                        className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 outline-none focus:ring-2 focus:ring-[#d4af37]/30"
+                        className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 text-base outline-none focus:ring-2 focus:ring-[#d4af37]/30"
                       >
                         <option value="true">Active</option>
                         <option value="false">Inactive</option>
                       </select>
                     </div>
 
-                    <div className="flex gap-4 pt-4">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
                       <Link
                         href="/users"
-                        className="flex-1 rounded-xl border border-[#d0c5af] px-8 py-4 text-center font-bold text-[#4d4635] transition hover:bg-[#ece9e2]"
+                        className="w-full sm:flex-1 rounded-xl border border-[#d0c5af] px-6 py-3.5 text-center font-bold text-[#4d4635] transition hover:bg-[#ece9e2]"
                       >
                         Cancel
                       </Link>
@@ -279,7 +280,7 @@ export default function EditUserPage() {
                       <button
                         type="submit"
                         disabled={loading}
-                        className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-[#735c00] px-8 py-4 font-bold text-white transition hover:bg-[#d4af37] disabled:opacity-60"
+                        className="w-full sm:flex-1 flex items-center justify-center gap-2 rounded-xl bg-[#735c00] px-6 py-3.5 font-bold text-white transition hover:bg-[#d4af37] disabled:opacity-60"
                       >
                         <Save size={18} />
                         {loading ? "Saving..." : "Save Changes"}

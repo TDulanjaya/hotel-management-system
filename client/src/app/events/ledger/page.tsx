@@ -67,34 +67,34 @@ export default function EventLedgerPage() {
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
 
-        <main className="min-h-screen px-8 py-10 lg:ml-[280px]">
-          <header className="mb-10 flex flex-col justify-between gap-6 xl:flex-row xl:items-end">
+        <main className="min-h-screen px-4 py-6 pt-16 sm:px-8 sm:py-10 lg:pt-10 lg:ml-[280px]">
+          <header className="mb-6 sm:mb-10 flex flex-col justify-between gap-4 sm:gap-6 xl:flex-row xl:items-end">
             <div>
-              <div className="mb-2 flex items-center gap-2 text-sm text-[#4d4635]">
+              <div className="mb-2 flex items-center gap-2 text-xs sm:text-sm text-[#4d4635]">
                 <Link href="/events" className="hover:underline">Events Control</Link>
                 <span>›</span>
                 <span className="font-bold text-[#735c00]">Master Ledger</span>
               </div>
 
-              <h1 className="text-4xl font-extrabold text-[#1b1c1a]">
+              <h1 className="text-2xl sm:text-4xl font-extrabold text-[#1b1c1a]">
                 {currentEvent?.eventName || (isLoading ? "Loading Event..." : "Event Master Ledger")}
               </h1>
 
-              <div className="mt-4 flex flex-wrap gap-3">
-                <span className="rounded-full border border-[#d4af37]/40 bg-[#d4af37]/20 px-4 py-2 text-sm font-bold text-[#735c00]">
+              <div className="mt-3 sm:mt-4 flex flex-wrap gap-2 sm:gap-3">
+                <span className="rounded-full border border-[#d4af37]/40 bg-[#d4af37]/20 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold text-[#735c00]">
                   TYPE: {currentEvent?.eventType || "GENERAL"}
                 </span>
 
-                <span className="rounded-full border border-[#dae2fd] bg-[#dae2fd]/50 px-4 py-2 text-sm font-bold text-[#565e74]">
+                <span className="rounded-full border border-[#dae2fd] bg-[#dae2fd]/50 px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm font-bold text-[#565e74]">
                   STATUS: {currentEvent?.status || "CONFIRMED"}
                 </span>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-3 w-full sm:w-auto">
               <Link
                 href="/events"
-                className="flex items-center gap-2 rounded-xl border-2 border-[#565e74] px-6 py-3 font-bold text-[#565e74] transition hover:bg-[#565e74]/5"
+                className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl border-2 border-[#565e74] px-5 py-3 text-sm sm:text-base font-bold text-[#565e74] transition hover:bg-[#565e74]/5"
               >
                 <ArrowLeft size={18} />
                 Back to Events
@@ -103,10 +103,10 @@ export default function EventLedgerPage() {
           </header>
 
           {!currentEvent && !isLoading ? (
-            <div className="rounded-2xl border border-[#d0c5af] bg-white p-12 text-center">
+            <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 sm:p-12 text-center">
               <Receipt size={48} className="mx-auto mb-3 text-[#735c00]/40" />
-              <h2 className="text-2xl font-bold">No Event Selected</h2>
-              <p className="mt-1 text-sm text-[#4d4635]">
+              <h2 className="text-xl sm:text-2xl font-bold">No Event Selected</h2>
+              <p className="mt-1 text-xs sm:text-sm text-[#4d4635]">
                 Please navigate to the Events page and select an event to view its master ledger.
               </p>
               <Link
@@ -121,11 +121,11 @@ export default function EventLedgerPage() {
               <section className="relative col-span-12 overflow-hidden rounded-xl border border-[#d0c5af] bg-white shadow-sm lg:col-span-4">
                 <div className="absolute left-0 top-0 h-full w-1 bg-[#d4af37]" />
 
-                <div className="border-b border-[#d0c5af]/50 p-6">
-                  <h2 className="text-xl font-bold">Organizer Information</h2>
+                <div className="border-b border-[#d0c5af]/50 p-4 sm:p-6">
+                  <h2 className="text-lg sm:text-xl font-bold">Organizer Information</h2>
                 </div>
 
-                <div className="space-y-4 p-6">
+                <div className="space-y-4 p-4 sm:p-6">
                   <InfoRow label="Primary Contact" value={currentEvent?.organizerName || "—"} />
                   <InfoRow label="Contact Phone" value={currentEvent?.organizerPhone || "—"} />
                   <InfoRow label="Billing Email" value={currentEvent?.organizerEmail || "—"} />
@@ -135,16 +135,16 @@ export default function EventLedgerPage() {
                 </div>
               </section>
 
-              <section className="col-span-12 rounded-xl border border-[#d0c5af] bg-white p-6 shadow-sm lg:col-span-8">
-                <div className="mb-6 flex items-center justify-between">
-                  <h2 className="text-xl font-bold">Billing Breakdown</h2>
+              <section className="col-span-12 rounded-xl border border-[#d0c5af] bg-white p-4 sm:p-6 shadow-sm lg:col-span-8">
+                <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <h2 className="text-lg sm:text-xl font-bold">Billing Breakdown</h2>
                   <span className="text-sm font-bold text-[#735c00]">
                     Total: Rs {Number(currentEvent?.grandTotal || 0).toLocaleString()}
                   </span>
                 </div>
 
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left">
+                  <table className="w-full min-w-[550px] text-left">
                     <thead>
                       <tr className="border-b border-[#d0c5af] bg-[#f5f3ef] text-xs uppercase tracking-widest text-[#4d4635]">
                         <th className="px-4 py-3">Item Description</th>

@@ -71,13 +71,13 @@ export default function EditPricingPage() {
       <div className="min-h-screen bg-[#f8f5ef] text-[#181818]">
         <AppSidebar />
 
-        <main className="page-slide-in px-8 py-10 lg:ml-[280px]">
-          <div className="mb-8 flex flex-col justify-between gap-5 xl:flex-row xl:items-end">
+        <main className="page-slide-in px-4 py-6 pt-16 sm:px-8 sm:py-10 lg:pt-10 lg:ml-[280px]">
+          <div className="mb-6 sm:mb-8 flex flex-col justify-between gap-4 sm:gap-5 xl:flex-row xl:items-end">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#806300]">Master Price Control</p>
-              <h1 className="mt-3 text-5xl font-extrabold tracking-tight">Edit Price Item</h1>
+              <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.3em] text-[#806300]">Master Price Control</p>
+              <h1 className="mt-1 sm:mt-3 text-2xl sm:text-5xl font-extrabold tracking-tight">Edit Price Item</h1>
             </div>
-            <Link href="/pricing" className="rounded-xl border border-[#806300] bg-white px-7 py-4 text-lg font-bold text-[#806300] transition hover:bg-[#faf8f3]">
+            <Link href="/pricing" className="w-full sm:w-auto rounded-xl border border-[#806300] bg-white px-5 sm:px-7 py-3 sm:py-4 text-sm sm:text-lg font-bold text-[#806300] transition hover:bg-[#faf8f3] text-center">
               Back to Pricing
             </Link>
           </div>
@@ -85,12 +85,12 @@ export default function EditPricingPage() {
           {fetching ? (
             <p>Loading details...</p>
           ) : (
-            <form onSubmit={handleSubmit} className="grid gap-8 xl:grid-cols-[1fr_0.6fr]">
-              <section className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-                {error && <div className="mb-4 text-red-600">{error}</div>}
-                <h2 className="text-2xl font-bold">Price Item Details</h2>
+            <form onSubmit={handleSubmit} className="grid gap-6 sm:gap-8 xl:grid-cols-[1fr_0.6fr]">
+              <section className="rounded-2xl border border-[#d0c5af] bg-white p-4 sm:p-6 shadow-sm">
+                {error && <div className="mb-4 text-sm font-bold text-red-600">{error}</div>}
+                <h2 className="text-xl sm:text-2xl font-bold">Price Item Details</h2>
 
-                <div className="mt-6 grid gap-5 md:grid-cols-2">
+                <div className="mt-5 sm:mt-6 grid gap-4 sm:gap-5 grid-cols-1 md:grid-cols-2">
                   <div className="md:col-span-2">
                     <label className="text-sm font-bold text-[#4d4635]">Item Name</label>
                     <input
@@ -98,7 +98,7 @@ export default function EditPricingPage() {
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                      className="mt-1.5 sm:mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 text-base outline-none focus:ring-2 focus:ring-[#735c00]/30"
                     />
                   </div>
 
@@ -164,11 +164,11 @@ export default function EditPricingPage() {
                   </div>
                 </div>
 
-                <div className="mt-8 flex gap-4">
-                  <Link href="/pricing" className="flex-1 rounded-xl border border-[#806300] bg-white px-7 py-4 text-center font-bold text-[#806300] transition hover:bg-[#faf8f3]">
+                <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row gap-3 sm:gap-4">
+                  <Link href="/pricing" className="w-full sm:flex-1 rounded-xl border border-[#806300] bg-white px-5 sm:px-7 py-3.5 sm:py-4 text-center font-bold text-[#806300] transition hover:bg-[#faf8f3]">
                     Cancel
                   </Link>
-                  <button type="submit" disabled={loading} className="flex-1 rounded-xl bg-[#d8b328] px-7 py-4 font-bold text-[#4c3a00] transition hover:bg-[#f2c426]">
+                  <button type="submit" disabled={loading} className="w-full sm:flex-1 rounded-xl bg-[#d8b328] px-5 sm:px-7 py-3.5 sm:py-4 font-bold text-[#4c3a00] transition hover:bg-[#f2c426] text-center">
                     {loading ? "Updating..." : "Update Price Item"}
                   </button>
                 </div>

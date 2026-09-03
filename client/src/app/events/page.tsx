@@ -150,16 +150,16 @@ function EventsPageContent() {
         <AppSidebar />
 
         <main className="lg:ml-[280px]">
-          <header className="sticky top-0 z-30 flex h-[76px] items-center justify-between border-b border-[#d9cfbd] bg-[#f8f5ef]/95 px-8 backdrop-blur-xl">
+          <header className="sticky top-0 z-20 flex h-[76px] items-center justify-between border-b border-[#d9cfbd] bg-[#f8f5ef]/95 pl-16 pr-4 sm:px-8 backdrop-blur-xl">
             <div className="flex flex-1 justify-start">
-              <div className="flex w-full max-w-[470px] items-center gap-4 rounded-full bg-[#f2f0ec] px-6 py-3 shadow-sm border border-[#e4dccb]">
-                <Search className="h-5 w-5 text-[#8a8175]" />
+              <div className="flex w-full max-w-[470px] items-center gap-3 sm:gap-4 rounded-full bg-[#f2f0ec] px-4 sm:px-6 py-2.5 sm:py-3 shadow-sm border border-[#e4dccb]">
+                <Search className="h-4 w-4 sm:h-5 sm:w-5 text-[#8a8175] shrink-0" />
                 <input
                   type="text"
-                  placeholder="Search events, organizers, or codes..."
+                  placeholder="Search events, organizers..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-transparent text-base outline-none placeholder:text-[#8a8175]"
+                  className="w-full bg-transparent text-sm sm:text-base outline-none placeholder:text-[#8a8175]"
                 />
                 {searchQuery && (
                   <button
@@ -172,7 +172,7 @@ function EventsPageContent() {
               </div>
             </div>
 
-            <div className="flex items-center gap-7">
+            <div className="flex items-center gap-3 sm:gap-7">
               <div className="hidden h-9 w-px bg-[#d9cfbd] md:block" />
 
               <div className="hidden text-right xl:block">
@@ -182,56 +182,56 @@ function EventsPageContent() {
                 </p>
               </div>
 
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#101827] text-white font-bold shadow">
+              <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-[#101827] text-white font-bold text-sm sm:text-base shadow">
                 {user?.name ? user.name.charAt(0).toUpperCase() : "A"}
               </div>
             </div>
           </header>
 
-          <section className="px-8 py-10">
-            <div className="event-fade mb-12 flex flex-col justify-between gap-6 xl:flex-row xl:items-center">
+          <section className="p-4 sm:p-6 lg:p-8">
+            <div className="event-fade mb-8 sm:mb-12 flex flex-col justify-between gap-4 sm:gap-6 xl:flex-row xl:items-center">
               <div>
-                <h1 className="text-5xl font-extrabold tracking-tight">
+                <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight">
                   Event Operations
                 </h1>
-                <p className="mt-3 text-xl text-[#3f3b35]">
+                <p className="mt-2 sm:mt-3 text-base sm:text-xl text-[#3f3b35]">
                   Manage weddings, batch parties, hall bookings, catering and event ledgers.
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-5">
+              <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-5 w-full xl:w-auto">
                 <button
                   onClick={handleExportLedger}
-                  className="flex items-center gap-2 rounded-xl border border-[#807464] bg-white px-7 py-4 text-base font-semibold transition hover:-translate-y-1 hover:bg-[#faf8f3] hover:shadow-lg"
+                  className="flex w-full sm:w-auto justify-center items-center gap-2 rounded-xl border border-[#807464] bg-white px-6 py-3.5 sm:px-7 sm:py-4 text-sm sm:text-base font-semibold transition hover:-translate-y-0.5 hover:bg-[#faf8f3] hover:shadow-lg"
                 >
-                  <Download className="h-5 w-5 text-[#807464]" />
+                  <Download className="h-4 w-4 sm:h-5 sm:w-5 text-[#807464]" />
                   Export Ledger
                 </button>
 
                 <Link
                   href="/events/list"
-                  className="flex items-center gap-2 rounded-xl border border-[#806300] bg-white px-7 py-4 text-base font-bold text-[#806300] transition hover:-translate-y-1 hover:bg-[#faf8f3] hover:shadow-lg"
+                  className="flex w-full sm:w-auto justify-center items-center gap-2 rounded-xl border border-[#806300] bg-white px-6 py-3.5 sm:px-7 sm:py-4 text-sm sm:text-base font-bold text-[#806300] transition hover:-translate-y-0.5 hover:bg-[#faf8f3] hover:shadow-lg"
                 >
-                  <Calendar className="h-5 w-5 text-[#806300]" />
+                  <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-[#806300]" />
                   Event List
                 </Link>
 
                 <button
                   onClick={() => setPanelOpen(true)}
-                  className="flex items-center gap-2 rounded-xl bg-[#d8b328] px-8 py-4 text-base font-bold text-[#4c3a00] transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl"
+                  className="flex w-full sm:w-auto justify-center items-center gap-2 rounded-xl bg-[#d8b328] px-6 py-3.5 sm:px-8 sm:py-4 text-sm sm:text-base font-bold text-[#4c3a00] transition hover:-translate-y-0.5 hover:bg-[#f2c426] hover:shadow-xl"
                 >
-                  <Plus className="h-5 w-5 text-[#4c3a00]" />
+                  <Plus className="h-4 w-4 sm:h-5 sm:w-5 text-[#4c3a00]" />
                   Create Event
                 </button>
               </div>
             </div>
 
-            <div className="grid gap-8 xl:grid-cols-[1.35fr_0.65fr]">
+            <div className="grid gap-6 sm:gap-8 xl:grid-cols-[1.35fr_0.65fr]">
               {/* Calendar Section */}
               <section className="event-fade delay-100 overflow-hidden rounded-2xl border border-[#d9cfbd] bg-white shadow-sm">
-                <div className="flex flex-col justify-between gap-5 border-b border-[#d9cfbd] bg-[#f8f5ef] px-8 py-6 xl:flex-row xl:items-center">
-                  <div className="flex items-center gap-5">
-                    <h2 className="text-3xl font-bold">
+                <div className="flex flex-col justify-between gap-4 sm:gap-5 border-b border-[#d9cfbd] bg-[#f8f5ef] p-4 sm:px-8 sm:py-6 sm:flex-row sm:items-center">
+                  <div className="flex items-center justify-between sm:justify-start gap-3 sm:gap-5">
+                    <h2 className="text-xl sm:text-3xl font-bold">
                       {monthName} {year}
                     </h2>
 
@@ -239,26 +239,26 @@ function EventsPageContent() {
                       <button
                         onClick={prevMonth}
                         aria-label="Previous Month"
-                        className="flex h-10 w-10 items-center justify-center transition hover:bg-white text-lg font-bold"
+                        className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center transition hover:bg-white text-base sm:text-lg font-bold"
                       >
-                        <ChevronLeft className="h-5 w-5" />
+                        <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
                       </button>
                       <button
                         onClick={nextMonth}
                         aria-label="Next Month"
-                        className="flex h-10 w-10 items-center justify-center transition hover:bg-white text-lg font-bold"
+                        className="flex h-9 w-9 sm:h-10 sm:w-10 items-center justify-center transition hover:bg-white text-base sm:text-lg font-bold"
                       >
-                        <ChevronRight className="h-5 w-5" />
+                        <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
                       </button>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 sm:gap-2">
                     {(["Month", "Week", "Day"] as const).map((view) => (
                       <button
                         key={view}
                         onClick={() => setCalendarView(view)}
-                        className={`rounded-xl px-5 py-2.5 text-base font-semibold transition ${
+                        className={`flex-1 sm:flex-initial text-center rounded-xl px-3 sm:px-5 py-2 sm:py-2.5 text-xs sm:text-base font-semibold transition ${
                           calendarView === view
                             ? "border border-[#cdbfaa] bg-white shadow-sm text-[#806300]"
                             : "text-[#57534e] hover:bg-white"
@@ -270,16 +270,18 @@ function EventsPageContent() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-7 border-b border-[#d9cfbd] bg-[#faf8f3]">
-                  {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((dayName) => (
-                    <div
-                      key={dayName}
-                      className="border-r border-[#d9cfbd] last:border-r-0 px-3 py-3 text-center text-xs font-bold text-[#57534e]"
-                    >
-                      {dayName}
+                <div className="overflow-x-auto">
+                  <div className="min-w-[600px]">
+                    <div className="grid grid-cols-7 border-b border-[#d9cfbd] bg-[#faf8f3]">
+                      {["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map((dayName) => (
+                        <div
+                          key={dayName}
+                          className="border-r border-[#d9cfbd] last:border-r-0 px-2 sm:px-3 py-2 sm:py-3 text-center text-[10px] sm:text-xs font-bold text-[#57534e]"
+                        >
+                          {dayName}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
 
                 <div className="grid grid-cols-7">
                   {/* Empty cells before month first day */}
@@ -335,7 +337,9 @@ function EventsPageContent() {
                     );
                   })}
                 </div>
-              </section>
+              </div>
+            </div>
+          </section>
 
               {/* Sidebar Section */}
               <aside className="space-y-8">

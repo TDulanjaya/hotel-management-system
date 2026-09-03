@@ -28,6 +28,7 @@ function EditEventPageContent() {
     startTime: "",
     organizerName: "",
     phone: "",
+    email: "",
     status: "Active",
     venueId: "V-001",
   });
@@ -59,6 +60,7 @@ function EditEventPageContent() {
           startTime: data.startTime || "",
           organizerName: data.organizerName || "",
           phone: data.phone || "",
+          email: data.email || "",
           status: data.status || "Active",
           venueId: data.venueId || "V-001",
         });
@@ -176,46 +178,46 @@ function EditEventPageContent() {
       <div className="min-h-screen bg-[#f8f5ef] text-[#181818]">
         <AppSidebar />
 
-        <main className="page-slide-in px-8 py-10 lg:ml-[280px]">
-          <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+        <main className="page-slide-in px-4 py-6 pt-16 sm:px-8 sm:py-10 lg:pt-10 lg:ml-[280px]">
+          <div className="mb-6 sm:mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#806300]">
+              <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.3em] text-[#806300]">
                 Events Module
               </p>
 
-              <h1 className="mt-3 text-4xl font-bold text-[#735c00]">
+              <h1 className="mt-1 sm:mt-3 text-2xl sm:text-4xl font-bold text-[#735c00]">
                 Edit Event
               </h1>
 
-              <p className="mt-2 text-[#4d4635]">
+              <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-[#4d4635]">
                 Update event details, status and service packages.
               </p>
             </div>
 
             <Link
               href="/events/list"
-              className="rounded-xl border border-[#806300] bg-white px-6 py-3 text-center font-bold text-[#806300] transition hover:bg-[#faf8f3]"
+              className="w-full sm:w-auto rounded-xl border border-[#806300] bg-white px-5 py-3 text-center text-sm sm:text-base font-bold text-[#806300] transition hover:bg-[#faf8f3]"
             >
               Back to Event List
             </Link>
           </div>
 
-          <section className="max-w-4xl rounded-2xl border border-[#d0c5af] bg-white p-8 shadow-sm">
+          <section className="max-w-4xl rounded-2xl border border-[#d0c5af] bg-white p-4 sm:p-8 shadow-sm">
             {error && (
-              <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 font-bold text-red-700">
+              <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
                 {error}
               </div>
             )}
 
             {fetching ? (
-              <div className="flex h-48 items-center justify-center text-lg font-bold text-[#806300]">
+              <div className="flex h-48 items-center justify-center text-base sm:text-lg font-bold text-[#806300]">
                 Loading event details...
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div className="flex items-center gap-3 border-b border-[#d0c5af] pb-5">
+              <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
+                <div className="flex items-center gap-3 border-b border-[#d0c5af] pb-4 sm:pb-5">
                   <CalendarDays className="text-[#735c00]" />
-                  <h2 className="text-2xl font-bold">Event Information</h2>
+                  <h2 className="text-xl sm:text-2xl font-bold">Event Information</h2>
                 </div>
 
                 <InputField
@@ -226,7 +228,7 @@ function EditEventPageContent() {
                   required
                 />
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
                   <div>
                     <label className="block text-sm font-bold text-[#4d4635]">
                       Event Type
@@ -235,7 +237,7 @@ function EditEventPageContent() {
                       name="eventType"
                       value={formData.eventType}
                       onChange={handleChange}
-                      className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+                      className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 text-base"
                     >
                       <option value="Wedding">Wedding</option>
                       <option value="Party">Party</option>
@@ -253,7 +255,7 @@ function EditEventPageContent() {
                   />
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
                   <InputField
                     label="Date *"
                     name="primaryDate"
@@ -273,7 +275,7 @@ function EditEventPageContent() {
                   />
                 </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
                   <InputField
                     label="Organizer Name *"
                     name="organizerName"
@@ -291,41 +293,51 @@ function EditEventPageContent() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-bold text-[#4d4635]">
-                    Status
-                  </label>
-                  <select
-                    name="status"
-                    value={formData.status}
+                <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
+                  <InputField
+                    label="Email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
                     onChange={handleChange}
-                    className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Confirmed">Confirmed</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Cancelled">Cancelled</option>
-                  </select>
+                  />
+
+                  <div>
+                    <label className="block text-sm font-bold text-[#4d4635]">
+                      Status
+                    </label>
+                    <select
+                      name="status"
+                      value={formData.status}
+                      onChange={handleChange}
+                      className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 text-base"
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Confirmed">Confirmed</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Cancelled">Cancelled</option>
+                    </select>
+                  </div>
                 </div>
 
-                <div className="rounded-2xl border border-[#d0c5af] bg-[#fbf9f5] p-5">
-                  <div className="mb-4 flex items-center gap-3">
+                {/* Event Service Packages */}
+                <div className="rounded-xl border border-[#d0c5af] bg-[#fbf9f5] p-3.5 sm:p-5">
+                  <div className="mb-3 sm:mb-4 flex items-center gap-3">
                     <PackagePlus className="text-[#735c00]" />
-                    <h3 className="text-xl font-bold text-[#735c00]">
+                    <h3 className="text-lg sm:text-xl font-bold text-[#735c00]">
                       Event Service Packages
                     </h3>
                   </div>
 
-                  <div className="mb-4 flex gap-2">
+                  <div className="mb-4 flex flex-col sm:flex-row gap-2">
                     <select
-                      id="pkg-select"
-                      className="flex-1 rounded-xl border border-[#d0c5af] p-3 text-sm"
+                      id="edit-pkg-select"
+                      className="w-full flex-1 rounded-xl border border-[#d0c5af] p-3 text-base sm:text-sm"
                       defaultValue=""
                     >
                       <option value="" disabled>
                         Select a package to add...
                       </option>
-
                       {pricingItems.map((item) => (
                         <option key={item.id} value={item.id}>
                           {item.name} - Rs {Number(item.price || 0)}
@@ -337,37 +349,36 @@ function EditEventPageContent() {
                       type="button"
                       onClick={() => {
                         const select = document.getElementById(
-                          "pkg-select"
+                          "edit-pkg-select"
                         ) as HTMLSelectElement;
-
                         addPackage(select.value);
                         select.value = "";
                       }}
-                      className="rounded-xl bg-[#e6cf77] px-5 py-3 font-bold text-[#4c3a00] hover:bg-[#d4af37]"
+                      className="w-full sm:w-auto rounded-xl bg-[#e6cf77] px-6 py-2.5 font-bold text-[#4c3a00]"
                     >
                       Add
                     </button>
                   </div>
 
                   {selectedPackages.length === 0 ? (
-                    <p className="text-sm italic text-gray-500">
+                    <p className="text-xs sm:text-sm italic text-gray-500">
                       No packages added yet.
                     </p>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {selectedPackages.map((pkg, idx) => (
                         <div
                           key={idx}
-                          className="flex items-center justify-between rounded-xl border border-[#e6dfd2] bg-white p-4 shadow-sm"
+                          className="flex items-center justify-between rounded-lg border border-[#e6dfd2] bg-white p-3 shadow-sm"
                         >
-                          <div>
-                            <p className="font-bold">{pkg.name}</p>
+                          <div className="min-w-0 pr-2">
+                            <p className="font-bold text-sm truncate">{pkg.name}</p>
                             <p className="text-xs text-gray-500">
                               Rs {Number(pkg.price || 0)} each
                             </p>
                           </div>
 
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
                             <button
                               type="button"
                               onClick={() =>
@@ -377,11 +388,9 @@ function EditEventPageContent() {
                             >
                               -
                             </button>
-
-                            <span className="w-5 text-center font-bold">
+                            <span className="w-4 text-center font-bold text-sm">
                               {pkg.quantity}
                             </span>
-
                             <button
                               type="button"
                               onClick={() =>
@@ -397,7 +406,7 @@ function EditEventPageContent() {
                     </div>
                   )}
 
-                  <div className="mt-5 flex justify-between border-t border-[#d0c5af] pt-4 text-lg font-bold">
+                  <div className="mt-4 sm:mt-5 flex justify-between border-t border-[#d0c5af] pt-4 text-base sm:text-lg font-bold">
                     <span>Grand Total:</span>
                     <span className="text-[#735c00]">
                       Rs {packageTotal.toLocaleString()}
@@ -405,18 +414,18 @@ function EditEventPageContent() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-4 pt-4">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
                   <button
                     type="submit"
                     disabled={loading}
-                    className="rounded-xl bg-[#735c00] px-8 py-3 font-bold text-white transition hover:bg-[#d4af37] disabled:opacity-60"
+                    className="w-full sm:w-auto rounded-xl bg-[#735c00] px-8 py-3.5 font-bold text-white transition hover:bg-[#d4af37] disabled:opacity-60 text-center"
                   >
                     {loading ? "Updating..." : "Update Event"}
                   </button>
 
                   <Link
                     href="/events/list"
-                    className="rounded-xl border border-[#d0c5af] px-8 py-3 font-bold text-[#4d4635] transition hover:bg-[#f5f3ef]"
+                    className="w-full sm:w-auto rounded-xl border border-[#d0c5af] px-8 py-3.5 font-bold text-[#4d4635] transition hover:bg-[#f5f3ef] text-center"
                   >
                     Cancel
                   </Link>
@@ -455,7 +464,7 @@ function InputField({
         name={name}
         value={value}
         onChange={onChange}
-        className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+        className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 text-base"
       />
     </div>
   );

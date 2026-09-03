@@ -29,7 +29,6 @@ const ROUTE_ROLES: Record<string, UserRole[]> = {
   "/pricing": ["OWNER", "MANAGER"],
   "/reports": ["OWNER", "MANAGER"],
   "/audit-logs": ["OWNER", "MANAGER"],
-  "/settings": ["OWNER"],
 };
 
 export default function AuthGuard({

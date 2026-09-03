@@ -10,7 +10,7 @@ import {
 
 export default function LandingPage() {
   return (
-    <main className="relative min-h-screen overflow-hidden bg-[#070b0d] text-white">
+    <main className="relative min-h-screen overflow-hidden bg-[#070b0d] text-white flex flex-col justify-between">
       {/* Background image */}
       <div
         className="absolute inset-0 bg-cover bg-center"
@@ -19,97 +19,93 @@ export default function LandingPage() {
         }}
       />
 
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-black/30" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-black/40" />
+      {/* Dark overlay gradients */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/75 to-black/40" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-black/50" />
 
-      {/* Decorative circles */}
-      <div className="pointer-events-none absolute -left-24 top-20 h-80 w-80 rounded-full border border-[#c99a32]/10 opacity-40" />
-      <div className="pointer-events-none absolute -right-24 bottom-0 h-80 w-80 rounded-full border border-[#c99a32]/10 opacity-40" />
+      {/* Subtle background glow */}
+      <div className="pointer-events-none absolute -left-32 top-16 h-96 w-96 rounded-full bg-[#d4af37]/10 blur-3xl" />
+      <div className="pointer-events-none absolute -right-32 bottom-16 h-96 w-96 rounded-full bg-[#d4af37]/10 blur-3xl" />
 
-      <section className="relative z-10 flex min-h-screen flex-col px-6 py-6 md:px-10 lg:px-14 xl:px-16">
+      <section className="relative z-10 flex min-h-screen flex-col justify-between px-6 py-6 sm:px-10 lg:px-14 xl:px-16">
         {/* Header */}
-        <header className="flex items-start justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-[#d3a13b]/60 bg-black/20 md:h-14 md:w-14">
-              <Sparkles className="h-7 w-7 text-[#d3a13b] md:h-8 md:w-8" />
+        <header className="flex items-center justify-between">
+          <div className="flex items-center gap-3.5 sm:gap-4">
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl border border-[#d3a13b]/60 bg-black/40 shadow-lg backdrop-blur-md">
+              <Sparkles className="h-6 w-6 sm:h-7 sm:w-7 text-[#d3a13b]" />
             </div>
 
             <div>
-              <h1 className="font-serif text-3xl font-semibold tracking-wide text-[#d3a13b] md:text-4xl">
+              <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-semibold tracking-wide text-[#d3a13b]">
                 The Camellia
               </h1>
-              <p className="mt-1 text-xs font-semibold uppercase tracking-[0.4em] text-white md:text-sm">
+              <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.4em] text-white">
                 Reserve
               </p>
             </div>
           </div>
 
           <div className="hidden text-right md:block">
-            <p className="text-sm font-semibold uppercase tracking-[0.45em] text-white lg:text-base">
+            <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.45em] text-white/90">
               Staff Portal
             </p>
-            <div className="ml-auto mt-3 h-[2px] w-16 bg-[#d3a13b]" />
+            <div className="ml-auto mt-2 h-[2px] w-14 bg-[#d3a13b]" />
           </div>
         </header>
 
-        {/* Main content */}
+        {/* Main Hero Content */}
         <div className="grid flex-1 items-center gap-8 py-8 lg:grid-cols-[1fr_0.9fr]">
-          {/* Left content */}
+          {/* Left Hero Text */}
           <div className="max-w-xl">
-            <p className="mb-3 text-sm font-semibold uppercase tracking-[0.35em] text-[#d3a13b] md:text-base">
+            <p className="mb-2 text-xs sm:text-sm font-bold uppercase tracking-[0.35em] text-[#d3a13b]">
               Welcome to Camellia Reserve
             </p>
 
-            <div className="mb-5 h-[2px] w-14 bg-[#d3a13b]" />
+            <div className="mb-4 h-[2px] w-12 bg-[#d3a13b]" />
 
-            <h2 className="font-serif text-4xl font-bold leading-tight text-white md:text-5xl xl:text-6xl">
+            <h2 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-bold leading-tight text-white">
               Welcome Back,
               <span className="block text-[#d3a13b]">Valued Team</span>
             </h2>
 
-            <p className="mt-5 max-w-lg text-base leading-relaxed text-white/90 md:text-lg">
-              This is your hub to manage, serve and create memorable experiences
-              for our guests.
+            <p className="mt-4 max-w-lg text-sm sm:text-base lg:text-lg leading-relaxed text-white/85">
+              This is your central operational hub to manage reservations, serve guests, and create memorable luxury experiences.
             </p>
           </div>
 
-          {/* Right login call */}
+          {/* Right Login Call-to-Action */}
           <div className="flex justify-center lg:justify-end">
-            <div className="w-full max-w-md text-center">
-              <div className="mx-auto mb-6 flex items-center justify-center gap-6">
-                <div className="h-[2px] w-20 bg-[#d3a13b]/50" />
-                <Sparkles className="h-9 w-9 text-[#d3a13b]" />
-                <div className="h-[2px] w-20 bg-[#d3a13b]/50" />
+            <div className="w-full max-w-md rounded-3xl border border-[#d3a13b]/30 bg-black/50 p-6 sm:p-8 text-center shadow-2xl backdrop-blur-xl">
+              <div className="mx-auto mb-4 flex items-center justify-center gap-4">
+                <div className="h-[1.5px] w-14 bg-[#d3a13b]/60" />
+                <Sparkles className="h-7 w-7 text-[#d3a13b]" />
+                <div className="h-[1.5px] w-14 bg-[#d3a13b]/60" />
               </div>
 
-              <h3 className="font-serif text-3xl font-semibold leading-tight text-white md:text-4xl">
-                We&apos;re glad to have you here!
+              <h3 className="font-serif text-2xl sm:text-3xl font-semibold leading-tight text-white">
+                Glad to have you back!
               </h3>
 
-              <p className="mx-auto mt-4 max-w-md text-base leading-relaxed text-white/90">
-                Let&apos;s continue delivering exceptional hospitality and
-                making every stay unforgettable.
+              <p className="mx-auto mt-2.5 max-w-sm text-xs sm:text-sm leading-relaxed text-white/80">
+                Let&apos;s continue delivering exceptional Sri Lankan hospitality across all departments.
               </p>
 
-              <p className="mt-8 text-base font-semibold text-[#d3a13b]">
-                Ready to get started?
-              </p>
-
-              <Link
-                href="/login"
-                className="group mx-auto mt-5 flex w-full max-w-sm items-center justify-center gap-3 rounded-xl bg-gradient-to-r from-[#b88727] to-[#e3b84f] px-7 py-4 text-xl font-bold text-white shadow-[0_18px_40px_rgba(211,161,59,0.25)] transition hover:scale-[1.02] hover:shadow-[0_22px_55px_rgba(211,161,59,0.35)]"
-              >
-                Staff Login
-                <ChevronRight className="h-6 w-6 transition group-hover:translate-x-2" />
-              </Link>
+              <div className="mt-6">
+                <Link
+                  href="/login"
+                  className="group mx-auto flex w-full items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-[#b88727] via-[#d3a13b] to-[#e3b84f] px-7 py-4 text-lg font-bold text-white shadow-[0_12px_35px_rgba(211,161,59,0.35)] transition hover:scale-[1.02] hover:shadow-[0_16px_45px_rgba(211,161,59,0.45)] active:scale-95"
+                >
+                  Staff Portal Login
+                  <ChevronRight className="h-5 w-5 transition group-hover:translate-x-1.5" />
+                </Link>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Footer */}
-        <footer className="border-t border-[#d3a13b]/30 pt-5">
-          <div className="grid gap-5 text-white md:grid-cols-3">
+        {/* Footer Support Info (Properly Aligned & Responsive) */}
+        <footer className="border-t border-[#d3a13b]/25 pt-5 pb-2">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-6">
             <FooterItem
               icon={<Clock />}
               title="Need Help?"
@@ -120,12 +116,14 @@ export default function LandingPage() {
               icon={<Mail />}
               title="Email Support"
               description="it.support@camelliareserve.com"
+              href="mailto:it.support@camelliareserve.com"
             />
 
             <FooterItem
               icon={<Phone />}
               title="Call Support"
               description="+94 11 234 5678"
+              href="tel:+94112345678"
             />
           </div>
         </footer>
@@ -138,21 +136,37 @@ function FooterItem({
   icon,
   title,
   description,
+  href,
 }: {
   icon: ReactNode;
   title: string;
   description: string;
+  href?: string;
 }) {
-  return (
-    <div className="flex items-center justify-center gap-3 md:justify-start">
-      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#d3a13b]/40 text-[#d3a13b]">
+  const content = (
+    <div className="flex items-center gap-3.5 rounded-2xl border border-[#d3a13b]/20 bg-black/40 px-4 py-3 backdrop-blur-md transition hover:border-[#d3a13b]/50 hover:bg-black/60">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#d3a13b]/40 bg-[#d3a13b]/10 text-[#d3a13b]">
         <div className="[&>svg]:h-5 [&>svg]:w-5">{icon}</div>
       </div>
 
-      <div>
-        <p className="text-sm font-semibold text-[#d3a13b]">{title}</p>
-        <p className="mt-1 text-sm text-white/85">{description}</p>
+      <div className="min-w-0 flex-1 text-left">
+        <p className="text-[11px] font-bold uppercase tracking-wider text-[#d3a13b]">
+          {title}
+        </p>
+        <p className="mt-0.5 text-xs sm:text-sm font-medium text-white/90 truncate">
+          {description}
+        </p>
       </div>
     </div>
   );
+
+  if (href) {
+    return (
+      <a href={href} className="block transition active:scale-95">
+        {content}
+      </a>
+    );
+  }
+
+  return content;
 }

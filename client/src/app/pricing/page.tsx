@@ -175,77 +175,77 @@ function PricingPageContent() {
     <div className="min-h-screen bg-[#f8f5ef] text-[#181818]">
       <AppSidebar />
 
-      <main className="px-8 py-10 lg:ml-[280px]">
-        <div className="mb-8 flex flex-col justify-between gap-5 xl:flex-row xl:items-end">
+      <main className="px-4 py-6 pt-16 sm:px-8 sm:py-10 lg:pt-10 lg:ml-[280px]">
+        <div className="mb-6 sm:mb-8 flex flex-col justify-between gap-4 sm:gap-5 xl:flex-row xl:items-end">
           <div>
-            <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#806300]">
+            <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.3em] text-[#806300]">
               Master Price Control
             </p>
 
-            <h1 className="mt-3 text-5xl font-extrabold tracking-tight">
+            <h1 className="mt-1 sm:mt-3 text-2xl sm:text-5xl font-extrabold tracking-tight">
               Service Pricing
             </h1>
 
-            <p className="mt-3 max-w-3xl text-lg text-[#4d4635]">
+            <p className="mt-1 sm:mt-3 max-w-3xl text-xs sm:text-lg text-[#4d4635]">
               Control menu prices, bites, drinks, bar packages, parking,
               amenities, and hotel service charges from one place.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-4">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 w-full xl:w-auto">
             <button
               onClick={resetDefaultItems}
-              className="rounded-xl border border-[#806300] bg-white px-6 py-4 font-bold text-[#806300] transition hover:bg-[#faf8f3]"
+              className="w-full sm:w-auto rounded-xl border border-[#806300] bg-white px-5 sm:px-6 py-3 sm:py-4 text-sm sm:text-base font-bold text-[#806300] transition hover:bg-[#faf8f3]"
             >
               Reset Defaults
             </button>
 
             <button
               onClick={() => setPanelOpen(true)}
-              className="rounded-xl bg-[#d8b328] px-7 py-4 text-lg font-bold text-[#4c3a00] transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl"
+              className="w-full sm:w-auto rounded-xl bg-[#d8b328] px-5 sm:px-7 py-3 sm:py-4 text-sm sm:text-lg font-bold text-[#4c3a00] transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl text-center"
             >
               + Add Price Item
             </button>
           </div>
         </div>
 
-        <section className="mb-8 grid gap-5 md:grid-cols-3">
-          <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-            <p className="text-sm font-bold uppercase tracking-wider text-[#806300]">
+        <section className="mb-6 sm:mb-8 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5">
+          <div className="rounded-2xl border border-[#d0c5af] bg-white p-4 sm:p-6 shadow-sm">
+            <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#806300]">
               Active Items
             </p>
-            <h2 className="mt-3 text-4xl font-extrabold">{activeCount}</h2>
+            <h2 className="mt-1 sm:mt-3 text-2xl sm:text-4xl font-extrabold">{activeCount}</h2>
           </div>
 
-          <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-            <p className="text-sm font-bold uppercase tracking-wider text-[#806300]">
+          <div className="rounded-2xl border border-[#d0c5af] bg-white p-4 sm:p-6 shadow-sm">
+            <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#806300]">
               Inactive Items
             </p>
-            <h2 className="mt-3 text-4xl font-extrabold">{inactiveCount}</h2>
+            <h2 className="mt-1 sm:mt-3 text-2xl sm:text-4xl font-extrabold">{inactiveCount}</h2>
           </div>
 
-          <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-            <p className="text-sm font-bold uppercase tracking-wider text-[#806300]">
+          <div className="rounded-2xl border border-[#d0c5af] bg-white p-4 sm:p-6 shadow-sm">
+            <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#806300]">
               Total Base Price Value
             </p>
-            <h2 className="mt-3 text-4xl font-extrabold">
+            <h2 className="mt-1 sm:mt-3 text-2xl sm:text-4xl font-extrabold">
               Rs{totalValue.toLocaleString()}
             </h2>
           </div>
         </section>
 
-        <section className="mb-6 grid gap-4 md:grid-cols-[1fr_240px]">
+        <section className="mb-6 grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-[1fr_240px]">
           <input
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
             placeholder="Search menu, parking, bar, amenity..."
-            className="rounded-xl border border-[#d0c5af] bg-white px-5 py-4 outline-none focus:ring-2 focus:ring-[#806300]/30"
+            className="rounded-xl border border-[#d0c5af] bg-white px-4 sm:px-5 py-3 sm:py-4 text-base outline-none focus:ring-2 focus:ring-[#806300]/30"
           />
 
           <select
             value={categoryFilter}
             onChange={(event) => setCategoryFilter(event.target.value)}
-            className="rounded-xl border border-[#d0c5af] bg-white px-5 py-4 outline-none focus:ring-2 focus:ring-[#806300]/30"
+            className="rounded-xl border border-[#d0c5af] bg-white px-4 sm:px-5 py-3 sm:py-4 text-base outline-none focus:ring-2 focus:ring-[#806300]/30"
           >
             {uniqueCategories.map((cat) => (
               <option key={cat}>{cat}</option>

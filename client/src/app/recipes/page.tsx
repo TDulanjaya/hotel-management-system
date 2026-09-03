@@ -74,39 +74,39 @@ export default function PageComponent() {
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "COOK"]}>
       <div className="flex min-h-screen bg-[#f8f5ef]">
         <AppSidebar />
-        <main className="flex-1 p-8 lg:ml-[280px]">
-          <div className="mb-8 flex items-center justify-between">
-            <h1 className="text-3xl font-extrabold text-[#181818]">Recipes</h1>
-            <button onClick={handleOpenNew} className="rounded-xl bg-[#806300] px-6 py-2 text-white font-bold hover:bg-[#6b5400]">+ Add</button>
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 pt-16 sm:pt-20 lg:pt-8 lg:ml-[280px]">
+          <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#181818]">Recipes</h1>
+            <button onClick={handleOpenNew} className="w-full sm:w-auto rounded-xl bg-[#806300] px-6 py-2.5 text-white font-bold hover:bg-[#6b5400] text-center">+ Add Recipe</button>
           </div>
 
           {loading ? (
             <div className="flex h-64 items-center justify-center text-lg text-[#806300]">Loading...</div>
           ) : error ? (
-            <div className="text-red-600">{error}</div>
+            <div className="text-red-600 font-bold">{error}</div>
           ) : items.length === 0 ? (
-            <div className="flex h-64 flex-col items-center justify-center rounded-xl bg-white shadow-sm border border-[#d9cfbd]">
-              <p className="mb-4 text-xl font-semibold text-gray-500">No records found</p>
-              <button onClick={handleOpenNew} className="rounded-xl bg-[#806300] px-6 py-2 text-white font-bold hover:bg-[#6b5400]">+ Add</button>
+            <div className="flex h-64 flex-col items-center justify-center rounded-xl bg-white shadow-sm border border-[#d9cfbd] p-6 text-center">
+              <p className="mb-4 text-lg sm:text-xl font-semibold text-gray-500">No records found</p>
+              <button onClick={handleOpenNew} className="rounded-xl bg-[#806300] px-6 py-2.5 text-white font-bold hover:bg-[#6b5400]">+ Add Recipe</button>
             </div>
           ) : (
             <div className="overflow-x-auto rounded-xl bg-white shadow-sm border border-[#d9cfbd]">
-              <table className="w-full text-left text-sm">
+              <table className="w-full min-w-[550px] text-left text-sm">
                 <thead className="bg-[#f5eed9] text-[#4c4032]">
                   <tr>
-                    <th className="p-4 font-bold">Name</th><th className="p-4 font-bold">Category</th><th className="p-4 font-bold">Prep Time (min)</th><th className="p-4 font-bold">Servings</th><th className="p-4 font-bold">Actions</th>
+                    <th className="p-3 sm:p-4 font-bold">Name</th><th className="p-3 sm:p-4 font-bold">Category</th><th className="p-3 sm:p-4 font-bold">Prep Time (min)</th><th className="p-3 sm:p-4 font-bold">Servings</th><th className="p-3 sm:p-4 font-bold">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#d9cfbd]">
                   {items.map((item: any) => (
                     <tr key={item.id} className="hover:bg-slate-50">
                       
-                      <td className="p-4 font-semibold">{item.name}</td>
-                      <td className="p-4">{item.category}</td>
-                      <td className="p-4">{item.prepTime}</td>
-                      <td className="p-4">{item.servings}</td>
+                      <td className="p-3 sm:p-4 font-semibold">{item.name}</td>
+                      <td className="p-3 sm:p-4">{item.category}</td>
+                      <td className="p-3 sm:p-4">{item.prepTime}</td>
+                      <td className="p-3 sm:p-4">{item.servings}</td>
 
-                      <td className="p-4 flex gap-2">
+                      <td className="p-3 sm:p-4 flex gap-2">
                         {canEdit && (
                           <button onClick={() => handleOpenEdit(item)} className="text-blue-600 font-semibold hover:underline">Edit</button>
                         )}
@@ -121,18 +121,18 @@ export default function PageComponent() {
             </div>
           )}
 
-          <SlidePanel open={panelOpen} onClose={() => setPanelOpen(false)} title={editItem ? "Edit" : "Add"}>
+          <SlidePanel open={panelOpen} onClose={() => setPanelOpen(false)} title={editItem ? "Edit Recipe" : "Add Recipe"}>
             <form onSubmit={handleSubmit} className="space-y-4">
               
-              <div><label className="block text-sm font-bold">Name *</label><input required className="w-full rounded border p-2" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} /></div>
-              <div><label className="block text-sm font-bold">Category</label><select className="w-full rounded border p-2" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}><option>Starter</option><option>Main</option><option>Dessert</option><option>Beverage</option></select></div>
-              <div><label className="block text-sm font-bold">Ingredients *</label><textarea required className="w-full rounded border p-2" value={formData.ingredients} onChange={e => setFormData({...formData, ingredients: e.target.value})} /></div>
-              <div><label className="block text-sm font-bold">Instructions *</label><textarea required className="w-full rounded border p-2" value={formData.instructions} onChange={e => setFormData({...formData, instructions: e.target.value})} /></div>
-              <div><label className="block text-sm font-bold">Prep Time (min)</label><input type="number" className="w-full rounded border p-2" value={formData.prepTime} onChange={e => setFormData({...formData, prepTime: parseInt(e.target.value) || 0})} /></div>
-              <div><label className="block text-sm font-bold">Servings</label><input type="number" className="w-full rounded border p-2" value={formData.servings} onChange={e => setFormData({...formData, servings: parseInt(e.target.value) || 1})} /></div>
-              <div><label className="block text-sm font-bold">Notes</label><textarea className="w-full rounded border p-2" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} /></div>
+              <div><label className="block text-sm font-bold">Name *</label><input required className="w-full rounded-xl border border-[#d0c5af] p-3 text-base" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} /></div>
+              <div><label className="block text-sm font-bold">Category</label><select className="w-full rounded-xl border border-[#d0c5af] p-3 text-base" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}><option>Starter</option><option>Main</option><option>Dessert</option><option>Beverage</option></select></div>
+              <div><label className="block text-sm font-bold">Ingredients *</label><textarea required rows={4} className="w-full rounded-xl border border-[#d0c5af] p-3 text-base" value={formData.ingredients} onChange={e => setFormData({...formData, ingredients: e.target.value})} /></div>
+              <div><label className="block text-sm font-bold">Instructions *</label><textarea required rows={4} className="w-full rounded-xl border border-[#d0c5af] p-3 text-base" value={formData.instructions} onChange={e => setFormData({...formData, instructions: e.target.value})} /></div>
+              <div><label className="block text-sm font-bold">Prep Time (min)</label><input type="number" className="w-full rounded-xl border border-[#d0c5af] p-3 text-base" value={formData.prepTime} onChange={e => setFormData({...formData, prepTime: parseInt(e.target.value) || 0})} /></div>
+              <div><label className="block text-sm font-bold">Servings</label><input type="number" className="w-full rounded-xl border border-[#d0c5af] p-3 text-base" value={formData.servings} onChange={e => setFormData({...formData, servings: parseInt(e.target.value) || 1})} /></div>
+              <div><label className="block text-sm font-bold">Notes</label><textarea rows={3} className="w-full rounded-xl border border-[#d0c5af] p-3 text-base" value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} /></div>
 
-              <button type="submit" className="w-full rounded bg-[#806300] py-3 text-white font-bold hover:bg-[#6b5400]">Save</button>
+              <button type="submit" className="w-full rounded-xl bg-[#806300] py-3.5 text-white font-bold hover:bg-[#6b5400] text-center">Save Recipe</button>
             </form>
           </SlidePanel>
         </main>

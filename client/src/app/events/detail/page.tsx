@@ -59,13 +59,13 @@ export default function EventDetailsPage() {
       <div className="min-h-screen bg-[#f8f5ef] text-[#181818]">
         <AppSidebar />
 
-        <main className="px-8 py-10 lg:ml-[280px]">
+        <main className="px-4 py-6 pt-16 sm:px-8 sm:py-10 lg:pt-10 lg:ml-[280px]">
           {!event ? (
-            <section className="rounded-2xl border border-[#d0c5af] bg-white p-10 text-center shadow-sm">
-              <h1 className="text-3xl font-bold text-[#735c00]">
+            <section className="rounded-2xl border border-[#d0c5af] bg-white p-6 sm:p-10 text-center shadow-sm">
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#735c00]">
                 Event not found
               </h1>
-              <p className="mt-3 text-[#4d4635]">
+              <p className="mt-2 sm:mt-3 text-sm sm:text-base text-[#4d4635]">
                 This event may have been deleted or not saved correctly.
               </p>
 
@@ -78,64 +78,64 @@ export default function EventDetailsPage() {
             </section>
           ) : (
             <>
-              <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
+              <div className="mb-6 sm:mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
                 <div>
-                  <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#806300]">
+                  <p className="text-xs sm:text-sm font-bold uppercase tracking-[0.3em] text-[#806300]">
                     Event Details
                   </p>
 
-                  <h1 className="mt-3 text-4xl font-bold text-[#735c00]">
+                  <h1 className="mt-1 sm:mt-3 text-2xl sm:text-4xl font-bold text-[#735c00]">
                     {event.eventName}
                   </h1>
 
-                  <p className="mt-2 text-[#4d4635]">
+                  <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-[#4d4635]">
                     {event.eventType} - {event.selectedVenue.name}
                   </p>
                 </div>
 
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4 w-full sm:w-auto">
                   <Link
                     href="/events/list"
-                    className="rounded-xl border border-[#806300] bg-white px-6 py-3 text-center font-bold text-[#806300] transition hover:bg-[#faf8f3]"
+                    className="w-full sm:w-auto rounded-xl border border-[#806300] bg-white px-5 py-3 text-center text-sm sm:text-base font-bold text-[#806300] transition hover:bg-[#faf8f3]"
                   >
                     Back to List
                   </Link>
 
                   <Link
                     href="/events/new"
-                    className="rounded-xl bg-[#735c00] px-6 py-3 text-center font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
+                    className="w-full sm:w-auto rounded-xl bg-[#735c00] px-5 py-3 text-center text-sm sm:text-base font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
                   >
                     + New Event
                   </Link>
                 </div>
               </div>
 
-              <div className="grid gap-8 xl:grid-cols-[1.35fr_0.65fr]">
-                <section className="space-y-8">
+              <div className="grid gap-6 sm:gap-8 xl:grid-cols-[1.35fr_0.65fr]">
+                <section className="space-y-6 sm:space-y-8">
                   <section className="overflow-hidden rounded-2xl border border-[#d0c5af] bg-white shadow-sm">
                     <Image
                       src={event.selectedVenue.image}
                       alt={event.selectedVenue.name}
                       width={800}
                       height={400}
-                      className="h-72 w-full object-cover"
+                      className="h-48 sm:h-72 w-full object-cover"
                       unoptimized
                     />
 
-                    <div className="p-6">
-                      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
+                    <div className="p-4 sm:p-6">
+                      <div className="flex flex-col justify-between gap-3 sm:gap-4 sm:flex-row sm:items-start">
                         <div>
-                          <h2 className="text-3xl font-bold">
+                          <h2 className="text-2xl sm:text-3xl font-bold">
                             {event.selectedVenue.name}
                           </h2>
-                          <p className="mt-2 text-[#4d4635]">
+                          <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-[#4d4635]">
                             {event.selectedVenue.type} -{" "}
                             {event.selectedVenue.size} - Max{" "}
                             {event.selectedVenue.capacity} guests
                           </p>
                         </div>
 
-                        <span className="rounded-full bg-[#f5eed9] px-4 py-2 text-sm font-bold text-[#735c00]">
+                        <span className="self-start rounded-full bg-[#f5eed9] px-3.5 py-1.5 text-xs sm:text-sm font-bold text-[#735c00]">
                           {event.status}
                         </span>
                       </div>
