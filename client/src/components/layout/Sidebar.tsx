@@ -35,7 +35,6 @@ const menuItems: MenuItem[] = [
 
   // 4. EVENTS & RECREATION
   { name: "Events",            href: "/events",             icon: "▣", allowedRoles: ["OWNER", "MANAGER", "EVENTS"], category: "EVENTS & RECREATION" },
-  { name: "Event Bookings",    href: "/events/list",        icon: "▤", allowedRoles: ["OWNER", "MANAGER", "EVENTS"], category: "EVENTS & RECREATION" },
   { name: "Venues",            href: "/venues",             icon: "▥", allowedRoles: ["OWNER", "MANAGER", "EVENTS"], category: "EVENTS & RECREATION" },
   { name: "Games",             href: "/games",              icon: "◇", allowedRoles: ["OWNER", "MANAGER", "GAME_STAFF"], category: "EVENTS & RECREATION" },
 

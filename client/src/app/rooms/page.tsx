@@ -3,12 +3,10 @@
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SlidePanel from "@/components/ui/SlidePanel";
-import { Button, Card } from "@/components/ui";
-import { Bed, Pencil, Plus, Trash2 } from "lucide-react";
+import { Bed, Pencil, Plus, Trash2, Search, X, Users, DoorOpen, Sparkles } from "lucide-react";
 import {
   deleteRoom as apiDeleteRoom,
   createRoom,
-  getRooms,
 } from "@/lib/api/roomApi";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -187,16 +185,18 @@ export default function RoomsPage() {
         <AppSidebar />
 
         <main className="lg:ml-[280px]">
-          <header className="sticky top-0 z-20 flex h-[80px] items-center justify-between border-b border-[#d9cfbd] bg-[#f8f5ef]/95 px-8 backdrop-blur-xl">
-            <div className="hidden items-center gap-3 xl:flex">
-              <p className="text-xl font-semibold leading-tight">
-                The Camellia <br /> Reserve
+          {/* Topbar Header */}
+          <header className="sticky top-0 z-20 flex h-[72px] sm:h-[80px] items-center justify-between border-b border-[#d9cfbd] bg-[#f8f5ef]/95 pl-16 pr-4 sm:px-8 backdrop-blur-xl gap-3">
+            <div className="hidden items-center gap-3 xl:flex shrink-0">
+              <p className="text-lg font-bold leading-tight text-[#1b1c1a]">
+                The Camellia <br />
+                <span className="text-xs uppercase tracking-wider text-[#735c00]">Reserve</span>
               </p>
             </div>
 
-            <div className="flex flex-1 justify-center">
-              <div className="flex w-full max-w-[520px] items-center gap-3 rounded-full border border-[#d9cfbd] bg-white px-5 py-3 shadow-sm">
-                <span className="text-xl">⌕</span>
+            <div className="flex flex-1 justify-center max-w-[500px]">
+              <div className="flex w-full items-center gap-2.5 rounded-full border border-[#d9cfbd] bg-white px-3.5 sm:px-5 py-2 sm:py-2.5 shadow-sm">
+                <Search className="h-4 w-4 text-[#8a8175] shrink-0" />
 
                 <input
                   type="text"
@@ -206,32 +206,53 @@ export default function RoomsPage() {
                     setSearchTerm(e.target.value);
                     setSelectedStatus("");
                   }}
-                  className="w-full bg-transparent text-lg outline-none placeholder:text-slate-500"
+                  className="w-full bg-transparent text-sm sm:text-base outline-none placeholder:text-slate-400"
                 />
+
+                {searchTerm && (
+                  <button
+                    onClick={() => {
+                      setSearchTerm("");
+                      setSelectedStatus("");
+                    }}
+                    className="text-xs font-bold text-[#8a8175] hover:text-[#181818]"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
               </div>
             </div>
 
-            <div className="flex items-center gap-5">
-              <button className="text-2xl transition hover:scale-110">♧</button>
+            {/* Profile Section */}
+            <div className="flex items-center gap-3 sm:gap-4 shrink-0">
+              <div className="hidden text-right md:block">
+                <p className="text-sm font-bold text-[#181818] leading-tight">
+                  {user?.name || "Staff Member"}
+                </p>
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#806300]">
+                  {user?.role || "Front Desk"}
+                </p>
+              </div>
 
-              <div className="flex h-11 w-11 items-center justify-center rounded-full border-4 border-[#d8b328] bg-white shadow">
-                🧑
+              <div className="flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-full border-2 border-[#d8b328] bg-[#101827] text-white font-bold text-sm sm:text-base shadow-sm">
+                {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
               </div>
             </div>
           </header>
 
-          <section className="px-8 py-10">
-            <div className="room-fade mb-12 flex flex-col justify-between gap-6 xl:flex-row xl:items-center">
+          <section className="p-4 sm:p-6 lg:p-8">
+            <div className="room-fade mb-6 sm:mb-8 flex flex-col justify-between gap-4 sm:gap-6 xl:flex-row xl:items-center">
               <div>
-                <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#735c00]">
-                  Rooms Module
-                </p>
+                <div className="flex items-center gap-2 text-xs sm:text-sm font-bold uppercase tracking-[0.25em] text-[#735c00]">
+                  <DoorOpen className="h-4 w-4" />
+                  <span>Rooms Module</span>
+                </div>
 
-                <h1 className="mt-3 text-4xl font-bold text-[#735c00]">
+                <h1 className="mt-1 sm:mt-2 text-2xl sm:text-3xl lg:text-4xl font-extrabold text-[#735c00]">
                   Room Management
                 </h1>
 
-                <p className="mt-2 text-xl text-[#3f3b35]">
+                <p className="mt-1 text-xs sm:text-base text-[#3f3b35]">
                   Manage inventory, monitor room status, and handle maintenance.
                 </p>
               </div>
@@ -243,15 +264,16 @@ export default function RoomsPage() {
                     setError("");
                     setPanelOpen(true);
                   }}
-                  className="flex items-center gap-2 rounded-2xl bg-[#d8b328] px-8 py-4 text-lg font-semibold text-[#4c3a00] shadow-lg transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl"
+                  className="flex items-center justify-center gap-2 rounded-xl bg-[#d8b328] px-6 py-3 text-sm sm:text-base font-bold text-[#4c3a00] shadow transition hover:bg-[#f2c426] active:scale-[0.98]"
                 >
                   <Plus size={18} />
-                  Add Room
+                  <span>Add Room</span>
                 </button>
               )}
             </div>
 
-            <div className="mb-8 grid gap-6 md:grid-cols-4">
+            {/* Quick Stat Cards */}
+            <div className="mb-6 grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
               <StatCard label="Total Rooms" value={String(totalElements)} />
               <StatCard label="Loaded" value={String(rooms.length)} />
               <StatCard
@@ -268,8 +290,9 @@ export default function RoomsPage() {
               />
             </div>
 
-            <div className="room-fade delay-100 mb-5 flex flex-wrap items-center gap-5">
-              <div className="flex overflow-hidden rounded-xl bg-[#ebe8e2] p-1">
+            {/* Room Type Filter Pills */}
+            <div className="room-fade delay-100 mb-4 flex overflow-x-auto pb-1 scrollbar-none">
+              <div className="flex rounded-xl bg-[#ebe8e2] p-1 gap-1">
                 {roomTypesList.map((type) => (
                   <button
                     key={type}
@@ -277,10 +300,10 @@ export default function RoomsPage() {
                       setSelectedStatus("");
                       setSearchTerm(type !== "All Rooms" ? type : "");
                     }}
-                    className={`px-8 py-3 text-lg transition ${
+                    className={`rounded-lg px-4 sm:px-6 py-2 text-xs sm:text-sm font-bold transition whitespace-nowrap ${
                       searchTerm === type ||
                       (searchTerm === "" && type === "All Rooms")
-                        ? "rounded-lg bg-white text-[#806300] shadow"
+                        ? "bg-white text-[#806300] shadow-sm"
                         : "text-[#4c4032] hover:bg-white/60"
                     }`}
                   >
@@ -290,17 +313,20 @@ export default function RoomsPage() {
               </div>
             </div>
 
-            <div className="room-fade delay-150 mb-8 flex flex-wrap gap-3">
+            {/* Status Filters */}
+            <div className="room-fade delay-150 mb-6 flex flex-wrap gap-2 sm:gap-3">
               <button
                 onClick={() => {
                   setSelectedStatus("");
                   setPage(0);
                 }}
-                className={`flex items-center gap-3 rounded-full border px-5 py-3 text-lg transition hover:-translate-y-1 hover:shadow-md ${
-                  !selectedStatus ? "ring-2 ring-current font-extrabold" : ""
+                className={`flex items-center gap-2 rounded-full border px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold transition hover:shadow-sm ${
+                  !selectedStatus
+                    ? "bg-[#181818] text-white border-[#181818]"
+                    : "bg-white text-[#4c4032] border-[#d0c5af]"
                 }`}
               >
-                All
+                All Status
               </button>
 
               {statusFilters.map((filter) => {
@@ -314,13 +340,13 @@ export default function RoomsPage() {
                       setPage(0);
                       setSearchTerm("");
                     }}
-                    className={`flex items-center gap-3 rounded-full border px-5 py-3 text-lg transition hover:-translate-y-1 hover:shadow-md ${badgeClass} ${
+                    className={`flex items-center gap-2 rounded-full border px-3.5 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-bold transition hover:shadow-sm ${badgeClass} ${
                       selectedStatus === filter.value
                         ? "ring-2 ring-current font-extrabold"
                         : ""
                     }`}
                   >
-                    <span className="h-2.5 w-2.5 rounded-full bg-current" />
+                    <span className="h-2 w-2 rounded-full bg-current" />
                     {filter.label}
                   </button>
                 );
@@ -332,105 +358,84 @@ export default function RoomsPage() {
             )}
 
             {pageLoading ? (
-              <div className="flex h-64 items-center justify-center text-lg font-bold text-[#806300]">
-                Loading rooms...
+              <div className="flex h-64 flex-col items-center justify-center gap-3 rounded-2xl border border-[#d9cfbd] bg-white p-6 shadow-sm">
+                <div className="h-8 w-8 animate-spin rounded-full border-3 border-[#806300] border-t-transparent"></div>
+                <p className="text-sm font-semibold text-[#806300]">Loading rooms...</p>
               </div>
             ) : rooms.length === 0 ? (
-              <div className="rounded-2xl border border-[#d9cfbd] bg-white p-10 text-center shadow-sm">
-                <Bed size={42} className="mx-auto mb-4 text-[#735c00]" />
-                <p className="text-xl font-bold text-[#735c00]">
+              <div className="rounded-2xl border border-[#d9cfbd] bg-white p-8 sm:p-10 text-center shadow-sm">
+                <Bed size={36} className="mx-auto mb-3 text-[#735c00]" />
+                <p className="text-lg sm:text-xl font-bold text-[#735c00]">
                   No rooms found
                 </p>
-                <p className="mt-2 text-[#4d4635]">
+                <p className="mt-1 text-xs sm:text-sm text-[#4d4635]">
                   Adjust your search or add a new room.
                 </p>
               </div>
             ) : (
-              <div className="grid gap-7 md:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-4 sm:gap-6 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                 {rooms.map((room: any, index: number) => {
                   const badgeClass = getStatusBadgeClass(room.status);
-                  const color =
-                    room.status === "AVAILABLE"
-                      ? "green"
-                      : room.status === "CLEANING"
-                      ? "yellow"
-                      : room.status === "OCCUPIED"
-                      ? "red"
-                      : "gray";
 
                   return (
                     <article
                       key={room.id || index}
-                      className="room-card room-fade rounded-2xl border border-[#d9cfbd] border-l-4 border-l-current bg-white p-7 shadow-sm transition hover:-translate-y-2 hover:shadow-2xl"
-                      style={{ animationDelay: `${0.18 + index * 0.07}s` }}
+                      className="room-card room-fade rounded-2xl border border-[#d9cfbd] bg-white p-4 sm:p-6 shadow-sm transition hover:shadow-md hover:border-[#735c00]/50"
+                      style={{ animationDelay: `${0.1 + index * 0.04}s` }}
                     >
-                      <div className="mb-6 flex items-start justify-between gap-4">
+                      <div className="mb-4 flex items-start justify-between gap-2">
                         <div>
-                          <h2 className="text-2xl font-extrabold">
+                          <h2 className="text-xl font-extrabold text-[#181818]">
                             Room {room.roomNumber}
                           </h2>
 
-                          <p className="mt-1 text-xl text-[#3f3b35]">
+                          <p className="text-sm font-semibold text-[#735c00]">
                             {room.roomType}
                           </p>
 
-                          <p className="mt-1 text-lg text-[#3f3b35]">
+                          <p className="text-xs text-[#5c5443] mt-0.5">
                             Cap: {room.capacity} • {room.floor}
                           </p>
                         </div>
 
                         <span
-                          className={`rounded-full px-4 py-2 text-sm font-extrabold tracking-widest ${badgeClass}`}
+                          className={`rounded-full px-3 py-1 text-xs font-bold tracking-wide ${badgeClass}`}
                         >
                           {room.status}
                         </span>
                       </div>
 
-                      <div className="mb-6 flex min-h-[58px] items-center gap-3 text-lg text-[#3f3b35]">
-                        <span className="text-xl">
-                          {color === "red"
-                            ? "♙"
-                            : color === "yellow"
-                            ? "▥"
-                            : color === "gray"
-                            ? "♨"
-                            : "◉"}
-                        </span>
-
-                        <span className={color === "gray" ? "text-red-600" : ""}>
-                          {room.description || "No notes"}
-                        </span>
+                      <div className="mb-4 min-h-[42px] rounded-xl bg-[#fbf9f5] border border-[#f0eae0] p-2.5 text-xs text-[#5c5443]">
+                        {room.description || "No specific room notes"}
                       </div>
 
-                      <div className="mb-6">
-                        <strong className="text-2xl">
-                          Rs {Number(room.pricePerNight || 0).toLocaleString()}
-                        </strong>
-                        <span className="text-lg text-[#3f3b35]"> / night</span>
+                      <div className="mb-4 flex items-baseline justify-between">
+                        <div>
+                          <span className="text-lg sm:text-xl font-extrabold text-[#181818]">
+                            Rs {Number(room.pricePerNight || 0).toLocaleString()}
+                          </span>
+                          <span className="text-xs text-[#5c5443]"> / night</span>
+                        </div>
                       </div>
 
-                      <div className="grid grid-cols-3 gap-2">
-                        <button className="rounded-xl bg-[#ece9e2] px-2 py-3 text-sm font-bold text-[#181818] transition hover:bg-[#ded8cc]">
-                          View
-                        </button>
-
+                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#f0eae0]">
                         {canEdit && (
                           <Link
                             href={`/rooms/edit?id=${room.id}`}
-                            className="flex items-center justify-center gap-1 rounded-xl border border-[#806300] bg-white px-2 py-3 text-center text-sm font-bold text-[#806300] transition hover:-translate-y-1 hover:shadow-lg"
+                            className="flex items-center justify-center gap-1.5 rounded-xl border border-[#806300] bg-white py-2.5 text-xs font-bold text-[#806300] transition hover:bg-[#806300] hover:text-white"
                           >
-                            <Pencil size={14} />
-                            Edit
+                            <Pencil size={13} />
+                            <span>Edit</span>
                           </Link>
                         )}
 
                         {canDelete && (
                           <button
                             onClick={() => deleteRoomRecord(room.id)}
-                            className="flex items-center justify-center gap-1 rounded-xl bg-red-100 px-2 py-3 text-sm font-bold text-red-700 transition hover:-translate-y-1 hover:bg-red-200 hover:shadow-lg"
+                            className="flex items-center justify-center gap-1.5 rounded-xl bg-red-50 border border-red-200 py-2.5 text-xs font-bold text-red-700 transition hover:bg-red-100"
                           >
-                            <Trash2 size={14} />
-                            Delete
+                            <Trash2 size={13} />
+                            <span>Delete</span>
                           </button>
                         )}
                       </div>
@@ -441,8 +446,8 @@ export default function RoomsPage() {
             )}
 
             {totalPages > 1 && (
-              <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-[#d9cfbd] pt-6 md:flex-row">
-                <p className="text-lg text-[#4c4032]">
+              <div className="mt-8 flex flex-col items-center justify-between gap-4 border-t border-[#d9cfbd] pt-6 sm:flex-row">
+                <p className="text-xs sm:text-sm text-[#4c4032]">
                   Showing {rooms.length} of {totalElements} rooms
                 </p>
 
@@ -450,19 +455,19 @@ export default function RoomsPage() {
                   <button
                     disabled={page === 0}
                     onClick={() => setPage(page - 1)}
-                    className="rounded-xl border border-[#d0c5af] bg-white px-4 py-2 font-bold text-[#4d4635] disabled:opacity-50"
+                    className="rounded-xl border border-[#d0c5af] bg-white px-3.5 py-1.5 text-xs sm:text-sm font-bold text-[#4d4635] disabled:opacity-50"
                   >
                     Prev
                   </button>
 
-                  <span className="flex items-center px-4 font-bold text-[#735c00]">
+                  <span className="flex items-center px-3 text-xs sm:text-sm font-bold text-[#735c00]">
                     Page {page + 1} of {totalPages}
                   </span>
 
                   <button
                     disabled={page >= totalPages - 1}
                     onClick={() => setPage(page + 1)}
-                    className="rounded-xl border border-[#d0c5af] bg-white px-4 py-2 font-bold text-[#4d4635] disabled:opacity-50"
+                    className="rounded-xl border border-[#d0c5af] bg-white px-3.5 py-1.5 text-xs sm:text-sm font-bold text-[#4d4635] disabled:opacity-50"
                   >
                     Next
                   </button>
@@ -472,6 +477,7 @@ export default function RoomsPage() {
           </section>
         </main>
 
+        {/* Add New Room SlidePanel */}
         <SlidePanel
           open={panelOpen}
           onClose={() => setPanelOpen(false)}
@@ -480,15 +486,15 @@ export default function RoomsPage() {
           icon={<Bed className="h-5 w-5" />}
         >
           {error && (
-            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 font-bold text-red-700">
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs sm:text-sm font-bold text-red-700">
               {error}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
+          <form onSubmit={handleSubmit} className="space-y-4 pb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <InputField
-                label="Room Number"
+                label="Room Number *"
                 name="roomNumber"
                 value={formData.roomNumber}
                 onChange={handleChange}
@@ -496,7 +502,7 @@ export default function RoomsPage() {
               />
 
               <div>
-                <label className="block text-sm font-bold text-[#4d4635]">
+                <label className="block text-xs sm:text-sm font-bold text-[#4d4635] mb-1">
                   Room Type
                 </label>
 
@@ -504,7 +510,7 @@ export default function RoomsPage() {
                   name="roomType"
                   value={formData.roomType}
                   onChange={handleChange}
-                  className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+                  className="w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-3.5 py-2.5 sm:py-3 text-base outline-none focus:ring-2 focus:ring-[#735c00]/30"
                 >
                   <option value="Standard">Standard</option>
                   <option value="Deluxe">Deluxe</option>
@@ -514,9 +520,9 @@ export default function RoomsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <InputField
-                label="Floor"
+                label="Floor *"
                 name="floor"
                 value={formData.floor}
                 onChange={handleChange}
@@ -524,7 +530,7 @@ export default function RoomsPage() {
               />
 
               <InputField
-                label="Capacity"
+                label="Capacity *"
                 name="capacity"
                 type="number"
                 value={String(formData.capacity)}
@@ -533,9 +539,9 @@ export default function RoomsPage() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <InputField
-                label="Price Per Night"
+                label="Price Per Night *"
                 name="pricePerNight"
                 type="number"
                 value={String(formData.pricePerNight)}
@@ -544,7 +550,7 @@ export default function RoomsPage() {
               />
 
               <div>
-                <label className="block text-sm font-bold text-[#4d4635]">
+                <label className="block text-xs sm:text-sm font-bold text-[#4d4635] mb-1">
                   Status
                 </label>
 
@@ -552,7 +558,7 @@ export default function RoomsPage() {
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
-                  className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+                  className="w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-3.5 py-2.5 sm:py-3 text-base outline-none focus:ring-2 focus:ring-[#735c00]/30"
                 >
                   <option value="AVAILABLE">AVAILABLE</option>
                   <option value="OCCUPIED">OCCUPIED</option>
@@ -570,7 +576,7 @@ export default function RoomsPage() {
             />
 
             <div>
-              <label className="block text-sm font-bold text-[#4d4635]">
+              <label className="block text-xs sm:text-sm font-bold text-[#4d4635] mb-1">
                 Description / Note
               </label>
 
@@ -579,25 +585,25 @@ export default function RoomsPage() {
                 value={formData.description}
                 onChange={handleChange}
                 rows={3}
-                className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+                className="w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-3 text-base outline-none focus:ring-2 focus:ring-[#735c00]/30"
               />
             </div>
 
-            <div className="flex gap-4 pt-4">
-              <button
-                type="button"
-                onClick={() => setPanelOpen(false)}
-                className="flex-1 rounded-xl border border-[#d0c5af] px-8 py-4 font-bold text-[#4d4635] transition hover:bg-[#ece9e2]"
-              >
-                Cancel
-              </button>
-
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 rounded-xl bg-[#735c00] px-8 py-4 font-bold text-white transition hover:bg-[#d4af37] disabled:opacity-60"
+                className="w-full sm:flex-1 rounded-xl bg-[#735c00] py-3.5 text-base font-bold text-white transition hover:bg-[#8f7300] active:scale-[0.98] disabled:opacity-60 text-center"
               >
                 {loading ? "Saving..." : "Save Room"}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPanelOpen(false)}
+                className="w-full sm:w-auto rounded-xl border border-[#d0c5af] px-6 py-3.5 text-base font-bold text-[#4d4635] transition hover:bg-[#ece9e2] text-center"
+              >
+                Cancel
               </button>
             </div>
           </form>
@@ -609,13 +615,12 @@ export default function RoomsPage() {
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <Card className="p-6">
-      <p className="text-sm font-bold uppercase tracking-widest text-[#4d4635]">
+    <div className="rounded-2xl border border-[#d9cfbd] bg-white p-3.5 sm:p-5 shadow-sm">
+      <p className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-[#7f7663]">
         {label}
       </p>
-
-      <p className="mt-2 text-3xl font-extrabold text-[#735c00]">{value}</p>
-    </Card>
+      <p className="mt-1 text-xl sm:text-2xl font-extrabold text-[#735c00]">{value}</p>
+    </div>
   );
 }
 
@@ -631,14 +636,18 @@ function InputField({
   name: string;
   value: string;
   onChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >
   ) => void;
   type?: string;
   required?: boolean;
 }) {
   return (
     <div>
-      <label className="block text-sm font-bold text-[#4d4635]">{label}</label>
+      <label className="block text-xs sm:text-sm font-bold text-[#4d4635] mb-1">
+        {label}
+      </label>
 
       <input
         required={required}
@@ -646,7 +655,7 @@ function InputField({
         name={name}
         value={value}
         onChange={onChange}
-        className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+        className="w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-3.5 py-2.5 sm:py-3 text-base text-[#1b1c1a] outline-none focus:ring-2 focus:ring-[#735c00]/30 transition"
       />
     </div>
   );
