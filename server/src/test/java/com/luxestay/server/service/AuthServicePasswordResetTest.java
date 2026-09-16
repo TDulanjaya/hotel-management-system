@@ -49,6 +49,9 @@ class AuthServicePasswordResetTest {
     @Mock
     private EmailService emailService;
 
+    @Mock
+    private RateLimiterService rateLimiterService;
+
     @InjectMocks
     private AuthService authService;
 
@@ -56,6 +59,8 @@ class AuthServicePasswordResetTest {
 
     @BeforeEach
     void setUp() {
+        lenient().when(rateLimiterService.isAllowed(anyString(), anyInt(), anyLong())).thenReturn(true);
+
         testUser = AppUser.builder()
                 .id("user-123")
                 .name("Test User")
@@ -66,9 +71,7 @@ class AuthServicePasswordResetTest {
                 .build();
     }
 
-    // ---------------------------------------------------------------
     // forgotPassword tests
-    // ---------------------------------------------------------------
     @Nested
     @DisplayName("forgotPassword()")
     class ForgotPasswordTests {
@@ -99,7 +102,7 @@ class AuthServicePasswordResetTest {
                     eq("staff@luxestay.com"),
                     eq(savedUser.getResetPasswordToken()));
 
-            // Verify generic message (prevents user enumeration)
+            // Verify generic message returned
             assertEquals("If this email exists, a password reset request has been created.",
                     response.get("message"));
         }
@@ -115,11 +118,11 @@ class AuthServicePasswordResetTest {
 
             Map<String, String> response = authService.forgotPassword(request);
 
-            // Must NOT reveal that the email doesn't exist
+            // Generic response for non-existent email
             assertEquals("If this email exists, a password reset request has been created.",
                     response.get("message"));
 
-            // Should NOT attempt to save or send email
+            // Ensure no email sent
             verify(userRepository, never()).save(any());
             verify(emailService, never()).sendPasswordResetEmail(anyString(), anyString());
         }
@@ -135,7 +138,6 @@ class AuthServicePasswordResetTest {
             ForgotPasswordRequest request = new ForgotPasswordRequest();
             request.setEmail("staff@luxestay.com");
 
-            // Should NOT throw
             Map<String, String> response = assertDoesNotThrow(
                     () -> authService.forgotPassword(request));
 
@@ -147,9 +149,7 @@ class AuthServicePasswordResetTest {
         }
     }
 
-    // ---------------------------------------------------------------
     // resetPassword tests
-    // ---------------------------------------------------------------
     @Nested
     @DisplayName("resetPassword()")
     class ResetPasswordTests {

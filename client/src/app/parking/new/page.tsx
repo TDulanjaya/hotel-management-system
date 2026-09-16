@@ -26,30 +26,34 @@ export default function NewParkingPage() {
     expectedCheckOutTime: "",
     guestName: "",
     roomNumber: "",
+    pricingItemId: "",
     amount: 0,
     paymentStatus: "Pending",
     notes: "",
-    status: "CHECKED_IN"
+    status: "CHECKED_IN",
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handlePricingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedId = e.target.value;
-    if (!selectedId) return;
-    const selectedItem = pricingItems.find(item => item.id === selectedId);
-    if (selectedItem) {
-      setFormData({ ...formData, amount: selectedItem.price });
-    }
+    const selectedItem = pricingItems.find((item) => item.id === selectedId);
+    setFormData({
+      ...formData,
+      pricingItemId: selectedId,
+      amount: selectedItem ? selectedItem.price : 0,
+    });
   };
 
   useEffect(() => {
     async function loadPricing() {
       try {
         const items = await getPricingItemsByCategory("PARKING");
-        setPricingItems(items);
+        setPricingItems(items || []);
       } catch (err) {
         console.error("Failed to load parking pricing items", err);
       }
@@ -59,6 +63,10 @@ export default function NewParkingPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.pricingItemId) {
+      setError("Please select a parking package from Service Pricing.");
+      return;
+    }
     setLoading(true);
     setError("");
     try {
@@ -172,14 +180,16 @@ export default function NewParkingPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-[#4d4635]">Parking Package</label>
-                  <select onChange={handlePricingChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 mb-2 bg-[#fbf9f5]">
+                  <select required value={formData.pricingItemId} onChange={handlePricingChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 mb-2 bg-[#fbf9f5]">
                     <option value="">-- Select a parking package --</option>
-                    {pricingItems.map(item => (
-                      <option key={item.id} value={item.id}>{item.name} - Rs {item.price}</option>
+                    {pricingItems.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name} - Rs {item.price}
+                      </option>
                     ))}
                   </select>
                   <label className="block text-sm font-bold text-[#4d4635]">Amount (Rs)</label>
-                  <input required type="number" name="amount" value={formData.amount} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+                  <input readOnly type="number" name="amount" value={formData.amount} className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-gray-50 p-3 font-semibold text-gray-700" />
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-[#4d4635]">Payment Status</label>

@@ -16,4 +16,6 @@ public interface ReservationRepository extends MongoRepository<Reservation, Stri
     Page<Reservation> findByStatusIgnoreCase(String status, Pageable pageable);
     
     java.util.List<Reservation> findAllByStatusIgnoreCase(String status);
+
+    java.util.List<Reservation> findByRoomNumber(String roomNumber);
 }

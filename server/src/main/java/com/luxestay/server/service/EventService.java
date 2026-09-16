@@ -2,12 +2,17 @@ package com.luxestay.server.service;
 
 import com.luxestay.server.dto.EventOccupancyImpactDto;
 import com.luxestay.server.dto.EventRequest;
+import com.luxestay.server.exception.ResourceNotFoundException;
 import com.luxestay.server.model.EventBooking;
+import com.luxestay.server.model.PricingItem;
 import com.luxestay.server.model.Reservation;
+import com.luxestay.server.model.SelectedPackage;
+import com.luxestay.server.model.Venue;
 import com.luxestay.server.repository.EventBookingRepository;
+import com.luxestay.server.repository.PricingItemRepository;
 import com.luxestay.server.repository.ReservationRepository;
 import com.luxestay.server.repository.RoomRepository;
-import jakarta.annotation.PostConstruct;
+import com.luxestay.server.repository.VenueRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -19,13 +24,22 @@ public class EventService {
     private final EventBookingRepository eventRepository;
     private final RoomRepository roomRepository;
     private final ReservationRepository reservationRepository;
+    private final VenueRepository venueRepository;
+    private final PricingItemRepository pricingItemRepository;
+    private final AuditLogService auditLogService;
 
     public EventService(EventBookingRepository eventRepository,
                         RoomRepository roomRepository,
-                        ReservationRepository reservationRepository) {
+                        ReservationRepository reservationRepository,
+                        VenueRepository venueRepository,
+                        PricingItemRepository pricingItemRepository,
+                        AuditLogService auditLogService) {
         this.eventRepository = eventRepository;
         this.roomRepository = roomRepository;
         this.reservationRepository = reservationRepository;
+        this.venueRepository = venueRepository;
+        this.pricingItemRepository = pricingItemRepository;
+        this.auditLogService = auditLogService;
     }
 
     public EventOccupancyImpactDto getOccupancyImpact() {
@@ -47,22 +61,20 @@ public class EventService {
                 .sum();
 
         long reservationRoomNights = activeReservations.size() * 3L;
-        long eventRoomNights = Math.round(totalGuests * 0.6);
+        long eventRoomNights = Math.round(totalGuests * 0.15);
         long committedRooms = reservationRoomNights + eventRoomNights;
 
-        if (committedRooms > monthlyCapacity) {
-            committedRooms = monthlyCapacity;
-        }
-
-        double percentage = monthlyCapacity > 0 ? ((double) committedRooms / monthlyCapacity) * 100.0 : 0.0;
-        percentage = Math.round(percentage * 10.0) / 10.0;
+        double percentage = monthlyCapacity > 0
+                ? Math.min(100.0, Math.round(((double) committedRooms / monthlyCapacity) * 1000.0) / 10.0)
+                : 0.0;
 
         String forecastText;
-        if (percentage > 0) {
-            double forecastDiff = Math.max(1.0, Math.round(percentage * 0.15));
-            forecastText = String.format("+%.0f%% from last month's forecast", forecastDiff);
+        if (percentage >= 80.0) {
+            forecastText = "Critical Peak — banquet guest influx will require housekeeping surge capacity.";
+        } else if (percentage >= 50.0) {
+            forecastText = "High Demand — banquet dates show significant overlap with room occupancy.";
         } else {
-            forecastText = "0% from last month's forecast";
+            forecastText = "Optimal capacity available across all room categories.";
         }
 
         return EventOccupancyImpactDto.builder()
@@ -75,19 +87,51 @@ public class EventService {
                 .build();
     }
 
-
-
     public List<EventBooking> getAllEvents() {
         return eventRepository.findAll();
     }
 
     public EventBooking getEventById(String id) {
         return eventRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Event not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id));
     }
 
     public EventBooking createEvent(EventRequest request) {
+        String venueId = request.getSelectedVenue() != null ? request.getSelectedVenue().getId() : null;
+        assertNoVenueOverlap(venueId, request.getPrimaryDate(), null);
+
         String id = "EV-" + System.currentTimeMillis();
+
+        Venue venue = null;
+        double venueTotal = 0.0;
+        if (venueId != null && !venueId.isBlank()) {
+            venue = venueRepository.findById(venueId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Venue not found: " + venueId));
+            venueTotal = venue.getPrice() != null ? venue.getPrice() : 0.0;
+        }
+
+        List<SelectedPackage> resolvedPackages = new ArrayList<>();
+        double packageTotal = 0.0;
+        if (request.getSelectedPackages() != null) {
+            for (SelectedPackage requested : request.getSelectedPackages()) {
+                if (requested.getId() == null || requested.getId().isBlank()) continue;
+                PricingItem catalogItem = pricingItemRepository.findById(requested.getId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Pricing item not found: " + requested.getId()));
+                SelectedPackage resolved = SelectedPackage.builder()
+                        .id(catalogItem.getId())
+                        .name(catalogItem.getName())
+                        .category(catalogItem.getCategory())
+                        .description(catalogItem.getDescription())
+                        .priceType(catalogItem.getPriceType())
+                        .price(catalogItem.getPrice() != null ? catalogItem.getPrice() : 0.0)
+                        .build();
+                resolvedPackages.add(resolved);
+                packageTotal += (catalogItem.getPrice() != null ? catalogItem.getPrice() : 0.0);
+            }
+        }
+
+        double serviceCharge = Math.round((venueTotal + packageTotal) * 0.10 * 100.0) / 100.0;
+        double grandTotal = venueTotal + packageTotal + serviceCharge;
 
         EventBooking event = EventBooking.builder()
                 .id(id)
@@ -102,20 +146,56 @@ public class EventService {
                 .kitchenNote(request.getKitchenNote())
                 .specialNote(request.getSpecialNote())
                 .status(request.getStatus() != null ? request.getStatus() : "Pending")
-                .selectedVenue(request.getSelectedVenue())
-                .selectedPackages(request.getSelectedPackages())
-                .venueTotal(request.getVenueTotal())
-                .packageTotal(request.getPackageTotal())
-                .serviceCharge(request.getServiceCharge())
-                .grandTotal(request.getGrandTotal())
+                .selectedVenue(venue)
+                .selectedPackages(resolvedPackages)
+                .venueTotal(venueTotal)
+                .packageTotal(packageTotal)
+                .serviceCharge(serviceCharge)
+                .grandTotal(grandTotal)
                 .createdAt(System.currentTimeMillis())
                 .build();
 
-        return eventRepository.save(event);
+        EventBooking saved = eventRepository.save(event);
+        auditLogService.log("CREATE", "EVENT", saved.getId(), "Created event booking: " + saved.getEventName());
+        return saved;
     }
 
     public EventBooking updateEvent(String id, EventRequest request) {
         EventBooking existingEvent = getEventById(id);
+
+        String venueId = request.getSelectedVenue() != null ? request.getSelectedVenue().getId() : null;
+        assertNoVenueOverlap(venueId, request.getPrimaryDate(), id);
+
+        Venue venue = null;
+        double venueTotal = 0.0;
+        if (venueId != null && !venueId.isBlank()) {
+            venue = venueRepository.findById(venueId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Venue not found: " + venueId));
+            venueTotal = venue.getPrice() != null ? venue.getPrice() : 0.0;
+        }
+
+        List<SelectedPackage> resolvedPackages = new ArrayList<>();
+        double packageTotal = 0.0;
+        if (request.getSelectedPackages() != null) {
+            for (SelectedPackage requested : request.getSelectedPackages()) {
+                if (requested.getId() == null || requested.getId().isBlank()) continue;
+                PricingItem catalogItem = pricingItemRepository.findById(requested.getId())
+                        .orElseThrow(() -> new ResourceNotFoundException("Pricing item not found: " + requested.getId()));
+                SelectedPackage resolved = SelectedPackage.builder()
+                        .id(catalogItem.getId())
+                        .name(catalogItem.getName())
+                        .category(catalogItem.getCategory())
+                        .description(catalogItem.getDescription())
+                        .priceType(catalogItem.getPriceType())
+                        .price(catalogItem.getPrice() != null ? catalogItem.getPrice() : 0.0)
+                        .build();
+                resolvedPackages.add(resolved);
+                packageTotal += (catalogItem.getPrice() != null ? catalogItem.getPrice() : 0.0);
+            }
+        }
+
+        double serviceCharge = Math.round((venueTotal + packageTotal) * 0.10 * 100.0) / 100.0;
+        double grandTotal = venueTotal + packageTotal + serviceCharge;
 
         existingEvent.setEventName(request.getEventName());
         existingEvent.setEventType(request.getEventType());
@@ -128,20 +208,38 @@ public class EventService {
         existingEvent.setKitchenNote(request.getKitchenNote());
         existingEvent.setSpecialNote(request.getSpecialNote());
         existingEvent.setStatus(request.getStatus());
-        existingEvent.setSelectedVenue(request.getSelectedVenue());
-        existingEvent.setSelectedPackages(request.getSelectedPackages());
-        existingEvent.setVenueTotal(request.getVenueTotal());
-        existingEvent.setPackageTotal(request.getPackageTotal());
-        existingEvent.setServiceCharge(request.getServiceCharge());
-        existingEvent.setGrandTotal(request.getGrandTotal());
+        existingEvent.setSelectedVenue(venue);
+        existingEvent.setSelectedPackages(resolvedPackages);
+        existingEvent.setVenueTotal(venueTotal);
+        existingEvent.setPackageTotal(packageTotal);
+        existingEvent.setServiceCharge(serviceCharge);
+        existingEvent.setGrandTotal(grandTotal);
 
-        return eventRepository.save(existingEvent);
+        EventBooking saved = eventRepository.save(existingEvent);
+        auditLogService.log("UPDATE", "EVENT", saved.getId(), "Updated event booking: " + saved.getEventName());
+        return saved;
     }
 
     public void deleteEvent(String id) {
         if (!eventRepository.existsById(id)) {
-            throw new RuntimeException("Event not found with id: " + id);
+            throw new ResourceNotFoundException("Event not found with id: " + id);
         }
         eventRepository.deleteById(id);
+        auditLogService.log("DELETE", "EVENT", id, "Deleted event booking #" + id);
+    }
+
+    private void assertNoVenueOverlap(String venueId, String primaryDate, String excludeEventId) {
+        if (venueId == null || venueId.isBlank() || primaryDate == null || primaryDate.isBlank()) {
+            return;
+        }
+        boolean conflict = eventRepository.findAll().stream()
+                .filter(e -> excludeEventId == null || !e.getId().equals(excludeEventId))
+                .filter(e -> e.getStatus() == null || !"Cancelled".equalsIgnoreCase(e.getStatus()))
+                .filter(e -> e.getSelectedVenue() != null && venueId.equals(e.getSelectedVenue().getId()))
+                .anyMatch(e -> primaryDate.equalsIgnoreCase(e.getPrimaryDate()));
+
+        if (conflict) {
+            throw new IllegalStateException("Venue is already booked for another event on " + primaryDate + ".");
+        }
     }
 }

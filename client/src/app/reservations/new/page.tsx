@@ -1,7 +1,118 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { createReservation } from "@/lib/api/reservationsApi";
+import { getRooms } from "@/lib/api/roomApi";
 
 export default function NewReservationPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [rooms, setRooms] = useState<any[]>([]);
+
+  const [formData, setFormData] = useState({
+    guestName: "",
+    email: "",
+    phone: "",
+    guestType: "Regular",
+    roomNumber: "",
+    checkIn: "",
+    checkOut: "",
+    adults: 1,
+    children: 0,
+    status: "CONFIRMED",
+    paymentStatus: "PENDING",
+    notes: "",
+  });
+
+  useEffect(() => {
+    async function loadRooms() {
+      try {
+        const roomData = await getRooms({ size: 100 });
+        const list = Array.isArray(roomData) ? roomData : roomData?.content || [];
+        setRooms(list);
+        if (list.length > 0) {
+          setFormData((prev) => ({ ...prev, roomNumber: list[0].roomNumber }));
+        }
+      } catch (err) {
+        console.error("Failed to load rooms", err);
+      }
+    }
+    loadRooms();
+  }, []);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "adults" || name === "children" ? Number(value) : value,
+    }));
+  };
+
+  const selectedRoom = rooms.find((r) => r.roomNumber === formData.roomNumber);
+  const baseRate = selectedRoom?.price || 450;
+
+  // Calculate nights
+  let nights = 1;
+  if (formData.checkIn && formData.checkOut) {
+    const d1 = new Date(formData.checkIn);
+    const d2 = new Date(formData.checkOut);
+    const diff = Math.ceil((d2.getTime() - d1.getTime()) / (1000 * 60 * 60 * 24));
+    nights = diff > 0 ? diff : 1;
+  }
+
+  const roomSubtotal = baseRate * nights;
+  const taxAndService = Math.round(roomSubtotal * 0.10);
+  const estimatedTotal = roomSubtotal + taxAndService;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.roomNumber) {
+      setError("Please select a room.");
+      return;
+    }
+    if (!formData.checkIn || !formData.checkOut) {
+      setError("Please select check-in and check-out dates.");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      await createReservation({
+        guestName: formData.guestName,
+        roomNumber: formData.roomNumber,
+        checkIn: formData.checkIn,
+        checkOut: formData.checkOut,
+        adults: formData.adults,
+        children: formData.children,
+        status: formData.status,
+        paymentStatus: formData.paymentStatus,
+        totalAmount: estimatedTotal,
+        notes: [
+          formData.email ? `Email: ${formData.email}` : "",
+          formData.phone ? `Phone: ${formData.phone}` : "",
+          formData.guestType ? `Type: ${formData.guestType}` : "",
+          formData.notes,
+        ]
+          .filter(Boolean)
+          .join(" | "),
+      });
+      router.push("/reservations");
+    } catch (err: any) {
+      setError(err.message || "Failed to save reservation");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "RECEPTIONIST"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
@@ -23,7 +134,13 @@ export default function NewReservationPage() {
             </p>
           </div>
 
-          <form className="grid gap-8 xl:grid-cols-[1.3fr_0.7fr]">
+          {error && (
+            <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="grid gap-8 xl:grid-cols-[1.3fr_0.7fr]">
             <section className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
               <h2 className="text-2xl font-bold">Reservation Details</h2>
 
@@ -33,7 +150,11 @@ export default function NewReservationPage() {
                     Guest Name
                   </label>
                   <input
+                    required
                     type="text"
+                    name="guestName"
+                    value={formData.guestName}
+                    onChange={handleChange}
                     placeholder="Mr. Alexander Thorne"
                     className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
                   />
@@ -45,6 +166,9 @@ export default function NewReservationPage() {
                   </label>
                   <input
                     type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
                     placeholder="guest@email.com"
                     className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
                   />
@@ -56,6 +180,9 @@ export default function NewReservationPage() {
                   </label>
                   <input
                     type="text"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
                     placeholder="+94 77 123 4567"
                     className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
                   />
@@ -65,11 +192,16 @@ export default function NewReservationPage() {
                   <label className="text-sm font-bold text-[#4d4635]">
                     Guest Type
                   </label>
-                  <select className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                    <option>Regular</option>
-                    <option>VIP</option>
-                    <option>Corporate</option>
-                    <option>Walk-in</option>
+                  <select
+                    name="guestType"
+                    value={formData.guestType}
+                    onChange={handleChange}
+                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                  >
+                    <option value="Regular">Regular</option>
+                    <option value="VIP">VIP</option>
+                    <option value="Corporate">Corporate</option>
+                    <option value="Walk-in">Walk-in</option>
                   </select>
                 </div>
 
@@ -78,7 +210,11 @@ export default function NewReservationPage() {
                     Check-in Date
                   </label>
                   <input
+                    required
                     type="date"
+                    name="checkIn"
+                    value={formData.checkIn}
+                    onChange={handleChange}
                     className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
                   />
                 </div>
@@ -88,34 +224,32 @@ export default function NewReservationPage() {
                     Check-out Date
                   </label>
                   <input
+                    required
                     type="date"
+                    name="checkOut"
+                    value={formData.checkOut}
+                    onChange={handleChange}
                     className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
                   />
                 </div>
 
                 <div>
                   <label className="text-sm font-bold text-[#4d4635]">
-                    Room Type
-                  </label>
-                  <select className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                    <option>Presidential Suite</option>
-                    <option>Executive Suite</option>
-                    <option>Junior Suite</option>
-                    <option>Deluxe Room</option>
-                    <option>Standard Room</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-sm font-bold text-[#4d4635]">
                     Room Number
                   </label>
-                  <select className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                    <option>Room 402</option>
-                    <option>Room 403</option>
-                    <option>Room 308</option>
-                    <option>Room 215</option>
-                    <option>Room 501</option>
+                  <select
+                    required
+                    name="roomNumber"
+                    value={formData.roomNumber}
+                    onChange={handleChange}
+                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                  >
+                    <option value="">-- Select Room --</option>
+                    {rooms.map((room) => (
+                      <option key={room.id || room.roomNumber} value={room.roomNumber}>
+                        Room {room.roomNumber} ({room.type || "Room"}) — Rs {Number(room.price || 450).toLocaleString()}/night [{room.status || "AVAILABLE"}]
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -125,7 +259,10 @@ export default function NewReservationPage() {
                   </label>
                   <input
                     type="number"
-                    defaultValue={2}
+                    min={1}
+                    name="adults"
+                    value={formData.adults}
+                    onChange={handleChange}
                     className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
                   />
                 </div>
@@ -136,7 +273,10 @@ export default function NewReservationPage() {
                   </label>
                   <input
                     type="number"
-                    defaultValue={0}
+                    min={0}
+                    name="children"
+                    value={formData.children}
+                    onChange={handleChange}
                     className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
                   />
                 </div>
@@ -145,32 +285,44 @@ export default function NewReservationPage() {
                   <label className="text-sm font-bold text-[#4d4635]">
                     Reservation Status
                   </label>
-                  <select className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                    <option>Pending</option>
-                    <option>Confirmed</option>
-                    <option>Checked In</option>
-                    <option>Cancelled</option>
+                  <select
+                    name="status"
+                    value={formData.status}
+                    onChange={handleChange}
+                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                  >
+                    <option value="PENDING">PENDING</option>
+                    <option value="CONFIRMED">CONFIRMED</option>
+                    <option value="CHECKED_IN">CHECKED_IN</option>
+                    <option value="CANCELLED">CANCELLED</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="text-sm font-bold text-[#4d4635]">
-                    Payment Method
+                    Payment Status
                   </label>
-                  <select className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                    <option>Cash</option>
-                    <option>Card</option>
-                    <option>Bank Transfer</option>
-                    <option>Pay at Check-in</option>
+                  <select
+                    name="paymentStatus"
+                    value={formData.paymentStatus}
+                    onChange={handleChange}
+                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                  >
+                    <option value="PENDING">PENDING</option>
+                    <option value="PAID">PAID</option>
+                    <option value="PARTIAL">PARTIAL</option>
                   </select>
                 </div>
 
                 <div className="md:col-span-2">
                   <label className="text-sm font-bold text-[#4d4635]">
-                    Special Requests
+                    Special Requests / Notes
                   </label>
                   <textarea
-                    rows={5}
+                    rows={4}
+                    name="notes"
+                    value={formData.notes}
+                    onChange={handleChange}
                     placeholder="Airport pickup, extra bed, late check-in, meal preference..."
                     className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
                   />
@@ -183,62 +335,27 @@ export default function NewReservationPage() {
                 <h2 className="text-2xl font-bold">Billing Summary</h2>
 
                 <div className="mt-6 space-y-4">
-                  <SummaryRow label="Room Rate" value="Rs 450 / night" />
-                  <SummaryRow label="Nights" value="2" />
-                  <SummaryRow label="Tax & Service" value="Rs 90" />
-                  <SummaryRow label="Estimated Total" value="Rs 990" highlight />
-                </div>
-              </section>
-
-              <section className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-                <h2 className="text-2xl font-bold">Reservation Options</h2>
-
-                <div className="mt-6 space-y-4">
-                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-4">
-                    <input type="checkbox" className="mt-1 h-5 w-5" />
-                    <div>
-                      <p className="font-bold">Create guest profile</p>
-                      <p className="text-sm text-[#4d4635]">
-                        Save this guest into guest records.
-                      </p>
-                    </div>
-                  </label>
-
-                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-4">
-                    <input type="checkbox" className="mt-1 h-5 w-5" />
-                    <div>
-                      <p className="font-bold">Create folio automatically</p>
-                      <p className="text-sm text-[#4d4635]">
-                        Create billing folio for this reservation.
-                      </p>
-                    </div>
-                  </label>
-
-                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-4">
-                    <input type="checkbox" className="mt-1 h-5 w-5" />
-                    <div>
-                      <p className="font-bold">Send confirmation email</p>
-                      <p className="text-sm text-[#4d4635]">
-                        Send booking confirmation to guest email.
-                      </p>
-                    </div>
-                  </label>
+                  <SummaryRow label="Room Rate" value={`Rs ${baseRate.toLocaleString()} / night`} />
+                  <SummaryRow label="Nights" value={String(nights)} />
+                  <SummaryRow label="Tax & Service (10%)" value={`Rs ${taxAndService.toLocaleString()}`} />
+                  <SummaryRow label="Estimated Total" value={`Rs ${estimatedTotal.toLocaleString()}`} highlight />
                 </div>
               </section>
 
               <div className="flex gap-4">
-                <a
+                <Link
                   href="/reservations"
                   className="flex-1 rounded-xl border border-[#735c00] px-6 py-4 text-center font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
                 >
                   Cancel
-                </a>
+                </Link>
 
                 <button
                   type="submit"
-                  className="flex-1 rounded-xl bg-[#735c00] px-6 py-4 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
+                  disabled={loading}
+                  className="flex-1 rounded-xl bg-[#735c00] px-6 py-4 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00] disabled:opacity-60"
                 >
-                  Save Reservation
+                  {loading ? "Saving..." : "Save Reservation"}
                 </button>
               </div>
             </aside>

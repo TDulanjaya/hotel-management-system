@@ -3,6 +3,7 @@ import { useMemo } from "react";
 import { ReportSummaryCards } from "@/components/reports/ReportSummaryCards";
 import { ReportPageLayout } from "@/components/reports/ReportPageLayout";
 import useSWR from "swr";
+import { isLowStock, isCriticalStock } from "@/lib/utils/isLowStock";
 
 function getStatusClass(status: string) {
   if (status === "Critical" || status === "Urgent") {
@@ -29,13 +30,10 @@ export default function LowStockReportPage() {
   const items = useMemo(() => (Array.isArray(rawItems) ? rawItems : []), [rawItems]);
   const loading = !rawItems && isLoading;
 
-  const lowStockThreshold = (item: any) => item.quantity <= item.reorderLevel;
-  const criticalThreshold = (item: any) => item.quantity <= item.reorderLevel / 2;
+  const lowStockItems = useMemo(() => items.filter(isLowStock), [items]);
+  const criticalItems = useMemo(() => items.filter(isCriticalStock), [items]);
 
-  const lowStockItems = useMemo(() => items.filter(lowStockThreshold), [items]);
-  const criticalItems = useMemo(() => items.filter(criticalThreshold), [items]);
-
-  // Since we don't have a purchase request API, we'll mock them based on critical items
+  // Sample purchase requests for critical items
   const purchaseRequests = useMemo(() => criticalItems.map((item, idx) => ({
     id: `PR-00${idx + 1}`,
     item: item.itemName,
@@ -73,7 +71,7 @@ export default function LowStockReportPage() {
   ];
 
   const lowStockTableRows = lowStockItems.map(item => {
-    const isCritical = criticalThreshold(item);
+    const isCritical = isCriticalStock(item);
     return {
       id: `INV-${item.id.substring(0, 6)}`,
       item: item.itemName,

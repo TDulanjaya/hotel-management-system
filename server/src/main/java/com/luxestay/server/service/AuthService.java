@@ -38,23 +38,29 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
     private final EmailService emailService;
-    
+    private final RateLimiterService rateLimiterService;
 
     public AuthService(AppUserRepository userRepository,
                    PasswordEncoder passwordEncoder,
                    JwtService jwtService,
                    AuthenticationManager authenticationManager,
                    UserDetailsService userDetailsService,
-                   EmailService emailService) {
+                   EmailService emailService,
+                   RateLimiterService rateLimiterService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
-        this.emailService = emailService; 
+        this.emailService = emailService;
+        this.rateLimiterService = rateLimiterService;
     }
 
     public AuthResponse login(LoginRequest request) {
+        if (rateLimiterService != null && !rateLimiterService.isAllowed("login:" + request.getEmail(), 5, 300)) {
+            throw new IllegalStateException("Too many login attempts. Please wait a few minutes and try again.");
+        }
+
         var user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid email or password."));
 
@@ -83,6 +89,12 @@ public class AuthService {
     }
 
     public Map<String, String> forgotPassword(ForgotPasswordRequest request) {
+        if (rateLimiterService != null && !rateLimiterService.isAllowed("forgot-password:" + request.getEmail().trim().toLowerCase(), 3, 900)) {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "If this email exists, a password reset request has been created.");
+            return response;
+        }
+
         Map<String, String> response = new HashMap<>();
 
         AppUser user = userRepository.findByEmail(request.getEmail().trim())

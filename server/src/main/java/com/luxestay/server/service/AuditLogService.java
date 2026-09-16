@@ -2,7 +2,8 @@ package com.luxestay.server.service;
 
 import com.luxestay.server.model.AuditLog;
 import com.luxestay.server.repository.AuditLogRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -10,14 +11,25 @@ import java.util.List;
 @Service
 public class AuditLogService {
 
-    @Autowired
-    private AuditLogRepository auditLogRepository;
+    private final AuditLogRepository auditLogRepository;
+
+    public AuditLogService(AuditLogRepository auditLogRepository) {
+        this.auditLogRepository = auditLogRepository;
+    }
 
     public void log(String action, String module, String targetId, String details) {
-        // Here we could extract user details from SecurityContextHolder if auth is fully integrated
+        String userName = "System";
+        try {
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            if (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getPrincipal())) {
+                userName = auth.getName();
+            }
+        } catch (Exception ignored) {
+        }
+
         AuditLog auditLog = AuditLog.builder()
-                .userId("SYSTEM") // Fallback
-                .userName("System User") // Fallback
+                .userId(userName)
+                .userName(userName)
                 .action(action)
                 .module(module)
                 .targetId(targetId)

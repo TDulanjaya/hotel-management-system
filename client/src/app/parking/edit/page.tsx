@@ -9,6 +9,7 @@ import {
   getParkingBookingById,
   updateParkingBooking,
 } from "@/lib/api/parkingApi";
+import { getPricingItemsByCategory } from "@/lib/api/pricingApi";
 
 export default function EditParkingPage() {
   const router = useRouter();
@@ -18,6 +19,7 @@ export default function EditParkingPage() {
   const [pageLoading, setPageLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [pricingItems, setPricingItems] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     vehicleNumber: "",
@@ -32,6 +34,7 @@ export default function EditParkingPage() {
     expectedCheckOutTime: "",
     guestName: "",
     roomNumber: "",
+    pricingItemId: "",
     amount: 0,
     paymentStatus: "Pending",
     notes: "",
@@ -62,11 +65,19 @@ export default function EditParkingPage() {
           expectedCheckOutTime: record.expectedCheckOutTime || "",
           guestName: record.guestName || "",
           roomNumber: record.roomNumber || "",
+          pricingItemId: record.pricingItemId || "",
           amount: Number(record.amount || 0),
           paymentStatus: record.paymentStatus || "Pending",
           notes: record.notes || "",
           status: record.status || "CHECKED_IN",
         });
+
+        try {
+          const items = await getPricingItemsByCategory("PARKING");
+          setPricingItems(items || []);
+        } catch (catErr) {
+          console.error("Failed to load parking pricing items", catErr);
+        }
       } catch (err: any) {
         setError(err.message || "Failed to load parking record.");
       } finally {
@@ -76,6 +87,16 @@ export default function EditParkingPage() {
 
     loadParkingRecord();
   }, [parkingId]);
+
+  const handlePricingChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedId = e.target.value;
+    const selectedItem = pricingItems.find((item) => item.id === selectedId);
+    setFormData((prev) => ({
+      ...prev,
+      pricingItemId: selectedId,
+      amount: selectedItem ? selectedItem.price : 0,
+    }));
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
@@ -283,6 +304,24 @@ export default function EditParkingPage() {
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="block text-sm font-bold text-[#4d4635]">
+                          Parking Package
+                        </label>
+                        <select
+                          value={formData.pricingItemId}
+                          onChange={handlePricingChange}
+                          className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-[#fbf9f5] p-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                        >
+                          <option value="">-- Select parking package --</option>
+                          {pricingItems.map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.name} - Rs {item.price}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
                       <InputField
                         label="Amount (Rs)"
                         name="amount"
@@ -291,7 +330,9 @@ export default function EditParkingPage() {
                         onChange={handleChange}
                         required
                       />
+                    </div>
 
+                    <div className="grid gap-4 md:grid-cols-2">
                       <SelectField
                         label="Payment Status"
                         name="paymentStatus"

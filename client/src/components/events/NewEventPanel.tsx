@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import SlidePanel from "@/components/ui/SlidePanel";
 import { createEvent } from "@/lib/api/eventApi";
+import { getVenues } from "@/lib/api/venueApi";
 import { CalendarPlus } from "lucide-react";
 
 interface NewEventPanelProps {
@@ -14,23 +15,44 @@ interface NewEventPanelProps {
 export default function NewEventPanel({ open, onClose, onSuccess }: NewEventPanelProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [venues, setVenues] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     eventName: "",
     eventType: "Wedding",
-    guestCount: 0,
+    guestCount: 1,
     primaryDate: "",
     startTime: "",
     organizerName: "",
     phone: "",
     status: "Active",
-    venueId: "V-001",
-    grandTotal: 0
+    venueId: "",
   });
+
+  useEffect(() => {
+    async function loadVenues() {
+      try {
+        const venueList = await getVenues();
+        if (Array.isArray(venueList)) {
+          setVenues(venueList);
+          if (venueList.length > 0 && !formData.venueId) {
+            setFormData((prev) => ({ ...prev, venueId: venueList[0].id }));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load venues", err);
+      }
+    }
+    if (open) {
+      loadVenues();
+    }
+  }, [open]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
+
+  const selectedVenue = venues.find((v) => v.id === formData.venueId);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +62,7 @@ export default function NewEventPanel({ open, onClose, onSuccess }: NewEventPane
       await createEvent({
         ...formData,
         guestCount: Number(formData.guestCount),
-        grandTotal: Number(formData.grandTotal),
+        selectedVenue: formData.venueId ? { id: formData.venueId } : null,
       });
       onSuccess();
       onClose();
@@ -48,14 +70,13 @@ export default function NewEventPanel({ open, onClose, onSuccess }: NewEventPane
       setFormData({
         eventName: "",
         eventType: "Wedding",
-        guestCount: 0,
+        guestCount: 1,
         primaryDate: "",
         startTime: "",
         organizerName: "",
         phone: "",
         status: "Active",
-        venueId: "V-001",
-        grandTotal: 0
+        venueId: venues.length > 0 ? venues[0].id : "",
       });
     } catch (err: any) {
       setError(err.message || "Failed to create event");
@@ -99,6 +120,28 @@ export default function NewEventPanel({ open, onClose, onSuccess }: NewEventPane
           </div>
         </div>
 
+        <div>
+          <label className="block text-sm font-bold text-[#4d4635]">Venue</label>
+          <select
+            name="venueId"
+            value={formData.venueId}
+            onChange={handleChange}
+            className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+          >
+            <option value="">-- Select a venue --</option>
+            {venues.map((venue) => (
+              <option key={venue.id} value={venue.id}>
+                {venue.name} — Rs {Number(venue.price || 0).toLocaleString()}
+              </option>
+            ))}
+          </select>
+          {selectedVenue && (
+            <p className="mt-1 text-xs text-[#4d4635]">
+              Base Venue Price: Rs {Number(selectedVenue.price || 0).toLocaleString()} (+10% service charge calculated server-side)
+            </p>
+          )}
+        </div>
+
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-bold text-[#4d4635]">Date</label>
@@ -119,11 +162,6 @@ export default function NewEventPanel({ open, onClose, onSuccess }: NewEventPane
             <label className="block text-sm font-bold text-[#4d4635]">Phone</label>
             <input required type="text" name="phone" value={formData.phone} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-3 outline-none focus:ring-2 focus:ring-[#735c00]/30" />
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-bold text-[#4d4635]">Grand Total</label>
-          <input required type="number" min={0} name="grandTotal" value={formData.grandTotal} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-3 outline-none focus:ring-2 focus:ring-[#735c00]/30" />
         </div>
 
         <div className="flex gap-4 pt-4">

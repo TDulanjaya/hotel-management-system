@@ -54,7 +54,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/reset-password").permitAll()
 
                         .requestMatchers(HttpMethod.GET, "/api/venues/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/pricing/**").permitAll()
+
+                        // Authenticated staff pricing access
+                        .requestMatchers(HttpMethod.GET, "/api/pricing/**").hasAnyRole("OWNER", "MANAGER", "EVENTS", "WAITER", "ROOM_SERVICE", "LAUNDRY", "PARKING", "GAME_STAFF", "RECEPTIONIST")
 
                         // Authenticated user route
                         .requestMatchers(HttpMethod.GET, "/api/auth/me").authenticated()
@@ -96,6 +98,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/payments/**").hasAnyRole("OWNER", "MANAGER", "RECEPTIONIST")
                         .requestMatchers("/api/reservations/**").hasAnyRole("OWNER", "MANAGER", "RECEPTIONIST")
                         .requestMatchers("/api/folios/**", "/api/folio/**").hasAnyRole("OWNER", "MANAGER", "RECEPTIONIST")
+                        .requestMatchers("/api/checkout/**").hasAnyRole("OWNER", "MANAGER", "RECEPTIONIST")
 
                         // OWNER + MANAGER + INVENTORY
                         .requestMatchers(HttpMethod.GET, "/api/inventory/**").hasAnyRole("OWNER", "MANAGER", "INVENTORY")

@@ -51,14 +51,24 @@ function EditRecipeContent() {
         setError("");
         const data = await getRecipeById(id);
         if (data) {
+          const formattedIngredients = Array.isArray(data.ingredients)
+            ? data.ingredients
+                .map((ing: any) =>
+                  typeof ing === "string"
+                    ? ing
+                    : `${ing.itemName || ""} - ${ing.quantityPerServing ?? 1} ${ing.unit || ""}`.trim()
+                )
+                .join("\n")
+            : data.ingredients || "";
+
           setFormData({
             name: data.name || "",
             category: data.category || "Main",
             prepTime: data.prepTime !== undefined ? data.prepTime : 0,
             servings: data.servings !== undefined ? data.servings : 1,
-            ingredients: data.ingredients || "",
+            ingredients: formattedIngredients,
             instructions: data.instructions || "",
-            notes: data.notes || "",
+            notes: data.notes || data.ingredientsNote || "",
           });
         }
       } catch (err: any) {
@@ -84,8 +94,37 @@ function EditRecipeContent() {
       setSaving(true);
       setError("");
       setSuccess(false);
+
+      const parsedIngredients = (formData.ingredients || "")
+        .split("\n")
+        .map((line: string) => line.trim())
+        .filter((line: string) => line.length > 0)
+        .map((line: string) => {
+          const dashIdx = line.indexOf("-");
+          if (dashIdx > 0) {
+            const itemName = line.slice(0, dashIdx).trim();
+            const rest = line.slice(dashIdx + 1).trim();
+            const numMatch = rest.match(/^([0-9.]+)\s*(.*)$/);
+            return {
+              itemName,
+              quantityPerServing: numMatch ? parseFloat(numMatch[1]) || 1 : 1,
+              unit: numMatch && numMatch[2] ? numMatch[2].trim() : rest || "units",
+            };
+          }
+          return {
+            itemName: line,
+            quantityPerServing: 1,
+            unit: "portion",
+          };
+        });
+
       await updateRecipe(id, {
-        ...formData,
+        name: formData.name,
+        category: formData.category,
+        instructions: formData.instructions,
+        notes: formData.notes,
+        ingredientsNote: formData.notes,
+        ingredients: parsedIngredients,
         prepTime: Number(formData.prepTime) || 0,
         servings: Number(formData.servings) || 1,
       });

@@ -27,6 +27,7 @@ public class ParkingBooking {
     private String expectedCheckOutTime;
     private String guestName;
     private String roomNumber;
+    private String pricingItemId;
     private Double amount;
     private String paymentStatus;
     private String notes;

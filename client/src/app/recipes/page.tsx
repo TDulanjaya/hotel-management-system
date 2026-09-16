@@ -61,6 +61,28 @@ function getCategoryBadgeClass(category: string) {
   return "bg-purple-100 text-purple-800 border-purple-300";
 }
 
+function parseIngredientsToLines(ingredients: any, ingredientsNote?: string): string[] {
+  const lines: string[] = [];
+  if (Array.isArray(ingredients)) {
+    ingredients.forEach((ing: any) => {
+      if (typeof ing === "string" && ing.trim()) {
+        lines.push(ing.trim());
+      } else if (ing && typeof ing === "object") {
+        const name = ing.itemName || "Item";
+        const qty = ing.quantityPerServing !== undefined && ing.quantityPerServing !== null ? `${ing.quantityPerServing}` : "";
+        const unit = ing.unit || "";
+        lines.push(`${name} - ${qty} ${unit}`.trim());
+      }
+    });
+  } else if (typeof ingredients === "string" && ingredients.trim()) {
+    lines.push(...ingredients.split("\n").map((l: string) => l.trim()).filter((l: string) => l.length > 0));
+  }
+  if (ingredientsNote && ingredientsNote.trim()) {
+    lines.push(`Note: ${ingredientsNote.trim()}`);
+  }
+  return lines;
+}
+
 export default function RecipesPage() {
   const [user, setUser] = useState<AuthUser | null>(null);
   useEffect(() => {
@@ -107,10 +129,11 @@ export default function RecipesPage() {
   const filteredItems = useMemo(() => {
     return items.filter((item: any) => {
       const q = searchQuery.toLowerCase().trim();
+      const ingredientText = parseIngredientsToLines(item.ingredients, item.ingredientsNote).join(" ").toLowerCase();
       const matchesSearch =
         !q ||
         (item.name && item.name.toLowerCase().includes(q)) ||
-        (item.ingredients && item.ingredients.toLowerCase().includes(q)) ||
+        ingredientText.includes(q) ||
         (item.notes && item.notes.toLowerCase().includes(q)) ||
         (item.category && item.category.toLowerCase().includes(q));
 
@@ -160,14 +183,24 @@ export default function RecipesPage() {
   const handleOpenEdit = (item: any) => {
     setEditItem(item);
     setFormError("");
+    const formattedIngredients = Array.isArray(item.ingredients)
+      ? item.ingredients
+          .map((ing: any) =>
+            typeof ing === "string"
+              ? ing
+              : `${ing.itemName || ""} - ${ing.quantityPerServing ?? 1} ${ing.unit || ""}`.trim()
+          )
+          .join("\n")
+      : item.ingredients || "";
+
     setFormData({
       name: item.name || "",
       category: item.category || "Main",
-      ingredients: item.ingredients || "",
+      ingredients: formattedIngredients,
       instructions: item.instructions || "",
       prepTime: item.prepTime !== undefined ? item.prepTime : 0,
       servings: item.servings !== undefined ? item.servings : 1,
-      notes: item.notes || "",
+      notes: item.notes || item.ingredientsNote || "",
     });
     setPanelOpen(true);
   };
@@ -210,8 +243,36 @@ export default function RecipesPage() {
     }
 
     try {
+      const parsedIngredients = (formData.ingredients || "")
+        .split("\n")
+        .map((line: string) => line.trim())
+        .filter((line: string) => line.length > 0)
+        .map((line: string) => {
+          const dashIdx = line.indexOf("-");
+          if (dashIdx > 0) {
+            const itemName = line.slice(0, dashIdx).trim();
+            const rest = line.slice(dashIdx + 1).trim();
+            const numMatch = rest.match(/^([0-9.]+)\s*(.*)$/);
+            return {
+              itemName,
+              quantityPerServing: numMatch ? parseFloat(numMatch[1]) || 1 : 1,
+              unit: numMatch && numMatch[2] ? numMatch[2].trim() : rest || "units",
+            };
+          }
+          return {
+            itemName: line,
+            quantityPerServing: 1,
+            unit: "portion",
+          };
+        });
+
       const payload = {
-        ...formData,
+        name: formData.name,
+        category: formData.category,
+        instructions: formData.instructions,
+        notes: formData.notes,
+        ingredientsNote: formData.notes,
+        ingredients: parsedIngredients,
         prepTime: Number(formData.prepTime) || 0,
         servings: Number(formData.servings) || 1,
       };
@@ -442,9 +503,7 @@ export default function RecipesPage() {
               {/* MOBILE CARDS VIEW (< md screens) */}
               <div className="grid grid-cols-1 gap-3.5 md:hidden">
                 {filteredItems.map((item: any) => {
-                  const ingredientLines = (item.ingredients || "")
-                    .split("\n")
-                    .filter((l: string) => l.trim().length > 0);
+                  const ingredientLines = parseIngredientsToLines(item.ingredients, item.ingredientsNote);
 
                   return (
                     <div
@@ -564,9 +623,7 @@ export default function RecipesPage() {
                     </thead>
                     <tbody className="divide-y divide-[#d9cfbd]">
                       {filteredItems.map((item: any) => {
-                        const ingredientLines = (item.ingredients || "")
-                          .split("\n")
-                          .filter((l: string) => l.trim().length > 0);
+                        const ingredientLines = parseIngredientsToLines(item.ingredients, item.ingredientsNote);
 
                         return (
                           <tr
@@ -728,9 +785,7 @@ export default function RecipesPage() {
                   </div>
 
                   <div className="space-y-1.5 rounded-xl border border-[#d0c5af] bg-white p-3">
-                    {(viewRecipe.ingredients || "")
-                      .split("\n")
-                      .filter((line: string) => line.trim().length > 0)
+                    {parseIngredientsToLines(viewRecipe.ingredients, viewRecipe.ingredientsNote)
                       .map((ingredient: string, idx: number) => {
                         const isChecked = checkedIngredients[idx];
                         return (

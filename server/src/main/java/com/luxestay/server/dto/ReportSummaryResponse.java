@@ -13,9 +13,17 @@ public class ReportSummaryResponse {
     private String parkingIncome;
     private String inventoryUsage;
     private String auditHistory;
+    private boolean netProfitIsEstimate = true;
+    private String netProfitNote = "Estimated (assumes 45% margin — operational expense tracking not yet configured)";
 
     // Constructors
     public ReportSummaryResponse() {}
+
+    public boolean isNetProfitIsEstimate() { return netProfitIsEstimate; }
+    public void setNetProfitIsEstimate(boolean netProfitIsEstimate) { this.netProfitIsEstimate = netProfitIsEstimate; }
+
+    public String getNetProfitNote() { return netProfitNote; }
+    public void setNetProfitNote(String netProfitNote) { this.netProfitNote = netProfitNote; }
 
     // Getters and Setters
     public String getTodayRevenue() { return todayRevenue; }

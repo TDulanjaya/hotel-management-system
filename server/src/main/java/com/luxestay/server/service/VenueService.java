@@ -1,9 +1,9 @@
 package com.luxestay.server.service;
 
 import com.luxestay.server.dto.VenueRequest;
+import com.luxestay.server.exception.ResourceNotFoundException;
 import com.luxestay.server.model.Venue;
 import com.luxestay.server.repository.VenueRepository;
-import jakarta.annotation.PostConstruct;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -14,9 +14,11 @@ import java.util.List;
 public class VenueService {
 
     private final VenueRepository venueRepository;
+    private final AuditLogService auditLogService;
 
-    public VenueService(VenueRepository venueRepository) {
+    public VenueService(VenueRepository venueRepository, AuditLogService auditLogService) {
         this.venueRepository = venueRepository;
+        this.auditLogService = auditLogService;
     }
 
     @Cacheable("venues")
@@ -27,7 +29,7 @@ public class VenueService {
     @Cacheable(value = "venue", key = "#id")
     public Venue getVenueById(String id) {
         return venueRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Venue not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Venue not found with id: " + id));
     }
 
     @CacheEvict(value = {"venues", "venue"}, allEntries = true)
@@ -47,7 +49,9 @@ public class VenueService {
                 .tags(request.getTags())
                 .build();
 
-        return venueRepository.save(venue);
+        Venue saved = venueRepository.save(venue);
+        auditLogService.log("CREATE", "VENUE", saved.getId(), "Created venue: " + saved.getName());
+        return saved;
     }
 
     @CacheEvict(value = {"venues", "venue"}, allEntries = true)
@@ -64,14 +68,17 @@ public class VenueService {
         existingVenue.setImage(request.getImage());
         existingVenue.setTags(request.getTags());
 
-        return venueRepository.save(existingVenue);
+        Venue saved = venueRepository.save(existingVenue);
+        auditLogService.log("UPDATE", "VENUE", saved.getId(), "Updated venue: " + saved.getName());
+        return saved;
     }
 
     @CacheEvict(value = {"venues", "venue"}, allEntries = true)
     public void deleteVenue(String id) {
         if (!venueRepository.existsById(id)) {
-            throw new RuntimeException("Venue not found with id: " + id);
+            throw new ResourceNotFoundException("Venue not found with id: " + id);
         }
         venueRepository.deleteById(id);
+        auditLogService.log("DELETE", "VENUE", id, "Deleted venue #" + id);
     }
 }

@@ -1,10 +1,49 @@
 "use client";
+
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { createGuest } from "@/lib/api/guestsApi";
 
 export default function NewGuestPage() {
   const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    nationality: "",
+    idType: "Passport",
+    idNumber: "",
+    address: "",
+    notes: "",
+  });
+
+  const handleChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim()) {
+      setError("Full Name is required.");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError("");
+      await createGuest(formData);
+      router.push("/guests");
+    } catch (err: any) {
+      setError(err.message || "Failed to create guest. Please check the details.");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "RECEPTIONIST"]}>
@@ -29,6 +68,7 @@ export default function NewGuestPage() {
             </div>
 
             <button
+              type="button"
               onClick={() => router.push("/guests")}
               className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
             >
@@ -36,82 +76,103 @@ export default function NewGuestPage() {
             </button>
           </div>
 
-          <section className="grid gap-8 xl:grid-cols-[1fr_1fr]">
+          {error && (
+            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 font-semibold">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="grid gap-8 xl:grid-cols-[1fr_1fr]">
             <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
               <h2 className="text-2xl font-bold">Personal Details</h2>
 
               <div className="mt-6 space-y-5">
-                <InputField label="Full Name" placeholder="Enter guest name" />
+                <div>
+                  <label className="text-sm font-bold text-[#4d4635]">Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.name}
+                    onChange={(e) => handleChange("name", e.target.value)}
+                    placeholder="Enter guest name"
+                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                  />
+                </div>
 
-                <InputField
-                  label="Email"
-                  type="email"
-                  placeholder="guest@example.com"
-                />
+                <div>
+                  <label className="text-sm font-bold text-[#4d4635]">Email</label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleChange("email", e.target.value)}
+                    placeholder="guest@example.com"
+                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                  />
+                </div>
 
-                <InputField
-                  label="Phone Number"
-                  placeholder="+94 77 123 4567"
-                />
+                <div>
+                  <label className="text-sm font-bold text-[#4d4635]">Phone Number</label>
+                  <input
+                    type="text"
+                    value={formData.phone}
+                    onChange={(e) => handleChange("phone", e.target.value)}
+                    placeholder="+94 77 123 4567"
+                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                  />
+                </div>
 
-                <InputField label="Nationality" placeholder="Enter nationality" />
+                <div>
+                  <label className="text-sm font-bold text-[#4d4635]">Nationality</label>
+                  <input
+                    type="text"
+                    value={formData.nationality}
+                    onChange={(e) => handleChange("nationality", e.target.value)}
+                    placeholder="Enter nationality"
+                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                  />
+                </div>
 
-                <InputField
-                  label="Passport / ID No"
-                  placeholder="Enter passport or ID number"
-                />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-sm font-bold text-[#4d4635]">ID Type</label>
+                    <select
+                      value={formData.idType}
+                      onChange={(e) => handleChange("idType", e.target.value)}
+                      className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                    >
+                      <option value="Passport">Passport</option>
+                      <option value="National ID">National ID</option>
+                      <option value="Driver License">Driver License</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-bold text-[#4d4635]">Passport / ID No</label>
+                    <input
+                      type="text"
+                      value={formData.idNumber}
+                      onChange={(e) => handleChange("idNumber", e.target.value)}
+                      placeholder="Enter ID number"
+                      className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
             <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-              <h2 className="text-2xl font-bold">Guest Preferences</h2>
+              <h2 className="text-2xl font-bold">Address & Contact</h2>
 
               <div className="mt-6 space-y-5">
                 <div>
-                  <label className="text-sm font-bold text-[#4d4635]">
-                    Guest Type
-                  </label>
-
-                  <select className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                    <option>Regular</option>
-                    <option>VIP</option>
-                    <option>Corporate</option>
-                    <option>Walk-in</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="text-sm font-bold text-[#4d4635]">
-                    Preferred Room Type
-                  </label>
-
-                  <select className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                    <option>Standard Room</option>
-                    <option>Deluxe Room</option>
-                    <option>Executive Suite</option>
-                    <option>Presidential Suite</option>
-                  </select>
-                </div>
-
-                <InputField
-                  label="Meal Preference"
-                  placeholder="Regular / Vegetarian / Vegan"
-                />
-
-                <InputField
-                  label="Emergency Contact"
-                  placeholder="+94 71 222 3333"
-                />
-
-                <div>
-                  <label className="text-sm font-bold text-[#4d4635]">
-                    Guest Status
-                  </label>
-
-                  <select className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                    <option>Active</option>
-                    <option>Inactive</option>
-                  </select>
+                  <label className="text-sm font-bold text-[#4d4635]">Residential Address</label>
+                  <textarea
+                    rows={4}
+                    value={formData.address}
+                    onChange={(e) => handleChange("address", e.target.value)}
+                    placeholder="Street address, city, country..."
+                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                  />
                 </div>
               </div>
             </div>
@@ -120,17 +181,24 @@ export default function NewGuestPage() {
               <h2 className="text-2xl font-bold">Guest Notes</h2>
 
               <textarea
-                placeholder="Add guest notes, special requests, or preferences..."
-                rows={5}
+                placeholder="Add guest notes, special requests, VIP status, or dietary preferences..."
+                rows={4}
+                value={formData.notes}
+                onChange={(e) => handleChange("notes", e.target.value)}
                 className="mt-6 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
               />
 
               <div className="mt-6 flex flex-wrap gap-4">
-                <button className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]">
-                  Save Guest
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00] disabled:opacity-50"
+                >
+                  {saving ? "Saving Guest..." : "Save Guest"}
                 </button>
 
                 <button
+                  type="button"
                   onClick={() => router.push("/guests")}
                   className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
                 >
@@ -138,31 +206,9 @@ export default function NewGuestPage() {
                 </button>
               </div>
             </div>
-          </section>
+          </form>
         </main>
       </div>
     </ProtectedRoute>
-  );
-}
-
-function InputField({
-  label,
-  placeholder,
-  type = "text",
-}: {
-  label: string;
-  placeholder: string;
-  type?: string;
-}) {
-  return (
-    <div>
-      <label className="text-sm font-bold text-[#4d4635]">{label}</label>
-
-      <input
-        type={type}
-        placeholder={placeholder}
-        className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-      />
-    </div>
   );
 }

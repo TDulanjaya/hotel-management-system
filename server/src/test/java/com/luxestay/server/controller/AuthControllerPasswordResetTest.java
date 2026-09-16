@@ -49,9 +49,7 @@ class AuthControllerPasswordResetTest {
     @MockitoBean
     private CustomUserDetailsService customUserDetailsService;
 
-    // ---------------------------------------------------------------
-    // POST /api/auth/forgot-password — validation tests
-    // ---------------------------------------------------------------
+    // Forgot password endpoint tests
 
     @Test
     @DisplayName("forgot-password: blank email → 400 with validation error")
@@ -108,9 +106,7 @@ class AuthControllerPasswordResetTest {
         verify(authService).forgotPassword(any());
     }
 
-    // ---------------------------------------------------------------
-    // POST /api/auth/reset-password — validation tests
-    // ---------------------------------------------------------------
+    // Reset password endpoint tests
 
     @Test
     @DisplayName("reset-password: blank token → 400 with validation error")

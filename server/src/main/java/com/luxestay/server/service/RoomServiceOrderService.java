@@ -17,6 +17,9 @@ public class RoomServiceOrderService {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
+    @Autowired
+    private OrderBillingService billingService;
+
     public List<RoomServiceOrder> getAll() {
         return repository.findAll();
     }
@@ -26,13 +29,26 @@ public class RoomServiceOrderService {
     }
 
     public RoomServiceOrder create(RoomServiceOrder roomServiceOrder) {
+        roomServiceOrder.setItems(billingService.resolveAndPriceItems(roomServiceOrder.getItems()));
+        roomServiceOrder.setTotalAmount(billingService.sumTotal(roomServiceOrder.getItems()));
+
         RoomServiceOrder saved = repository.save(roomServiceOrder);
         messagingTemplate.convertAndSend("/topic/room-service", "updated");
+
+        billingService.postChargeToFolio(
+                saved.getRoomNumber(),
+                "Room service order (" + saved.getItems().size() + " item(s))",
+                "Room Service",
+                saved.getTotalAmount()
+        );
+
         return saved;
     }
 
     public RoomServiceOrder update(String id, RoomServiceOrder roomServiceOrder) {
         roomServiceOrder.setId(id);
+        roomServiceOrder.setItems(billingService.resolveAndPriceItems(roomServiceOrder.getItems()));
+        roomServiceOrder.setTotalAmount(billingService.sumTotal(roomServiceOrder.getItems()));
         RoomServiceOrder saved = repository.save(roomServiceOrder);
         messagingTemplate.convertAndSend("/topic/room-service", "updated");
         return saved;
@@ -43,3 +59,4 @@ public class RoomServiceOrderService {
         messagingTemplate.convertAndSend("/topic/room-service", "updated");
     }
 }
+

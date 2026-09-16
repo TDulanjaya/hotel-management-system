@@ -33,8 +33,37 @@ export default function NewRecipePage() {
     try {
       setSaving(true);
       setError("");
+
+      const parsedIngredients = (formData.ingredients || "")
+        .split("\n")
+        .map((line: string) => line.trim())
+        .filter((line: string) => line.length > 0)
+        .map((line: string) => {
+          const dashIdx = line.indexOf("-");
+          if (dashIdx > 0) {
+            const itemName = line.slice(0, dashIdx).trim();
+            const rest = line.slice(dashIdx + 1).trim();
+            const numMatch = rest.match(/^([0-9.]+)\s*(.*)$/);
+            return {
+              itemName,
+              quantityPerServing: numMatch ? parseFloat(numMatch[1]) || 1 : 1,
+              unit: numMatch && numMatch[2] ? numMatch[2].trim() : rest || "units",
+            };
+          }
+          return {
+            itemName: line,
+            quantityPerServing: 1,
+            unit: "portion",
+          };
+        });
+
       await createRecipe({
-        ...formData,
+        name: formData.name,
+        category: formData.category,
+        instructions: formData.instructions,
+        notes: formData.notes,
+        ingredientsNote: formData.notes,
+        ingredients: parsedIngredients,
         prepTime: Number(formData.prepTime) || 0,
         servings: Number(formData.servings) || 1,
       });

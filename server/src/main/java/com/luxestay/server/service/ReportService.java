@@ -46,7 +46,7 @@ public class ReportService {
         
         LocalDate today = LocalDate.now();
 
-        // 1. Today's Revenue (from Payments paid today)
+        // Revenue for today
         List<Payment> payments = paymentRepository.findAll();
         double todayRevenue = 0.0;
         double totalPayments = 0.0;
@@ -57,16 +57,16 @@ public class ReportService {
             }
         }
         
-        // 2. Net Profit (Assuming 45% margin)
+        // Estimated profit based on margin
         double netProfit = todayRevenue * 0.45;
 
-        // 3. Occupancy Rate
+        // Current room occupancy
         List<Room> rooms = roomRepository.findAll();
         long occupiedRooms = rooms.stream().filter(r -> "OCCUPIED".equalsIgnoreCase(r.getStatus())).count();
         long totalRooms = rooms.size();
         int occupancyRate = totalRooms > 0 ? (int) ((occupiedRooms * 100.0) / totalRooms) : 0;
 
-        // 4. Pending Payments (Reservations with PENDING)
+        // Unpaid reservations
         List<Reservation> reservations = reservationRepository.findAll();
         double pendingPaymentsAmount = 0.0;
         for (Reservation r : reservations) {
@@ -75,43 +75,40 @@ public class ReportService {
             }
         }
 
-        // 5. Low Stock Count
+        // Low stock items
         List<InventoryItem> inventoryItems = inventoryRepository.findAll();
         long lowStockCount = inventoryItems.stream()
                 .filter(i -> i.getQuantity() != null && i.getReorderLevel() != null && i.getQuantity() <= i.getReorderLevel())
                 .count();
 
-        // 6. Event Income
+        // Service revenues
         List<EventBooking> events = eventBookingRepository.findAll();
         double eventIncome = events.stream()
                 .mapToDouble(e -> e.getGrandTotal() != null ? e.getGrandTotal() : 0.0)
                 .sum();
 
-        // 7. Food Sales
         List<RestaurantOrder> orders = restaurantOrderRepository.findAll();
         double foodSales = orders.stream()
                 .mapToDouble(RestaurantOrder::getTotalAmount)
                 .sum();
 
-        // 8. Parking Income
         List<ParkingBooking> parkings = parkingBookingRepository.findAll();
         double parkingIncome = parkings.stream()
                 .mapToDouble(p -> p.getAmount() != null ? p.getAmount() : 0.0)
                 .sum();
 
-        // 9. Inventory Usage (Mock as total quantity of all items)
         long inventoryUsage = inventoryItems.stream()
                 .mapToInt(i -> i.getQuantity() != null ? i.getQuantity() : 0)
                 .sum();
 
-        // 10. Audit History (Total users for now)
         long auditHistory = appUserRepository.count();
 
-        // Format values
         NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(new Locale("en", "IN"));
         
         response.setTodayRevenue(formatCurrency(todayRevenue));
         response.setNetProfit(formatCurrency(netProfit));
+        response.setNetProfitIsEstimate(true);
+        response.setNetProfitNote("Estimated (assumes 45% margin — operational expense tracking not yet configured)");
         response.setOccupancyRate(occupancyRate + "%");
         response.setPendingPayments(formatCurrency(pendingPaymentsAmount));
         response.setLowStockCount(String.format("%02d", lowStockCount));
@@ -126,7 +123,6 @@ public class ReportService {
     }
 
     private String formatCurrency(double amount) {
-        // Simple formatting to match UI "Rs 42,850"
         return String.format("Rs %,.0f", amount);
     }
 

@@ -13,6 +13,9 @@ public class LaundryOrderService {
     @Autowired
     private LaundryOrderRepository repository;
 
+    @Autowired
+    private OrderBillingService billingService;
+
     public List<LaundryOrder> getAll() {
         return repository.findAll();
     }
@@ -22,11 +25,25 @@ public class LaundryOrderService {
     }
 
     public LaundryOrder create(LaundryOrder order) {
-        return repository.save(order);
+        order.setItems(billingService.resolveAndPriceItems(order.getItems()));
+        order.setTotalAmount(billingService.sumTotal(order.getItems()));
+
+        LaundryOrder saved = repository.save(order);
+
+        billingService.postChargeToFolio(
+                saved.getRoomNumber(),
+                "Laundry order (" + saved.getItems().size() + " item(s))",
+                "Laundry",
+                saved.getTotalAmount()
+        );
+
+        return saved;
     }
 
     public LaundryOrder update(String id, LaundryOrder order) {
         order.setId(id);
+        order.setItems(billingService.resolveAndPriceItems(order.getItems()));
+        order.setTotalAmount(billingService.sumTotal(order.getItems()));
         return repository.save(order);
     }
 
@@ -34,3 +51,4 @@ public class LaundryOrderService {
         repository.deleteById(id);
     }
 }
+

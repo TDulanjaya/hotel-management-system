@@ -1,19 +1,104 @@
 "use client";
-import { useSearchParams } from "next/navigation";
 
-
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import { getReservationById, updateReservation } from "@/lib/api/reservationsApi";
+import { getRooms } from "@/lib/api/roomApi";
 
 export default function EditReservationPage() {
   const searchParams = useSearchParams();
-  const rawId = searchParams.get("id");
-  const id = rawId as string;
-
+  const reservationId = searchParams.get("id") || "";
   const router = useRouter();
-  const params = useParams();
-  const reservationId = id as string;
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [rooms, setRooms] = useState<any[]>([]);
+
+  const [formData, setFormData] = useState({
+    guestName: "",
+    guestId: "",
+    roomNumber: "",
+    checkIn: "",
+    checkOut: "",
+    adults: 1,
+    children: 0,
+    status: "CONFIRMED",
+    paymentStatus: "PENDING",
+    totalAmount: 0,
+    notes: "",
+  });
+
+  useEffect(() => {
+    async function loadData() {
+      if (!reservationId) {
+        setError("Reservation ID is missing.");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const [reservation, roomData] = await Promise.all([
+          getReservationById(reservationId),
+          getRooms({ size: 100 }).catch(() => []),
+        ]);
+
+        const list = Array.isArray(roomData) ? roomData : roomData?.content || [];
+        setRooms(list);
+
+        setFormData({
+          guestName: reservation.guestName || "",
+          guestId: reservation.guestId || "",
+          roomNumber: reservation.roomNumber || "",
+          checkIn: reservation.checkIn || "",
+          checkOut: reservation.checkOut || "",
+          adults: Number(reservation.adults || 1),
+          children: Number(reservation.children || 0),
+          status: reservation.status || "CONFIRMED",
+          paymentStatus: reservation.paymentStatus || "PENDING",
+          totalAmount: Number(reservation.totalAmount || 0),
+          notes: reservation.notes || "",
+        });
+      } catch (err: any) {
+        setError(err.message || "Failed to load reservation data.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadData();
+  }, [reservationId]);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "adults" || name === "children" || name === "totalAmount" ? Number(value) : value,
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reservationId) return;
+
+    setSaving(true);
+    setError("");
+
+    try {
+      await updateReservation(reservationId, formData);
+      alert("Reservation updated successfully.");
+      router.push("/reservations");
+    } catch (err: any) {
+      setError(err.message || "Failed to update reservation");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "RECEPTIONIST"]}>
@@ -37,146 +122,201 @@ export default function EditReservationPage() {
               </p>
             </div>
 
-            <button
-              onClick={() => router.push("/reservations")}
+            <Link
+              href="/reservations"
               className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
             >
               Back to Reservations
-            </button>
+            </Link>
           </div>
 
-          <section className="mb-8 grid gap-6 md:grid-cols-4">
-            <StatCard label="Reservation ID" value={reservationId || "N/A"} />
-            <StatCard label="Current Status" value="Confirmed" />
-            <StatCard label="Room" value="402" />
-            <StatCard label="Total" value="Rs 860.00" />
-          </section>
-
-          <section className="grid gap-8 xl:grid-cols-[1fr_1fr]">
-            <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-              <h2 className="text-2xl font-bold">Guest Details</h2>
-
-              <div className="mt-6 space-y-5">
-                <InputField label="Guest Name" defaultValue="Daniel Smith" />
-
-                <InputField
-                  label="Email"
-                  type="email"
-                  defaultValue="daniel.smith@example.com"
-                />
-
-                <InputField label="Phone" defaultValue="+94 77 123 4567" />
-
-                <InputField label="Nationality" defaultValue="United Kingdom" />
-
-                <div>
-                  <label className="text-sm font-bold text-[#4d4635]">
-                    Guest Type
-                  </label>
-
-                  <select className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                    <option>VIP</option>
-                    <option>Regular</option>
-                    <option>Corporate</option>
-                    <option>Walk-in</option>
-                  </select>
-                </div>
-              </div>
+          {error && (
+            <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
+              {error}
             </div>
+          )}
 
-            <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-              <h2 className="text-2xl font-bold">Booking Details</h2>
+          {loading ? (
+            <div className="flex h-64 items-center justify-center text-lg font-bold text-[#735c00]">
+              Loading reservation details...
+            </div>
+          ) : (
+            <>
+              <section className="mb-8 grid gap-6 md:grid-cols-4">
+                <StatCard label="Reservation ID" value={reservationId || "N/A"} />
+                <StatCard label="Current Status" value={formData.status} />
+                <StatCard label="Room" value={formData.roomNumber || "N/A"} />
+                <StatCard label="Total" value={`Rs ${Number(formData.totalAmount || 0).toLocaleString()}`} />
+              </section>
 
-              <div className="mt-6 space-y-5">
-                <div>
-                  <label className="text-sm font-bold text-[#4d4635]">
-                    Room Type
-                  </label>
+              <form onSubmit={handleSubmit} className="grid gap-8 xl:grid-cols-[1fr_1fr]">
+                <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
+                  <h2 className="text-2xl font-bold">Guest & Stay Details</h2>
 
-                  <select className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                    <option>Deluxe Room</option>
-                    <option>Standard Room</option>
-                    <option>Executive Suite</option>
-                    <option>Presidential Suite</option>
-                  </select>
+                  <div className="mt-6 space-y-5">
+                    <div>
+                      <label className="text-sm font-bold text-[#4d4635]">Guest Name</label>
+                      <input
+                        required
+                        type="text"
+                        name="guestName"
+                        value={formData.guestName}
+                        onChange={handleChange}
+                        className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-bold text-[#4d4635]">Check-in Date</label>
+                        <input
+                          required
+                          type="date"
+                          name="checkIn"
+                          value={formData.checkIn}
+                          onChange={handleChange}
+                          className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-bold text-[#4d4635]">Check-out Date</label>
+                        <input
+                          required
+                          type="date"
+                          name="checkOut"
+                          value={formData.checkOut}
+                          onChange={handleChange}
+                          className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-bold text-[#4d4635]">Room Number</label>
+                      <select
+                        required
+                        name="roomNumber"
+                        value={formData.roomNumber}
+                        onChange={handleChange}
+                        className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                      >
+                        <option value="">-- Select Room --</option>
+                        {rooms.map((room) => (
+                          <option key={room.id || room.roomNumber} value={room.roomNumber}>
+                            Room {room.roomNumber} ({room.type || "Room"}) [{room.status || "AVAILABLE"}]
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-bold text-[#4d4635]">Adults</label>
+                        <input
+                          type="number"
+                          min={1}
+                          name="adults"
+                          value={formData.adults}
+                          onChange={handleChange}
+                          className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-bold text-[#4d4635]">Children</label>
+                        <input
+                          type="number"
+                          min={0}
+                          name="children"
+                          value={formData.children}
+                          onChange={handleChange}
+                          className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-sm font-bold text-[#4d4635]">Status</label>
+                        <select
+                          name="status"
+                          value={formData.status}
+                          onChange={handleChange}
+                          className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                        >
+                          <option value="PENDING">PENDING</option>
+                          <option value="CONFIRMED">CONFIRMED</option>
+                          <option value="CHECKED_IN">CHECKED_IN</option>
+                          <option value="CANCELLED">CANCELLED</option>
+                          <option value="CHECKED_OUT">CHECKED_OUT</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="text-sm font-bold text-[#4d4635]">Payment Status</label>
+                        <select
+                          name="paymentStatus"
+                          value={formData.paymentStatus}
+                          onChange={handleChange}
+                          className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                        >
+                          <option value="PENDING">PENDING</option>
+                          <option value="PAID">PAID</option>
+                          <option value="PARTIAL">PARTIAL</option>
+                          <option value="REFUNDED">REFUNDED</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-bold text-[#4d4635]">Total Amount (Rs)</label>
+                      <input
+                        type="number"
+                        min={0}
+                        name="totalAmount"
+                        value={formData.totalAmount}
+                        onChange={handleChange}
+                        className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30 font-bold"
+                      />
+                    </div>
+                  </div>
                 </div>
 
-                <InputField label="Room Number" defaultValue="402" />
+                <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold">Special Notes</h2>
 
-                <InputField
-                  label="Check In Date"
-                  type="date"
-                  defaultValue="2026-06-18"
-                />
+                    <textarea
+                      name="notes"
+                      value={formData.notes}
+                      onChange={handleChange}
+                      rows={10}
+                      placeholder="Special guest requests, notes, or preferences..."
+                      className="mt-6 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                    />
+                  </div>
 
-                <InputField
-                  label="Check Out Date"
-                  type="date"
-                  defaultValue="2026-06-21"
-                />
+                  <div className="mt-6 flex flex-wrap gap-4">
+                    <button
+                      type="submit"
+                      disabled={saving}
+                      className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00] disabled:opacity-60"
+                    >
+                      {saving ? "Saving..." : "Save Changes"}
+                    </button>
 
-                <div>
-                  <label className="text-sm font-bold text-[#4d4635]">
-                    Reservation Status
-                  </label>
-
-                  <select className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                    <option>Confirmed</option>
-                    <option>Pending</option>
-                    <option>Checked In</option>
-                    <option>Cancelled</option>
-                  </select>
+                    <Link
+                      href="/reservations"
+                      className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
+                    >
+                      Cancel
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-              <h2 className="text-2xl font-bold">Payment Details</h2>
-
-              <div className="mt-6 space-y-5">
-                <InputField label="Room Charge" defaultValue="Rs 750.00" />
-                <InputField label="Service Charge" defaultValue="Rs 75.00" />
-                <InputField label="Tax" defaultValue="Rs 35.00" />
-                <InputField label="Total Amount" defaultValue="Rs 860.00" />
-
-                <div>
-                  <label className="text-sm font-bold text-[#4d4635]">
-                    Payment Status
-                  </label>
-
-                  <select className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30">
-                    <option>Paid</option>
-                    <option>Pending</option>
-                    <option>Partial</option>
-                    <option>Refunded</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-              <h2 className="text-2xl font-bold">Special Notes</h2>
-
-              <textarea
-                defaultValue="Guest requested early check-in, airport pickup, and a quiet room on a higher floor."
-                rows={10}
-                className="mt-6 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-              />
-
-              <div className="mt-6 flex flex-wrap gap-4">
-                <button className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]">
-                  Save Changes
-                </button>
-
-                <button
-                  onClick={() => router.push("/reservations")}
-                  className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </section>
+              </form>
+            </>
+          )}
         </main>
       </div>
     </ProtectedRoute>
@@ -191,28 +331,6 @@ function StatCard({ label, value }: { label: string; value: string }) {
       </p>
 
       <p className="mt-2 text-2xl font-extrabold text-[#735c00]">{value}</p>
-    </div>
-  );
-}
-
-function InputField({
-  label,
-  defaultValue,
-  type = "text",
-}: {
-  label: string;
-  defaultValue: string;
-  type?: string;
-}) {
-  return (
-    <div>
-      <label className="text-sm font-bold text-[#4d4635]">{label}</label>
-
-      <input
-        type={type}
-        defaultValue={defaultValue}
-        className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-      />
     </div>
   );
 }

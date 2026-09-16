@@ -6,26 +6,19 @@ import useSWR from "swr";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { AlertTriangle, ArrowLeft, PackageCheck } from "lucide-react";
+import { isLowStock, isCriticalStock } from "@/lib/utils/isLowStock";
 
 export default function InventoryAlertsPage() {
   const { data: rawItems, isLoading } = useSWR<any[]>("/api/inventory");
   const items = useMemo(() => (Array.isArray(rawItems) ? rawItems : []), [rawItems]);
 
   const lowStockItems = useMemo(() => {
-    return items.filter((item) => {
-      const qty = Number(item.quantity || 0);
-      const reorder = Number(item.reorderLevel || 10);
-      return qty <= reorder;
-    });
+    return items.filter(isLowStock);
   }, [items]);
 
   const criticalItems = useMemo(() => {
-    return lowStockItems.filter((item) => {
-      const qty = Number(item.quantity || 0);
-      const reorder = Number(item.reorderLevel || 10);
-      return qty <= Math.max(1, Math.floor(reorder / 2));
-    });
-  }, [lowStockItems]);
+    return items.filter(isCriticalStock);
+  }, [items]);
 
   const normalLowItems = useMemo(() => {
     return lowStockItems.filter((item) => !criticalItems.includes(item));

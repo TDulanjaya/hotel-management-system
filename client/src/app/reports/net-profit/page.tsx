@@ -33,14 +33,14 @@ export default function NetProfitReportPage() {
     {
       label: "Net Profit",
       value: netProfitStr,
-      note: "Net profit after deducting expenses",
+      note: summary?.netProfitNote || "Estimated (assumes 45% margin benchmark)",
     },
     {
       label: "Profit Margin",
       value: margin,
-      note: "Overall profit percentage",
+      note: "Estimated margin benchmark",
     },
-  ], [totalIncomeStr, totalExp, netProfitStr, margin]);
+  ], [totalIncomeStr, totalExp, netProfitStr, margin, summary?.netProfitNote]);
 
   const incomeRows = useMemo(() => {
     const evAmt = parseAmt(summary?.eventIncome || "0");
@@ -142,6 +142,16 @@ export default function NetProfitReportPage() {
     <ReportPageLayout title="Net Profit Report">
 
           <ReportSummaryCards cards={profitSummary} />
+
+          <div className="mb-6 rounded-2xl border border-[#d4af37]/40 bg-[#fbf9f5] p-4 text-sm text-[#735c00] flex items-center justify-between">
+            <div>
+              <span className="font-bold">Reporting Note: </span>
+              {summary?.netProfitNote || "Net Profit and operational expenses are estimated using a 45% margin benchmark until direct expense tracking is configured."}
+            </div>
+            <span className="text-xs uppercase font-bold bg-[#735c00]/10 px-3 py-1 rounded-full text-[#735c00]">
+              Benchmark Estimate
+            </span>
+          </div>
 
           <section className="mb-8 grid gap-8 xl:grid-cols-[1.1fr_0.9fr]">
             <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">

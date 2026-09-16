@@ -24,7 +24,7 @@ export default function InventoryUsageReportPage() {
   const lowStockThreshold = (item: any) => item.quantity <= item.reorderLevel;
   const lowStockItems = useMemo(() => items.filter(lowStockThreshold), [items]);
 
-  // Since we don't have an InventoryUsage model, we'll generate some usage history based on the current items
+  // Sample usage activity based on inventory
   const usageRows = useMemo(() => {
     return items.slice(0, 8).map((item, idx) => ({
       id: `USE-${(idx + 1000).toString()}`,

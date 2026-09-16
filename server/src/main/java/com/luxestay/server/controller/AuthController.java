@@ -42,9 +42,7 @@ public class AuthController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<UserResponse> getCurrentUser(
-            @RequestParam String email
-    ) {
-        return ResponseEntity.ok(authService.getCurrentUser(email));
+    public ResponseEntity<UserResponse> getCurrentUser(java.security.Principal principal) {
+        return ResponseEntity.ok(authService.getCurrentUser(principal.getName()));
     }
-}
+}

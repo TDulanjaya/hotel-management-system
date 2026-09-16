@@ -1,2 +1,1 @@
-// Placeholder for roomStatus.ts
-export {};
+export const ROOM_STATUSES = ['AVAILABLE', 'OCCUPIED', 'RESERVED', 'MAINTENANCE', 'CLEANING'] as const;

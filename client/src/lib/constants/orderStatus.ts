@@ -1,2 +1,1 @@
-// Placeholder for orderStatus.ts
-export {};
+export const ORDER_STATUSES = ['PENDING', 'PREPARING', 'SERVED', 'COMPLETED', 'CANCELLED'] as const;

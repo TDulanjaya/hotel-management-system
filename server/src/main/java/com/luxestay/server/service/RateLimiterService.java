@@ -7,24 +7,13 @@ import java.util.Deque;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
-/**
- * Simple in-memory sliding-window rate limiter.
- * Tracks timestamps of requests per key and rejects calls that exceed
- * the configured limit within the time window.
- */
+// In-memory rate limiter using a sliding window
 @Service
 public class RateLimiterService {
 
     private final ConcurrentHashMap<String, Deque<Instant>> requestLog = new ConcurrentHashMap<>();
 
-    /**
-     * Check whether a request identified by {@code key} is allowed.
-     *
-     * @param key           the rate-limit key (e.g. an email address)
-     * @param maxRequests   maximum number of requests allowed in the window
-     * @param windowSeconds size of the sliding window in seconds
-     * @return {@code true} if the request is within limits, {@code false} if it should be rejected
-     */
+    // Check if request count is within allowed limit
     public boolean isAllowed(String key, int maxRequests, long windowSeconds) {
         Instant now = Instant.now();
         Instant windowStart = now.minusSeconds(windowSeconds);
