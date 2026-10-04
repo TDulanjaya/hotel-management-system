@@ -1,6 +1,6 @@
 # LuxeStay - Enterprise Hotel Management System (PMS)
 
-A full-stack Hotel Management / Property Management System built with Next.js 16, Spring Boot, and MongoDB. It manages end-to-end resort operations — reservations, front desk folios, checkout, dining & kitchen, housekeeping, laundry, inventory, banquet venues, game lounge, parking, and reporting.
+A full-stack Hotel Management / Property Management System built with Next.js 16, Spring Boot, and MongoDB. It manages end-to-end resort operations - reservations, front desk folios, checkout, dining & kitchen, housekeeping, laundry, inventory, banquet venues, game lounge, parking, and reporting.
 
 ---
 
@@ -42,16 +42,16 @@ MongoDB
 
 **In this project:** the Next.js client has its own API layer in `client/src/lib/api/*` that every request goes through — components never call the backend directly.
 
-- **`authApi.ts`** — the core piece. `authenticatedFetch()` attaches the JWT token to every request and handles `401` globally (clears the token, redirects to `/login`). Instead of every screen checking "am I logged in?", this one function does it for everyone.
-- **Data normalization** — Spring Data returns paginated results as `{ content: [...], totalElements, ... }`. The adapters unwrap this automatically so components just get plain arrays, instead of every component having to know about that wrapper shape.
-- **One adapter per domain** — `roomApi.ts`, `reservationApi.ts`, `kitchenApi.ts`, `folioApi.ts`, `eventApi.ts`, `laundryApi.ts`, `gameApi.ts`, `inventoryApi.ts`, `pricingApi.ts`, `reportApi.ts`, etc. — so a backend change only touches one file, not every page that uses it.
-- **SWR on top** — adapters plug into SWR (`swrFetcher`) for caching, revalidation, and background refresh, so the UI doesn't refetch data it already has.
+- **`authApi.ts`** - the core piece. `authenticatedFetch()` attaches the JWT token to every request and handles `401` globally (clears the token, redirects to `/login`). Instead of every screen checking "am I logged in?", this one function does it for everyone.
+- **Data normalization** - Spring Data returns paginated results as `{ content: [...], totalElements, ... }`. The adapters unwrap this automatically so components just get plain arrays, instead of every component having to know about that wrapper shape.
+- **One adapter per domain** - `roomApi.ts`, `reservationApi.ts`, `kitchenApi.ts`, `folioApi.ts`, `eventApi.ts`, `laundryApi.ts`, `gameApi.ts`, `inventoryApi.ts`, `pricingApi.ts`, `reportApi.ts`, etc. - so a backend change only touches one file, not every page that uses it.
+- **SWR on top** - adapters plug into SWR (`swrFetcher`) for caching, revalidation, and background refresh, so the UI doesn't refetch data it already has.
 
 ### Real-time (STOMP / SockJS)
 
 **What it is (simple terms):** normal REST calls only happen when the frontend asks for something ("pull"). But a kitchen screen needs to know the instant a new order comes in, without asking every few seconds ("polling"). WebSockets keep a connection open both ways, so the server can "push" updates to the browser the moment something changes. STOMP is just a simple messaging format on top of that connection (like "subscribe to this channel, publish to that channel"), and SockJS is a fallback so it still works if raw WebSockets are blocked.
 
-**In this project:** `WebSocketConfig.java` registers a `/ws` endpoint with a `/topic` broker. Orders placed from tables or room service publish to `/topic/kitchen`; the kitchen board subscribes via `useWebSocket` and updates live — no polling.
+**In this project:** `WebSocketConfig.java` registers a `/ws` endpoint with a `/topic` broker. Orders placed from tables or room service publish to `/topic/kitchen`; the kitchen board subscribes via `useWebSocket` and updates live - no polling.
 
 ### Role-based access control
 
