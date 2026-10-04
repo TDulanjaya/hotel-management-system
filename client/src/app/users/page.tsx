@@ -228,7 +228,7 @@ export default function UsersPage() {
                 required
                 type="email"
                 name="email"
-                placeholder="e.g. john@luxestay.com"
+                placeholder="e.g. john@camelliareserve.com"
                 value={formData.email}
                 onChange={handleChange}
                 className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 text-base"

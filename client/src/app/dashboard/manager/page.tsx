@@ -118,7 +118,7 @@ export default function ManagerDashboardPage() {
         <main className="min-h-screen lg:ml-[280px]">
           <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-[#d0c5af] bg-[#fbf9f5]/90 px-8 backdrop-blur-md">
             <div className="flex items-center gap-4">
-              <h1 className="text-xl font-semibold">LuxeStay Operations</h1>
+              <h1 className="text-xl font-semibold">The Camellia Reserve</h1>
 
               <div className="hidden h-6 w-px bg-[#d0c5af] md:block" />
 

@@ -9,7 +9,7 @@ export default function Loading() {
         </p>
 
         <p className="mt-2 text-slate-300">
-          Preparing LuxeStay Operations Suite...
+          Preparing The Camellia Reserve Operations Suite...
         </p>
       </div>
     </main>

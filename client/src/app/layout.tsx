@@ -3,8 +3,12 @@ import "./globals.css";
 import AuthGuard from "@/components/auth/AuthGuard";
 
 export const metadata: Metadata = {
-  title: "LuxeStay Operations Suite",
-  description: "Hotel Management Dashboard",
+  title: "The Camellia Reserve — Operations Suite",
+  description: "The Camellia Reserve Hotel & Resort — Staff Operations Portal",
+  icons: {
+    icon: "/camellia-logo.png",
+    apple: "/camellia-logo.png",
+  },
 };
 
 export default function RootLayout({

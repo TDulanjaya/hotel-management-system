@@ -31,8 +31,12 @@ export default function LandingPage() {
         {/* Header */}
         <header className="flex items-center justify-between">
           <div className="flex items-center gap-3.5 sm:gap-4">
-            <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl border border-[#d3a13b]/60 bg-black/40 shadow-lg backdrop-blur-md">
-              <Sparkles className="h-6 w-6 sm:h-7 sm:w-7 text-[#d3a13b]" />
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl border border-[#d3a13b]/60 bg-white shadow-lg backdrop-blur-md overflow-hidden">
+              <img
+                src="/camellia-logo.png"
+                alt="The Camellia Reserve"
+                className="h-full w-full object-contain p-1"
+              />
             </div>
 
             <div>

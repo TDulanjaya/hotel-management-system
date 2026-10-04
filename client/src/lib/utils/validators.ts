@@ -1,5 +1,5 @@
 /**
- * Common validation utilities for inputs across LuxeStay frontend.
+ * Common validation utilities for inputs across The Camellia Reserve frontend.
  */
 
 export function isValidEmail(email: string): boolean {

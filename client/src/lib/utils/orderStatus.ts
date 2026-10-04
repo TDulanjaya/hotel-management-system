@@ -1,5 +1,5 @@
 /**
- * Centralized status constants and display helpers for LuxeStay PMS.
+ * Centralized status constants and display helpers for The Camellia Reserve PMS.
  */
 
 export const RESERVATION_STATUS = {

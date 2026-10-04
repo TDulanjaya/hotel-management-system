@@ -94,13 +94,20 @@ export default function AppSidebar() {
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between px-8 py-8">
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-[#d8b328]">
-              LuxeStay
-            </h1>
-            <p className="mt-1 text-sm text-[#677386]">Elite Operations</p>
-          </div>
+        <div className="flex items-center justify-between px-6 py-6">
+          <Link href="/" className="flex items-center gap-3">
+            <img
+              src="/camellia-logo.png"
+              alt="The Camellia Reserve"
+              className="h-10 w-10 rounded-lg object-contain bg-white p-0.5"
+            />
+            <div>
+              <h1 className="text-sm font-bold leading-tight text-[#d8b328]">
+                The Camellia Reserve
+              </h1>
+              <p className="text-[10px] text-[#677386] uppercase tracking-widest">Hotel & Resort</p>
+            </div>
+          </Link>
           
           <button 
             onClick={() => setIsOpen(false)}
