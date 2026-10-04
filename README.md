@@ -1,4 +1,4 @@
-# LuxeStay — Enterprise Hotel Management System (PMS)
+# LuxeStay - Enterprise Hotel Management System (PMS)
 
 A full-stack Hotel Management / Property Management System built with Next.js 16, Spring Boot, and MongoDB. It manages end-to-end resort operations — reservations, front desk folios, checkout, dining & kitchen, housekeeping, laundry, inventory, banquet venues, game lounge, parking, and reporting.
 
@@ -59,8 +59,8 @@ MongoDB
 
 **In this project:** 11 roles, enforced on both sides:
 
-- **Frontend** — `AuthGuard.tsx` / `ProtectedRoute.tsx` guard routes and control sidebar nav
-- **Backend** — `SecurityConfig.java` / `JwtAuthenticationFilter.java` check role authorities on every request
+- **Frontend** - `AuthGuard.tsx` / `ProtectedRoute.tsx` guard routes and control sidebar nav
+- **Backend** - `SecurityConfig.java` / `JwtAuthenticationFilter.java` check role authorities on every request
 
 ---
 
@@ -84,22 +84,22 @@ MongoDB
 
 ## Key Modules
 
-- **Dashboard** — role-specific overview: revenue, check-ins, pending tickets
-- **Front Desk & Reservations** — room catalog, occupancy calendar, booking engine, folios
-- **Guests** — profiles, ID/passport verification, stay history
-- **Folios, Payments & Checkout** — billing, itemized charges, discounts, invoices, settlement
-- **Restaurant & Dining Tables** — table map, digital menu, waiter tickets
-- **Kitchen Display System** — live board (Queued → Preparing → Ready → Served) over WebSocket
-- **Recipes** — repository, prep instructions, ingredients
-- **Room Service & Laundry** — service delivery and status, tied to folio billing
-- **Events** — multi-venue scheduling, packages, split billing
-- **Game Lounge** — hourly session tracking, auto billing
-- **Inventory** — stock, suppliers, reorder levels, alerts
-- **Parking** — zone/slot allocation, vehicle tracking
-- **Pricing** — tariffs for rooms, amenities, venues, dining
-- **Reports** — revenue, F&B sales, occupancy, parking income, audit history
-- **Audit Logs** — user actions and security events
-- **User Management** — staff accounts, roles
+- **Dashboard** - role-specific overview: revenue, check-ins, pending tickets
+- **Front Desk & Reservations** - room catalog, occupancy calendar, booking engine, folios
+- **Guests** - profiles, ID/passport verification, stay history
+- **Folios, Payments & Checkout** - billing, itemized charges, discounts, invoices, settlement
+- **Restaurant & Dining Tables** - table map, digital menu, waiter tickets
+- **Kitchen Display System** - live board (Queued → Preparing → Ready → Served) over WebSocket
+- **Recipes** - repository, prep instructions, ingredients
+- **Room Service & Laundry** - service delivery and status, tied to folio billing
+- **Events** - multi-venue scheduling, packages, split billing
+- **Game Lounge** - hourly session tracking, auto billing
+- **Inventory** - stock, suppliers, reorder levels, alerts
+- **Parking** - zone/slot allocation, vehicle tracking
+- **Pricing** - tariffs for rooms, amenities, venues, dining
+- **Reports** - revenue, F&B sales, occupancy, parking income, audit history
+- **Audit Logs** - user actions and security events
+- **User Management** - staff accounts, roles
 
 ---
 
