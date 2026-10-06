@@ -47,9 +47,6 @@ class AuthServicePasswordResetTest {
     private UserDetailsService userDetailsService;
 
     @Mock
-    private EmailService emailService;
-
-    @Mock
     private RateLimiterService rateLimiterService;
 
     @InjectMocks
@@ -77,8 +74,8 @@ class AuthServicePasswordResetTest {
     class ForgotPasswordTests {
 
         @Test
-        @DisplayName("valid email → saves token, sends email, returns generic message")
-        void forgotPassword_validEmail_sendsResetEmail() {
+        @DisplayName("valid email → saves token, returns generic message")
+        void forgotPassword_validEmail_savesToken() {
             when(userRepository.findByEmail("staff@luxestay.com"))
                     .thenReturn(Optional.of(testUser));
 
@@ -96,11 +93,6 @@ class AuthServicePasswordResetTest {
             assertNotNull(savedUser.getResetPasswordTokenExpiry(), "Token expiry should be set");
             assertTrue(savedUser.getResetPasswordTokenExpiry().isAfter(LocalDateTime.now()),
                     "Token expiry should be in the future");
-
-            // Verify email was sent
-            verify(emailService).sendPasswordResetEmail(
-                    eq("staff@luxestay.com"),
-                    eq(savedUser.getResetPasswordToken()));
 
             // Verify generic message returned
             assertEquals("If this email exists, a password reset request has been created.",
@@ -122,30 +114,8 @@ class AuthServicePasswordResetTest {
             assertEquals("If this email exists, a password reset request has been created.",
                     response.get("message"));
 
-            // Ensure no email sent
+            // Ensure no user saved
             verify(userRepository, never()).save(any());
-            verify(emailService, never()).sendPasswordResetEmail(anyString(), anyString());
-        }
-
-        @Test
-        @DisplayName("email service failure → still returns generic message, no exception leaks")
-        void forgotPassword_emailFailure_returnsGenericMessage() {
-            when(userRepository.findByEmail("staff@luxestay.com"))
-                    .thenReturn(Optional.of(testUser));
-            doThrow(new RuntimeException("SMTP connection refused"))
-                    .when(emailService).sendPasswordResetEmail(anyString(), anyString());
-
-            ForgotPasswordRequest request = new ForgotPasswordRequest();
-            request.setEmail("staff@luxestay.com");
-
-            Map<String, String> response = assertDoesNotThrow(
-                    () -> authService.forgotPassword(request));
-
-            assertEquals("If this email exists, a password reset request has been created.",
-                    response.get("message"));
-
-            // Token should still have been persisted
-            verify(userRepository).save(any(AppUser.class));
         }
     }
 

@@ -37,7 +37,6 @@ public class AuthService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
     private final UserDetailsService userDetailsService;
-    private final EmailService emailService;
     private final RateLimiterService rateLimiterService;
 
     public AuthService(AppUserRepository userRepository,
@@ -45,14 +44,12 @@ public class AuthService {
                    JwtService jwtService,
                    AuthenticationManager authenticationManager,
                    UserDetailsService userDetailsService,
-                   EmailService emailService,
                    RateLimiterService rateLimiterService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
         this.userDetailsService = userDetailsService;
-        this.emailService = emailService;
         this.rateLimiterService = rateLimiterService;
     }
 
@@ -112,11 +109,7 @@ public class AuthService {
 
         userRepository.save(user);
 
-        try {
-            emailService.sendPasswordResetEmail(user.getEmail(), token);
-        } catch (Exception e) {
-            log.error("Failed to send password reset email to {}: {}", user.getEmail(), e.getMessage(), e);
-        }
+        log.info("Password reset token generated for user {}", user.getEmail());
 
         response.put("message", "If this email exists, a password reset request has been created.");
         return response;
