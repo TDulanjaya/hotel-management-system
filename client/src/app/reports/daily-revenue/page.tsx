@@ -17,29 +17,6 @@ export default function DailyRevenueReportPage() {
   const payments = useMemo(() => (Array.isArray(rawPayments) ? rawPayments : []), [rawPayments]);
   const loading = !rawPayments && isLoading;
 
-  const revenueSummary = useMemo(() => [
-    {
-      label: "Total Revenue",
-      value: summary?.todayRevenue || "Rs 0",
-      note: "All departments today",
-    },
-    {
-      label: "Room Revenue",
-      value: summary?.occupancyRate || "0%", // Replaced since Room Revenue specifically isn't scalar
-      note: "Occupancy Rate",
-    },
-    {
-      label: "Food Sales",
-      value: summary?.foodSales || "Rs 0",
-      note: "Restaurant and room service",
-    },
-    {
-      label: "Event Income",
-      value: summary?.eventIncome || "Rs 0",
-      note: "Venue and event payments",
-    },
-  ], [summary]);
-
   // Process today's payments
   const todayDateString = new Date().toISOString().split('T')[0];
   
@@ -49,16 +26,68 @@ export default function DailyRevenueReportPage() {
     return dateObj.toISOString().split('T')[0] === todayDateString;
   });
 
-  const revenueRows = todaysPayments.map(p => ({
-    id: `REV-${p.id.substring(0, 6)}`,
-    department: "Hotel", // Since payment doesn't always strictly store department
-    source: "Payment",
-    reference: `Ref #${p.id.substring(0, 8)}`,
-    income: `Rs ${p.amount}`,
-    paymentMethod: p.paymentMethod || "Unknown",
-    time: new Date(p.paidAt || p.paymentDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    status: p.status || "COMPLETED",
-  }));
+  const cashTotal = todaysPayments
+    .filter(p => ["CASH"].includes(((p.method || p.paymentMethod) || "").toUpperCase()))
+    .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+
+  const cardTotal = todaysPayments
+    .filter(p => ["CARD_TERMINAL", "CARD", "CREDIT_CARD"].includes(((p.method || p.paymentMethod) || "").toUpperCase()))
+    .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+
+  const digitalTotal = todaysPayments
+    .filter(p => ["BANK_TRANSFER", "CEFT", "LANKAQR", "ONLINE_PAYMENT"].includes(((p.method || p.paymentMethod) || "").toUpperCase()))
+    .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+
+  const effectiveCashTotal = cashTotal > 0 ? cashTotal : (Number(summary?.cashDrawerAmount) || 0);
+  const effectiveCardTotal = cardTotal > 0 ? cardTotal : (Number(summary?.cardBatchAmount) || 0);
+  const effectiveDigitalTotal = digitalTotal > 0 ? digitalTotal : (Number(summary?.digitalTransfersAmount) || 0);
+
+  const revenueSummary = useMemo(() => [
+    {
+      label: "Total Today Revenue",
+      value: summary?.todayRevenue || `Rs ${(effectiveCashTotal + effectiveCardTotal + effectiveDigitalTotal).toLocaleString()}`,
+      note: "All verified payments today",
+    },
+    {
+      label: "Cash in Drawer",
+      value: `Rs ${effectiveCashTotal.toLocaleString()}`,
+      note: "Physical cashier handover balance",
+    },
+    {
+      label: "Card Terminal Slips",
+      value: `Rs ${effectiveCardTotal.toLocaleString()}`,
+      note: "Bank POS batch settlement",
+    },
+    {
+      label: "Bank / QR Transfers",
+      value: `Rs ${effectiveDigitalTotal.toLocaleString()}`,
+      note: "CEFT, Slip & LankaQR deposits",
+    },
+  ], [summary, effectiveCashTotal, effectiveCardTotal, effectiveDigitalTotal]);
+
+  const displayPayments = todaysPayments.length > 0 ? todaysPayments : payments.slice(0, 30);
+
+  const revenueRows = displayPayments.map(p => {
+    let dept = "Front Desk";
+    const ref = (p.referenceType || "").toUpperCase();
+    if (ref === "ROOM_FOLIO" || ref === "RESERVATION" || ref === "CHECKOUT") dept = "Rooms & Suites";
+    else if (ref === "EVENT_BILL" || ref === "EVENT") dept = "Events & Banquets";
+    else if (ref === "RESTAURANT_ORDER") dept = "Restaurant & Dining";
+    else if (ref === "PARKING_BOOKING") dept = "Parking Gate";
+    else if (ref === "GAME_SESSION") dept = "Games Lounge";
+    else if (ref === "DIRECT_BILL") dept = "Direct POS Counter";
+
+    return {
+      id: `REV-${p.id ? p.id.substring(0, 6) : "0000"}`,
+      department: dept,
+      source: p.referenceType || "POS Payment",
+      reference: p.transactionReference || p.notes || `Ref #${p.id ? p.id.substring(0, 8) : "-"}`,
+      income: `Rs ${Number(p.amount || 0).toLocaleString()}`,
+      paymentMethod: p.paymentMethod || p.method || "Cash",
+      time: p.paidAt || p.paymentDate ? new Date(p.paidAt || p.paymentDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Today",
+      status: p.status || "PAID",
+    };
+  });
 
   // Calculate hourly revenue
   const hourlyBuckets = useMemo(() => {

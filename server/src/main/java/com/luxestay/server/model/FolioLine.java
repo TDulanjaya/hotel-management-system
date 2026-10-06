@@ -8,4 +8,8 @@ public class FolioLine {
     private double amount;
     private String date;
     private String category;
+    private String sourceType;
+    private String sourceId;
+    private String pricingItemId;
+    private String status = "POSTED";
 }

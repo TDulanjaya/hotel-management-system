@@ -7,8 +7,9 @@ import { getUser, AuthUser } from "@/utils/auth";
 import useSWR from "swr";
 import { getEvents, deleteEvent as apiDeleteEvent } from "@/lib/api/eventApi";
 import NewEventPanel from "@/components/events/NewEventPanel";
+import EventPaymentModal from "@/components/events/EventPaymentModal";
 import { useSearchParams } from "next/navigation";
-import { CalendarPlus, Trash2, Pencil, CalendarDays } from "lucide-react";
+import { CalendarPlus, Trash2, Pencil, CalendarDays, Receipt } from "lucide-react";
 
 type SavedEvent = {
   id: string;
@@ -54,6 +55,8 @@ function EventsListPageContent() {
 
   const searchParams = useSearchParams();
   const [panelOpen, setPanelOpen] = useState(false);
+  const [editItem, setEditItem] = useState<any>(null);
+  const [payEvent, setPayEvent] = useState<any>(null);
 
   const canEdit =
     currentRole === "OWNER" ||
@@ -132,7 +135,10 @@ function EventsListPageContent() {
 
               {canEdit && (
                 <button
-                  onClick={() => setPanelOpen(true)}
+                  onClick={() => {
+                    setEditItem(null);
+                    setPanelOpen(true);
+                  }}
                   className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-[#735c00] px-5 py-3 text-center text-sm sm:text-base font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
                 >
                   <CalendarPlus size={18} />
@@ -278,23 +284,43 @@ function EventsListPageContent() {
                         </td>
 
                         <td className="px-6 py-5">
-                          <div className="flex justify-end gap-3">
+                          <div className="flex justify-end gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setPayEvent(event)}
+                              className="flex items-center gap-1 rounded-lg bg-[#735c00] px-3 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-[#8d6b00]"
+                            >
+                              <Receipt size={14} />
+                              Pay
+                            </button>
+
+                            <Link
+                              href={`/events/ledger?id=${event.id}`}
+                              className="flex items-center gap-1 rounded-lg border border-[#565e74] px-3 py-1.5 text-xs font-bold text-[#565e74] transition hover:bg-[#565e74]/5"
+                            >
+                              Ledger
+                            </Link>
+
                             {canEdit && (
-                              <Link
-                                href={`/events/edit?id=${event.id}`}
-                                className="flex items-center gap-1 rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditItem(event);
+                                  setPanelOpen(true);
+                                }}
+                                className="flex items-center gap-1 rounded-lg border border-[#735c00] px-3 py-1.5 text-xs font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
                               >
-                                <Pencil size={16} />
+                                <Pencil size={14} />
                                 Edit
-                              </Link>
+                              </button>
                             )}
 
                             {canDelete && (
                               <button
                                 onClick={() => deleteEvent(event.id)}
-                                className="flex items-center gap-1 rounded-lg border border-red-200 px-4 py-2 text-sm font-bold text-red-700 transition hover:bg-red-50"
+                                className="flex items-center gap-1 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-bold text-red-700 transition hover:bg-red-50"
                               >
-                                <Trash2 size={16} />
+                                <Trash2 size={14} />
                                 Delete
                               </button>
                             )}
@@ -310,9 +336,25 @@ function EventsListPageContent() {
 
           <NewEventPanel
             open={panelOpen}
-            onClose={() => setPanelOpen(false)}
+            onClose={() => {
+              setPanelOpen(false);
+              setEditItem(null);
+            }}
             onSuccess={() => mutate()}
+            editItem={editItem}
           />
+
+          {payEvent && (
+            <EventPaymentModal
+              isOpen={Boolean(payEvent)}
+              onClose={() => setPayEvent(null)}
+              event={payEvent}
+              onPaymentSuccess={async () => {
+                setPayEvent(null);
+                await mutate();
+              }}
+            />
+          )}
         </main>
       </div>
     </ProtectedRoute>

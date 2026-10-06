@@ -16,4 +16,5 @@ public class SelectedPackage {
     private String description;
     private String priceType;
     private Double price;
+    private Integer quantity = 1;
 }

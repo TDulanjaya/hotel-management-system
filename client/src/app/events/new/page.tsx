@@ -109,6 +109,7 @@ export default function NewEventPage() {
         selectedPackages: selectedPackages.map((p) => ({
           id: p.id || p.pricingItemId,
           name: p.name,
+          quantity: p.quantity,
           price: p.price,
         })),
       });

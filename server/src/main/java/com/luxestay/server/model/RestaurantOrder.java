@@ -14,6 +14,13 @@ public class RestaurantOrder {
     private String tableNumber;
     private String guestName;
     private String roomNumber;
+    private String customerType;
+    private String billingType;
+    private String reservationId;
+    private String eventId;
+    private String folioId;
+    private String kitchenOrderId;
+    private String billingStatus;
     private List<OrderLineItem> items;
     private String notes;
     @org.springframework.data.mongodb.core.index.Indexed

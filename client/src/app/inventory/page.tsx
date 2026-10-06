@@ -6,14 +6,16 @@ import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import SlidePanel from "@/components/ui/SlidePanel";
-import { Package } from "lucide-react";
 import useSWR from "swr";
 import {
   getInventoryItems,
   deleteInventoryItem as apiDeleteInventory,
   createInventoryItem,
+  updateInventoryItem,
+  recordPurchaseStock,
 } from "@/lib/api/inventoryApi";
 import { getStatusBadgeClass } from "@/lib/utils/statusStyles";
+import { Package, ShoppingCart, DollarSign } from "lucide-react";
 
 function getStockPercent(stock: number, minimum: number) {
   const percent = Math.min((stock / (minimum * 3 || 1)) * 100, 100);
@@ -30,6 +32,7 @@ export default function InventoryPage() {
   const inventoryItems = useMemo(() => (Array.isArray(rawInventory) ? rawInventory : []), [rawInventory]);
   const [currentRole, setCurrentRole] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
+  const [editItem, setEditItem] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState("All");
@@ -62,16 +65,65 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [formData, setFormData] = useState({
+  // Restock & Stock Purchase Panel State
+  const [purchasePanelOpen, setPurchasePanelOpen] = useState(false);
+  const [purchaseItem, setPurchaseItem] = useState<any>(null);
+  const [purchaseSubmitting, setPurchaseSubmitting] = useState(false);
+  const [purchaseError, setPurchaseError] = useState("");
+  const [purchaseFormData, setPurchaseFormData] = useState({
+    quantity: 10,
+    unitPrice: 0,
+    supplierName: "",
+    supplierInvoiceNumber: "",
+    paymentMethod: "BANK_TRANSFER",
+    paymentStatus: "PAID",
+    notes: "",
+  });
+
+  const handleOpenPurchase = (item: any) => {
+    setPurchaseItem(item);
+    setPurchaseError("");
+    setPurchaseFormData({
+      quantity: Math.max(1, (item.reorderLevel || 10) * 2 - (item.quantity || 0)),
+      unitPrice: Number(item.purchasePrice || 0),
+      supplierName: item.supplierName || "",
+      supplierInvoiceNumber: "",
+      paymentMethod: "BANK_TRANSFER",
+      paymentStatus: "PAID",
+      notes: "",
+    });
+    setPurchasePanelOpen(true);
+  };
+
+  const handlePurchaseSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!purchaseItem) return;
+    setPurchaseSubmitting(true);
+    setPurchaseError("");
+    try {
+      await recordPurchaseStock(purchaseItem.id, purchaseFormData);
+      setPurchasePanelOpen(false);
+      setPurchaseItem(null);
+      await mutate();
+    } catch (err: any) {
+      setPurchaseError(err.message || "Failed to record stock purchase.");
+    } finally {
+      setPurchaseSubmitting(false);
+    }
+  };
+
+  const defaultFormData = {
     itemName: "",
     category: "Kitchen",
     quantity: 0,
-    unit: "pcs",
+    unit: "kg",
     reorderLevel: 10,
     supplierName: "",
     purchasePrice: 0,
     status: "In Stock",
-  });
+  };
+
+  const [formData, setFormData] = useState(defaultFormData);
 
   useEffect(() => {
     if (user?.role) {
@@ -103,6 +155,29 @@ export default function InventoryPage() {
     }
   };
 
+  const handleOpenAdd = () => {
+    setEditItem(null);
+    setError("");
+    setFormData(defaultFormData);
+    setPanelOpen(true);
+  };
+
+  const handleOpenEdit = (item: any) => {
+    setEditItem(item);
+    setError("");
+    setFormData({
+      itemName: item.itemName || "",
+      category: item.category || "Kitchen",
+      quantity: Number(item.quantity || 0),
+      unit: item.unit || "kg",
+      reorderLevel: Number(item.reorderLevel || 10),
+      supplierName: item.supplierName || "",
+      purchasePrice: Number(item.purchasePrice || 0),
+      status: item.status || "In Stock",
+    });
+    setPanelOpen(true);
+  };
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
@@ -115,28 +190,24 @@ export default function InventoryPage() {
     setError("");
 
     try {
-      await createInventoryItem({
+      const payload = {
         ...formData,
         quantity: Number(formData.quantity),
         reorderLevel: Number(formData.reorderLevel),
         purchasePrice: Number(formData.purchasePrice),
-      });
+      };
+
+      if (editItem) {
+        await updateInventoryItem(editItem.id, payload);
+      } else {
+        await createInventoryItem(payload);
+      }
 
       setPanelOpen(false);
+      setEditItem(null);
       mutate();
-
-      setFormData({
-        itemName: "",
-        category: "Kitchen",
-        quantity: 0,
-        unit: "pcs",
-        reorderLevel: 10,
-        supplierName: "",
-        purchasePrice: 0,
-        status: "In Stock",
-      });
     } catch (err: any) {
-      setError(err.message || "Failed to add inventory item");
+      setError(err.message || "Failed to save inventory item");
     } finally {
       setLoading(false);
     }
@@ -180,7 +251,7 @@ export default function InventoryPage() {
               </Link>
 
               <button
-                onClick={() => setPanelOpen(true)}
+                onClick={handleOpenAdd}
                 className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
               >
                 + Add Item
@@ -362,20 +433,23 @@ export default function InventoryPage() {
 
                           <td className="px-6 py-5">
                             <div className="flex justify-end gap-3">
-                              <Link
-                                href={`/inventory/purchase?itemId=${item.id}`}
-                                className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
+                              <button
+                                type="button"
+                                onClick={() => handleOpenPurchase(item)}
+                                className="flex items-center gap-1 rounded-lg border border-[#735c00] px-3.5 py-1.5 text-xs font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white shadow-sm"
                               >
+                                <ShoppingCart size={13} />
                                 Purchase
-                              </Link>
+                              </button>
 
                               {canEdit && (
-                                <Link
-                                  href={`/inventory/edit?id=${item.id}`}
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEdit(item)}
                                   className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
                                 >
                                   Edit
-                                </Link>
+                                </button>
                               )}
 
                               {canDelete && (
@@ -401,41 +475,391 @@ export default function InventoryPage() {
         <SlidePanel
           open={panelOpen}
           onClose={() => setPanelOpen(false)}
-          title="Add New Item"
+          title={editItem ? "Edit Inventory Item" : "Add Inventory Item"}
+          subtitle={
+            editItem
+              ? `Updating stock & supplier for ${editItem.itemName}`
+              : "Register a new stock item or hotel supply"
+          }
+          icon={<Package className="h-5 w-5 text-[#735c00]" />}
         >
+          {error && (
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 font-bold text-red-700">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && <p className="text-red-500 text-sm">{error}</p>}
-            <input
-              name="itemName"
-              placeholder="Item Name"
-              required
-              className="w-full rounded-xl border border-[#d0c5af] p-3"
-              value={formData.itemName}
-              onChange={handleChange}
-            />
-            <input
-              name="category"
-              placeholder="Category"
-              className="w-full rounded-xl border border-[#d0c5af] p-3"
-              value={formData.category}
-              onChange={handleChange}
-            />
-            <input
-              type="number"
-              name="quantity"
-              placeholder="Quantity"
-              className="w-full rounded-xl border border-[#d0c5af] p-3"
-              value={formData.quantity}
-              onChange={handleChange}
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-xl bg-[#735c00] p-3 text-white font-bold"
-            >
-              {loading ? "Adding..." : "Add Item"}
-            </button>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                Item Name *
+              </label>
+              <input
+                required
+                type="text"
+                name="itemName"
+                placeholder="e.g. Basmati Rice 5kg / Earl Grey Tea"
+                value={formData.itemName}
+                onChange={handleChange}
+                className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 font-medium focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                  Category *
+                </label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 font-semibold focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                >
+                  <option value="Kitchen">Kitchen Supplies</option>
+                  <option value="Bar">Bar & Beverage</option>
+                  <option value="Housekeeping">Housekeeping & Linen</option>
+                  <option value="Toiletries">Guest Toiletries</option>
+                  <option value="Maintenance">Maintenance & Tools</option>
+                  <option value="Office">Office & Stationery</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                  Unit of Measure *
+                </label>
+                <select
+                  name="unit"
+                  value={formData.unit}
+                  onChange={handleChange}
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 font-semibold focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                >
+                  <option value="kg">kg (Kilograms)</option>
+                  <option value="g">g (Grams)</option>
+                  <option value="liters">Liters</option>
+                  <option value="ml">ml (Milliliters)</option>
+                  <option value="pcs">Pieces (pcs)</option>
+                  <option value="boxes">Boxes</option>
+                  <option value="bottles">Bottles</option>
+                  <option value="packs">Packs</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                  Current Quantity *
+                </label>
+                <input
+                  required
+                  type="number"
+                  min="0"
+                  step="any"
+                  name="quantity"
+                  value={formData.quantity}
+                  onChange={handleChange}
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 font-bold focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                  Reorder Level (Min) *
+                </label>
+                <input
+                  required
+                  type="number"
+                  min="0"
+                  name="reorderLevel"
+                  value={formData.reorderLevel}
+                  onChange={handleChange}
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 font-bold focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                  Supplier Name
+                </label>
+                <input
+                  type="text"
+                  name="supplierName"
+                  placeholder="e.g. Ceylon Agro Ltd"
+                  value={formData.supplierName}
+                  onChange={handleChange}
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                  Purchase Price (Rs)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  name="purchasePrice"
+                  value={formData.purchasePrice}
+                  onChange={handleChange}
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 font-bold focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                Status
+              </label>
+              <select
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+                className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 font-semibold focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+              >
+                <option value="In Stock">In Stock</option>
+                <option value="Low Stock">Low Stock</option>
+                <option value="Out of Stock">Out of Stock</option>
+                <option value="Critical">Critical</option>
+              </select>
+            </div>
+
+            <div className="flex gap-4 pt-4 border-t border-[#d0c5af]">
+              <button
+                type="button"
+                onClick={() => setPanelOpen(false)}
+                className="flex-1 rounded-xl border border-[#d0c5af] px-8 py-3.5 font-bold text-[#4d4635] transition hover:bg-[#ece9e2]"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 rounded-xl bg-[#735c00] px-8 py-3.5 font-bold text-white transition hover:bg-[#d4af37] disabled:opacity-50"
+              >
+                {loading
+                  ? "Saving..."
+                  : editItem
+                  ? "Update Item"
+                  : "Add Item"}
+              </button>
+            </div>
           </form>
+        </SlidePanel>
+
+        {/* Restock & Stock Purchase SlidePanel */}
+        <SlidePanel
+          open={purchasePanelOpen}
+          onClose={() => setPurchasePanelOpen(false)}
+          title="Restock & Stock Purchase"
+          subtitle={
+            purchaseItem
+              ? `Recording financial expense & stock increment for ${purchaseItem.itemName}`
+              : "Record inventory stock purchase"
+          }
+          icon={<ShoppingCart className="h-5 w-5 text-[#735c00]" />}
+        >
+          {purchaseError && (
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 font-bold text-red-700">
+              {purchaseError}
+            </div>
+          )}
+
+          {purchaseItem && (
+            <form onSubmit={handlePurchaseSubmit} className="space-y-4">
+              {/* Item Info Summary */}
+              <div className="rounded-xl border border-[#d0c5af] bg-[#faf8f4] p-4 flex items-center justify-between">
+                <div>
+                  <h3 className="font-extrabold text-[#735c00] text-base">{purchaseItem.itemName}</h3>
+                  <p className="text-xs text-[#565e74]">
+                    Category: {purchaseItem.category} • Current Stock: {purchaseItem.quantity} {purchaseItem.unit}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <span className="text-[11px] text-gray-500">Reorder Level</span>
+                  <p className="text-xs font-bold text-amber-800">{purchaseItem.reorderLevel} {purchaseItem.unit}</p>
+                </div>
+              </div>
+
+              {/* Purchase Quantities & Cost */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                    Purchase Quantity ({purchaseItem.unit}) *
+                  </label>
+                  <input
+                    required
+                    type="number"
+                    min="1"
+                    step="1"
+                    value={purchaseFormData.quantity}
+                    onChange={(e) =>
+                      setPurchaseFormData((prev) => ({
+                        ...prev,
+                        quantity: Number(e.target.value) || 0,
+                      }))
+                    }
+                    className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                    Cost per Unit (Rs) *
+                  </label>
+                  <input
+                    required
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={purchaseFormData.unitPrice}
+                    onChange={(e) =>
+                      setPurchaseFormData((prev) => ({
+                        ...prev,
+                        unitPrice: Number(e.target.value) || 0,
+                      }))
+                    }
+                    className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 font-mono font-bold focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                  />
+                </div>
+              </div>
+
+              {/* Total Financial Outflow Banner */}
+              <div className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 p-4">
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-amber-900">Total Financial Expense</span>
+                  <p className="text-xs text-amber-700">Will be recorded in Inventory Outflows & P&L</p>
+                </div>
+                <p className="text-2xl font-extrabold text-[#735c00] font-mono">
+                  Rs {(purchaseFormData.quantity * purchaseFormData.unitPrice).toLocaleString()}
+                </p>
+              </div>
+
+              {/* Supplier & Invoice */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                    Supplier Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Ceylon Fishery Harbor"
+                    value={purchaseFormData.supplierName}
+                    onChange={(e) =>
+                      setPurchaseFormData((prev) => ({
+                        ...prev,
+                        supplierName: e.target.value,
+                      }))
+                    }
+                    className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                    Supplier Invoice No
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. INV-98431"
+                    value={purchaseFormData.supplierInvoiceNumber}
+                    onChange={(e) =>
+                      setPurchaseFormData((prev) => ({
+                        ...prev,
+                        supplierInvoiceNumber: e.target.value,
+                      }))
+                    }
+                    className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                  />
+                </div>
+              </div>
+
+              {/* Payment Method & Status */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                    Expense Payment Method
+                  </label>
+                  <select
+                    value={purchaseFormData.paymentMethod}
+                    onChange={(e) =>
+                      setPurchaseFormData((prev) => ({
+                        ...prev,
+                        paymentMethod: e.target.value,
+                      }))
+                    }
+                    className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                  >
+                    <option value="BANK_TRANSFER">Bank Transfer (CEFT)</option>
+                    <option value="PETTY_CASH">Petty Cash</option>
+                    <option value="CHEQUE">Company Cheque</option>
+                    <option value="COMPANY_CARD">Company Credit Card</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                    Payment Status
+                  </label>
+                  <select
+                    value={purchaseFormData.paymentStatus}
+                    onChange={(e) =>
+                      setPurchaseFormData((prev) => ({
+                        ...prev,
+                        paymentStatus: e.target.value,
+                      }))
+                    }
+                    className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                  >
+                    <option value="PAID">PAID (Settled Immediately)</option>
+                    <option value="CREDIT_INVOICE">CREDIT INVOICE (Pay Later)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Notes */}
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                  Purchase / Delivery Notes
+                </label>
+                <textarea
+                  rows={2}
+                  placeholder="Notes on batch, quality, expiry or delivery date..."
+                  value={purchaseFormData.notes}
+                  onChange={(e) =>
+                    setPurchaseFormData((prev) => ({
+                      ...prev,
+                      notes: e.target.value,
+                    }))
+                  }
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-4 pt-4 border-t border-[#d0c5af]">
+                <button
+                  type="button"
+                  onClick={() => setPurchasePanelOpen(false)}
+                  className="flex-1 rounded-xl border border-[#d0c5af] py-3 text-sm font-bold text-[#4d4635] hover:bg-[#ece9e2]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={purchaseSubmitting}
+                  className="flex-1 rounded-xl bg-[#735c00] py-3 text-sm font-bold text-white shadow-md hover:bg-[#d4af37] hover:text-[#241a00] disabled:opacity-50"
+                >
+                  {purchaseSubmitting ? "Recording..." : `Confirm Restock & Expense`}
+                </button>
+              </div>
+            </form>
+          )}
         </SlidePanel>
       </div>
     </ProtectedRoute>

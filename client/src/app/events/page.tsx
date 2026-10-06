@@ -6,6 +6,7 @@ import Link from "next/link";
 import useSWR from "swr";
 import { getEvents, getOccupancyImpact, EventOccupancyImpact } from "@/lib/api/eventApi";
 import NewEventPanel from "@/components/events/NewEventPanel";
+import EventPaymentModal from "@/components/events/EventPaymentModal";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import { getUser, AuthUser } from "@/utils/auth";
@@ -18,6 +19,7 @@ function EventsPageContent() {
   const eventsData = useMemo(() => (Array.isArray(rawEvents) ? rawEvents : []), [rawEvents]);
   const searchParams = useSearchParams();
   const [panelOpen, setPanelOpen] = useState(false);
+  const [payEvent, setPayEvent] = useState<any | null>(null);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentDate, setCurrentDate] = useState(() => new Date());
@@ -431,6 +433,24 @@ function EventsPageContent() {
                             <span className="text-xs text-[#8a8175]">{event.id}</span>
                             <span>{event.guestCount || 0} guests</span>
                           </div>
+
+                          <div className="mt-3 pt-3 border-t border-[#d9cfbd]/60 flex items-center justify-between">
+                            <span className="font-bold text-[#806300]">Rs {Number(event.grandTotal || 0).toLocaleString()}</span>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setPayEvent(event)}
+                                className="rounded-lg bg-[#806300] px-2.5 py-1 text-xs font-bold text-white hover:bg-[#685000] shadow-sm transition"
+                              >
+                                💳 Pay
+                              </button>
+                              <Link
+                                href={`/events/detail?id=${event.id}`}
+                                className="rounded-lg border border-[#806300] px-2.5 py-1 text-xs font-bold text-[#806300] hover:bg-[#806300]/10 transition"
+                              >
+                                Details
+                              </Link>
+                            </div>
+                          </div>
                         </article>
                       ))
                     )}
@@ -445,6 +465,18 @@ function EventsPageContent() {
             onClose={() => setPanelOpen(false)}
             onSuccess={handleRefresh}
           />
+
+          {payEvent && (
+            <EventPaymentModal
+              isOpen={Boolean(payEvent)}
+              event={payEvent}
+              onClose={() => setPayEvent(null)}
+              onPaymentSuccess={() => {
+                setPayEvent(null);
+                handleRefresh();
+              }}
+            />
+          )}
         </main>
       </div>
     </ProtectedRoute>

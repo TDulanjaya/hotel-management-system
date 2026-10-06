@@ -18,6 +18,14 @@ export async function getPricingItemsByCategory(category: string) {
   return data?.content !== undefined ? data.content : data;
 }
 
+export async function getPricingCategories(): Promise<string[]> {
+  const response = await authenticatedFetch("/api/pricing/categories");
+  if (!response.ok) {
+    throw new Error("Failed to fetch pricing categories");
+  }
+  return response.json();
+}
+
 export async function getPricingItemById(id: string) {
   const response = await authenticatedFetch(`/api/pricing/${id}`);
   if (!response.ok) {
@@ -55,4 +63,10 @@ export async function deletePricingItem(id: string) {
   if (!response.ok) {
     throw new Error("Failed to delete pricing item");
   }
+}
+
+export async function getRecipes() {
+  const response = await authenticatedFetch("/api/recipes");
+  if (!response.ok) throw new Error("Failed to fetch recipes");
+  return response.json();
 }

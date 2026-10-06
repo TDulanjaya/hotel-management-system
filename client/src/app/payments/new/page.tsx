@@ -1,54 +1,96 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import useSWR from "swr";
+import { useSearchParams } from "next/navigation";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { createPayment } from "@/lib/api/paymentsApi";
+import { getAll as getFolios } from "@/lib/api/folioApi";
+import { getToken } from "@/utils/auth";
 
 export default function NewPaymentPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  const { data: reservationsData } = useSWR<any>("/api/reservations");
-  const reservations = Array.isArray(reservationsData?.content)
-    ? reservationsData.content
-    : Array.isArray(reservationsData)
-    ? reservationsData
-    : [];
+  const [billOptions, setBillOptions] = useState<any[]>([]);
+  const [selectedBill, setSelectedBill] = useState<any>(null);
 
   const [formData, setFormData] = useState({
     guestName: "",
     roomNumber: "",
-    referenceType: "RESERVATION",
+    referenceType: "FOLIO",
     referenceId: "",
     amount: 0,
-    method: "Cash",
+    method: "CASH",
+    transactionReference: "",
     status: "PAID",
     notes: "",
   });
 
-  const handleSelectReservation = (reservationId: string) => {
-    const res = reservations.find((r: any) => r.id === reservationId);
-    if (res) {
+  useEffect(() => {
+    async function loadBills() {
+      try {
+        const token = getToken();
+        const headers = { Authorization: `Bearer ${token}` };
+        const [folios, events, direct] = await Promise.all([
+          getFolios(),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"}/api/event-bills`, { headers }).then((r) => r.json()),
+          fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"}/api/direct-bills`, { headers }).then((r) => r.json()),
+        ]);
+        setBillOptions([
+          ...(Array.isArray(folios) ? folios : []).map((bill: any) => ({ ...bill, referenceType: "FOLIO" })),
+          ...(Array.isArray(events) ? events : []).map((bill: any) => ({ ...bill, referenceType: "EVENT_BILL" })),
+          ...(Array.isArray(direct) ? direct : []).map((bill: any) => ({ ...bill, referenceType: "DIRECT_BILL" })),
+        ]);
+      } catch {
+        setError("Unable to load open bills.");
+      }
+    }
+    loadBills();
+  }, []);
+
+  useEffect(() => {
+    const referenceType = searchParams.get("referenceType");
+    const referenceId = searchParams.get("referenceId");
+    if (referenceType || referenceId) {
       setFormData((prev) => ({
         ...prev,
-        referenceId: res.id,
-        guestName: res.guestName || "",
-        roomNumber: res.roomNumber || "",
-        amount: res.totalAmount || prev.amount,
+        referenceType: referenceType || prev.referenceType,
+        referenceId: referenceId || prev.referenceId,
       }));
-    } else {
-      setFormData((prev) => ({ ...prev, referenceId: reservationId }));
+    }
+  }, [searchParams]);
+
+  const handleSelectBill = (billId: string) => {
+    const bill = billOptions.find((entry) => entry.id === billId);
+    if (bill) {
+      setSelectedBill(bill);
+      setFormData((prev) => ({
+        ...prev,
+        referenceType: bill.referenceType,
+        referenceId: bill.id,
+        guestName: bill.guestName || bill.eventName || "",
+        roomNumber: bill.roomNumber || "",
+        amount: Number(bill.balanceAmount ?? bill.totalAmount ?? 0),
+      }));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (formData.amount <= 0) {
-      setError("Payment amount must be greater than 0.");
+    if (!formData.referenceId || formData.amount <= 0) {
+      setError("Select an open bill and enter a payment amount greater than 0.");
+      return;
+    }
+    if (formData.amount > Number(selectedBill?.balanceAmount ?? formData.amount)) {
+      setError("Payment cannot exceed the outstanding bill balance.");
+      return;
+    }
+    if (formData.method !== "CASH" && !formData.transactionReference.trim()) {
+      setError("Transaction reference is required for non-cash payments.");
       return;
     }
 
@@ -110,17 +152,17 @@ export default function NewPaymentPage() {
               <div className="mt-6 grid gap-5 md:grid-cols-2">
                 <div>
                   <label className="text-sm font-bold text-[#4d4635]">
-                    Link to Active Reservation
+                    Open bill
                   </label>
                   <select
-                    value={formData.referenceType === "RESERVATION" ? formData.referenceId : ""}
-                    onChange={(e) => handleSelectReservation(e.target.value)}
+                    value={formData.referenceId}
+                    onChange={(e) => handleSelectBill(e.target.value)}
                     className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
                   >
-                    <option value="">-- Manual / Custom Reference --</option>
-                    {reservations.map((r: any) => (
-                      <option key={r.id} value={r.id}>
-                        Room {r.roomNumber || "?"} - {r.guestName} (Due: Rs {r.totalAmount || 0})
+                    <option value="">-- Select a bill --</option>
+                    {billOptions.filter((bill) => Number(bill.balanceAmount ?? 0) > 0).map((bill: any) => (
+                      <option key={`${bill.referenceType}-${bill.id}`} value={bill.id}>
+                        {bill.referenceType.replace("_", " ")} - {bill.guestName || bill.eventName || "Direct customer"} (Due: Rs {bill.balanceAmount || 0})
                       </option>
                     ))}
                   </select>
@@ -128,42 +170,38 @@ export default function NewPaymentPage() {
 
                 <div>
                   <label className="text-sm font-bold text-[#4d4635]">
-                    Reference ID *
+                    Transaction reference
                   </label>
                   <input
                     type="text"
-                    required
-                    value={formData.referenceId}
-                    onChange={(e) => setFormData({ ...formData, referenceId: e.target.value })}
-                    placeholder="Reservation ID, Folio ID, Event ID"
+                    value={formData.transactionReference}
+                    onChange={(e) => setFormData({ ...formData, transactionReference: e.target.value })}
+                    placeholder="Terminal, bank, or QR reference"
                     className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
                   />
+                </div>
+
+                <div>
+                  <label className="text-sm font-bold text-[#4d4635]">
+                    Reference ID *
+                  </label>
+                  <p className="mt-2 rounded-xl bg-[#f5f3ef] px-4 py-3 text-sm text-[#4d4635]">
+                    {formData.referenceId || "Select an open bill above"}
+                  </p>
                 </div>
 
                 <div>
                   <label className="text-sm font-bold text-[#4d4635]">
                     Guest / Payer Name
                   </label>
-                  <input
-                    type="text"
-                    value={formData.guestName}
-                    onChange={(e) => setFormData({ ...formData, guestName: e.target.value })}
-                    placeholder="Enter guest or event name"
-                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-                  />
+                  <p className="mt-2 rounded-xl bg-[#f5f3ef] px-4 py-3 text-sm text-[#4d4635]">{formData.guestName || "Derived from bill"}</p>
                 </div>
 
                 <div>
                   <label className="text-sm font-bold text-[#4d4635]">
                     Room Number
                   </label>
-                  <input
-                    type="text"
-                    value={formData.roomNumber}
-                    onChange={(e) => setFormData({ ...formData, roomNumber: e.target.value })}
-                    placeholder="e.g. 402"
-                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-                  />
+                  <p className="mt-2 rounded-xl bg-[#f5f3ef] px-4 py-3 text-sm text-[#4d4635]">{formData.roomNumber || "Not applicable"}</p>
                 </div>
 
                 <div>
@@ -175,10 +213,9 @@ export default function NewPaymentPage() {
                     onChange={(e) => setFormData({ ...formData, referenceType: e.target.value })}
                     className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
                   >
-                    <option value="RESERVATION">Reservation</option>
                     <option value="FOLIO">Folio Settlement</option>
-                    <option value="EVENT">Event</option>
-                    <option value="GENERAL">General</option>
+                    <option value="EVENT_BILL">Event master bill</option>
+                    <option value="DIRECT_BILL">Direct bill</option>
                   </select>
                 </div>
 
@@ -191,10 +228,14 @@ export default function NewPaymentPage() {
                     onChange={(e) => setFormData({ ...formData, method: e.target.value })}
                     className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
                   >
-                    <option value="Cash">Cash</option>
-                    <option value="Card">Card</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
-                    <option value="Online">Online Payment</option>
+                    <option value="CASH">Cash</option>
+                    <option value="CARD_TERMINAL">Card terminal</option>
+                    <option value="BANK_TRANSFER">Bank transfer</option>
+                    <option value="CEFT">CEFT</option>
+                    <option value="LANKAQR">LankaQR</option>
+                    <option value="ONLINE_PAYMENT">Online payment</option>
+                    <option value="VOUCHER">Voucher</option>
+                    <option value="COMPLIMENTARY">Complimentary</option>
                   </select>
                 </div>
 
@@ -208,6 +249,7 @@ export default function NewPaymentPage() {
                     step="0.01"
                     required
                     value={formData.amount || ""}
+                    readOnly={Boolean(selectedBill)}
                     onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
                     placeholder="0.00"
                     className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"

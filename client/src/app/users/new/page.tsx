@@ -18,6 +18,7 @@ const allRoles = [
   "EVENTS",
   "PARKING",
   "GAME_STAFF",
+  "LAUNDRY",
 ];
 
 function getAvailableRoles(creatorRole: string) {

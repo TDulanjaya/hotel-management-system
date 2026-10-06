@@ -18,7 +18,7 @@ export default function NewRoomPage() {
     roomType: "Standard",
     floor: "Floor 1",
     capacity: 2,
-    pricePerNight: 0,
+    pricePerNight: "",
     status: "AVAILABLE",
     description: "",
     image: "",
@@ -45,8 +45,8 @@ export default function NewRoomPage() {
       return;
     }
 
-    if (Number(formData.pricePerNight) < 0) {
-      setError("Price cannot be negative.");
+    if (Number(formData.pricePerNight) <= 0) {
+      setError("Price per night must be greater than 0.");
       return;
     }
 
@@ -189,7 +189,7 @@ export default function NewRoomPage() {
                   <input
                     required
                     type="number"
-                    min="0"
+                    min="0.01"
                     name="pricePerNight"
                     value={formData.pricePerNight}
                     onChange={handleChange}

@@ -12,6 +12,10 @@ import java.util.List;
 public class KitchenOrder {
     @Id private String id;
     private String orderSource;
+    private String restaurantOrderId;
+    private String roomServiceOrderId;
+    private String customerType;
+    private String billingType;
     private String tableOrRoom;
     private String guestName;
     private List<OrderLineItem> items;

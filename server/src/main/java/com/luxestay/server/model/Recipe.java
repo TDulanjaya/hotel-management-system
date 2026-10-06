@@ -27,4 +27,5 @@ public class Recipe {
     private int prepTime;
     private int servings;
     private String notes;
+    private String status = "ACTIVE";
 }

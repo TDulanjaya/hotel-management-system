@@ -18,26 +18,41 @@ function getStatusClass(status: string) {
 
 export default function InventoryUsageReportPage() {
   const { data: rawItems, isLoading } = useSWR<any[]>("/api/inventory");
+  const { data: rawPurchases } = useSWR<any[]>("/api/inventory/purchases");
   const items = useMemo(() => (Array.isArray(rawItems) ? rawItems : []), [rawItems]);
+  const purchases = useMemo(() => (Array.isArray(rawPurchases) ? rawPurchases : []), [rawPurchases]);
   const loading = !rawItems && isLoading;
 
   const lowStockThreshold = (item: any) => item.quantity <= item.reorderLevel;
   const lowStockItems = useMemo(() => items.filter(lowStockThreshold), [items]);
 
-  // Sample usage activity based on inventory
+  // Real purchase & stock expense ledger from database
   const usageRows = useMemo(() => {
-    return items.slice(0, 8).map((item, idx) => ({
-      id: `USE-${(idx + 1000).toString()}`,
+    if (purchases.length > 0) {
+      return purchases.map((p: any, idx: number) => ({
+        id: p.id ? p.id.slice(-8).toUpperCase() : `PO-${idx + 1000}`,
+        item: p.itemName,
+        category: p.category || "General",
+        department: p.category || "General",
+        usedQty: `${p.quantity || 1} ${p.unit || "units"}`,
+        unitCost: `Rs ${Number(p.unitPrice || 0).toLocaleString()}`,
+        totalCost: `Rs ${Number(p.totalExpense || 0).toLocaleString()}`,
+        date: p.purchasedAt ? new Date(p.purchasedAt).toLocaleDateString() : new Date().toLocaleDateString(),
+        status: p.paymentStatus || "PAID",
+      }));
+    }
+    return items.map((item, idx) => ({
+      id: `ITEM-${(idx + 1000).toString()}`,
       item: item.itemName,
       category: item.category || "General",
       department: item.category || "General",
-      usedQty: `${Math.floor(Math.random() * 20) + 1} ${item.unit || "units"}`,
-      unitCost: `Rs ${item.purchasePrice || 100}`,
-      totalCost: `Rs ${((item.purchasePrice || 100) * (Math.floor(Math.random() * 20) + 1)).toLocaleString()}`,
+      usedQty: `${item.quantity || 0} ${item.unit || "units"}`,
+      unitCost: `Rs ${Number(item.purchasePrice || 0).toLocaleString()}`,
+      totalCost: `Rs ${(Number(item.purchasePrice || 0) * Number(item.quantity || 0)).toLocaleString()}`,
       date: new Date().toLocaleDateString(),
-      status: "Issued",
+      status: item.status || "In Stock",
     }));
-  }, [items]);
+  }, [purchases, items]);
 
   const reorderAlerts = lowStockItems.map(item => ({
     item: item.itemName,

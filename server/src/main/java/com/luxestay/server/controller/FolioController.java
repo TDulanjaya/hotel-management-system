@@ -24,6 +24,11 @@ public class FolioController {
         return service.getById(id);
     }
 
+    @GetMapping("/reservation/{reservationId}")
+    public Folio getByReservationId(@PathVariable String reservationId) {
+        return service.getByReservationId(reservationId);
+    }
+
     @PostMapping
     public Folio create(@RequestBody Folio folio) {
         return service.create(folio);

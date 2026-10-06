@@ -23,6 +23,7 @@ import {
   getVenues,
   deleteVenue as apiDeleteVenue,
   createVenue,
+  updateVenue,
 } from "@/lib/api/venueApi";
 
 type Venue = {
@@ -56,6 +57,7 @@ export default function VenuesPage() {
   const error = swrError?.message || "";
 
   const [panelOpen, setPanelOpen] = useState(false);
+  const [editItem, setEditItem] = useState<Venue | null>(null);
   const [formLoading, setFormLoading] = useState(false);
   const [formError, setFormError] = useState("");
 
@@ -156,12 +158,28 @@ export default function VenuesPage() {
     setFormError("");
   };
 
-  const handleOpenNew = () => {
+  const handleOpenAdd = () => {
+    setEditItem(null);
     resetForm();
     setPanelOpen(true);
   };
 
-  const handleCreateVenue = async (event: FormEvent<HTMLFormElement>) => {
+  const handleOpenEdit = (venue: Venue) => {
+    setEditItem(venue);
+    setVenueName(venue.name || "");
+    setVenueType(venue.type || "Indoor");
+    setCapacity(Number(venue.capacity || 100));
+    setSize(venue.size || "");
+    setLocation(venue.location || "");
+    setStatus(venue.status || "Available");
+    setPrice(Number(venue.price || 1000));
+    setImage(venue.image || defaultImage);
+    setTagsText(Array.isArray(venue.tags) ? venue.tags.join(", ") : "");
+    setFormError("");
+    setPanelOpen(true);
+  };
+
+  const handleSaveVenue = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     if (!venueName.trim()) {
@@ -195,13 +213,17 @@ export default function VenuesPage() {
     };
 
     try {
-      await createVenue(venueData);
+      if (editItem) {
+        await updateVenue(editItem.id, venueData);
+      } else {
+        await createVenue(venueData);
+      }
       setPanelOpen(false);
+      setEditItem(null);
       resetForm();
       mutate();
-      alert("Venue created successfully.");
     } catch (err: any) {
-      setFormError(err.message || "Failed to create venue.");
+      setFormError(err.message || "Failed to save venue.");
     } finally {
       setFormLoading(false);
     }
@@ -240,7 +262,7 @@ export default function VenuesPage() {
 
               {canManage && (
                 <button
-                  onClick={handleOpenNew}
+                  onClick={handleOpenAdd}
                   className="flex items-center gap-2 rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
                 >
                   <Plus size={18} />
@@ -370,13 +392,14 @@ export default function VenuesPage() {
 
                           <div className="flex gap-3">
                             {canManage && (
-                              <Link
-                                href={`/venues/edit?id=${venue.id}`}
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEdit(venue)}
                                 className="flex items-center gap-2 rounded-xl border border-[#735c00] px-5 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
                               >
                                 <Edit size={16} />
                                 Edit
-                              </Link>
+                              </button>
                             )}
 
                             {canDelete && (
@@ -402,9 +425,13 @@ export default function VenuesPage() {
         <SlidePanel
           open={panelOpen}
           onClose={() => setPanelOpen(false)}
-          title="Add New Venue"
-          subtitle="Add hall price, photo, capacity, status and venue details."
-          icon={<MapPin className="h-5 w-5" />}
+          title={editItem ? "Edit Venue" : "Add New Venue"}
+          subtitle={
+            editItem
+              ? `Update details and pricing for ${editItem.name}`
+              : "Add hall price, photo, capacity, status and venue details."
+          }
+          icon={<MapPin className="h-5 w-5 text-[#735c00]" />}
         >
           {formError && (
             <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-bold text-red-700">
@@ -412,7 +439,7 @@ export default function VenuesPage() {
             </div>
           )}
 
-          <form onSubmit={handleCreateVenue} className="space-y-6">
+          <form onSubmit={handleSaveVenue} className="space-y-6">
             <VenueFormFields
               venueName={venueName}
               setVenueName={setVenueName}
@@ -434,11 +461,11 @@ export default function VenuesPage() {
               setTagsText={setTagsText}
             />
 
-            <div className="flex gap-4 pt-4">
+            <div className="flex gap-4 pt-4 border-t border-[#d0c5af]">
               <button
                 type="button"
                 onClick={() => setPanelOpen(false)}
-                className="flex-1 rounded-xl border border-[#d0c5af] px-8 py-4 font-bold text-[#4d4635] transition hover:bg-[#ece9e2]"
+                className="flex-1 rounded-xl border border-[#d0c5af] px-8 py-3.5 font-bold text-[#4d4635] transition hover:bg-[#ece9e2]"
               >
                 Cancel
               </button>
@@ -446,9 +473,9 @@ export default function VenuesPage() {
               <button
                 type="submit"
                 disabled={formLoading}
-                className="flex-1 rounded-xl bg-[#735c00] px-8 py-4 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
+                className="flex-1 rounded-xl bg-[#735c00] px-8 py-3.5 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00] disabled:opacity-50"
               >
-                {formLoading ? "Creating..." : "Save Venue"}
+                {formLoading ? "Saving..." : editItem ? "Update Venue" : "Save Venue"}
               </button>
             </div>
           </form>

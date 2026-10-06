@@ -7,6 +7,9 @@ import { getEventById } from "@/lib/api/eventApi";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 
+import { useState } from "react";
+import EventPaymentModal from "@/components/events/EventPaymentModal";
+
 type SavedEvent = {
   id: string;
   eventName: string;
@@ -17,6 +20,8 @@ type SavedEvent = {
   organizerName: string;
   phone: string;
   email: string;
+  roomNumber?: string;
+  reservationId?: string;
   kitchenNote: string;
   specialNote: string;
   status: string;
@@ -52,7 +57,8 @@ export default function EventDetailsPage() {
   const params = useParams();
   const eventId = id as string;
 
-  const { data: event } = useSWR<SavedEvent>(eventId ? `/api/events/${eventId}` : null, () => getEventById(eventId));
+  const [payModalOpen, setPayModalOpen] = useState(false);
+  const { data: event, mutate } = useSWR<SavedEvent>(eventId ? `/api/events/${eventId}` : null, () => getEventById(eventId));
 
   return (
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "EVENTS"]}>
@@ -176,6 +182,12 @@ export default function EventDetailsPage() {
                       <InfoCard label="Phone" value={event.phone} />
                       <InfoCard label="Email" value={event.email || "-"} />
                       <InfoCard label="Status" value={event.status} />
+                      {event.roomNumber && (
+                        <InfoCard
+                          label="Linked Guest Room / Suite"
+                          value={`Room ${event.roomNumber}`}
+                        />
+                      )}
                     </div>
                   </section>
 
@@ -246,17 +258,19 @@ export default function EventDetailsPage() {
                   <div className="mt-8 space-y-5 border-b border-white/10 pb-6">
                     <div className="flex justify-between gap-4">
                       <span className="text-slate-300">Base Venue Rental</span>
-                      <strong>${event.venueTotal.toLocaleString()}</strong>
+                      <strong>Rs {Number(event.venueTotal || 0).toLocaleString()}</strong>
                     </div>
 
                     {event.selectedPackages.map((item) => (
                       <div key={item.id} className="flex justify-between gap-4">
                         <span className="text-slate-300">{item.name}</span>
                         <strong>
-                          $
-                          {item.priceType === "perPerson"
-                            ? (item.price * event.guestCount).toLocaleString()
-                            : item.price.toLocaleString()}
+                          Rs{" "}
+                          {Number(
+                            item.priceType === "perPerson"
+                              ? item.price * event.guestCount
+                              : item.price
+                          ).toLocaleString()}
                         </strong>
                       </div>
                     ))}
@@ -265,7 +279,7 @@ export default function EventDetailsPage() {
                       <span className="text-slate-300">
                         Service Charge 15%
                       </span>
-                      <strong>${event.serviceCharge.toLocaleString()}</strong>
+                      <strong>Rs {Number(event.serviceCharge || 0).toLocaleString()}</strong>
                     </div>
                   </div>
 
@@ -276,7 +290,7 @@ export default function EventDetailsPage() {
 
                     <div className="mt-2 flex items-end justify-between gap-4">
                       <strong className="text-4xl text-[#d8b328]">
-                        ${event.grandTotal.toLocaleString()}
+                        Rs {Number(event.grandTotal || 0).toLocaleString()}
                       </strong>
                       <span className="text-xs italic text-slate-300">
                         Tax Included
@@ -284,11 +298,31 @@ export default function EventDetailsPage() {
                     </div>
                   </div>
 
-                  <button className="mt-8 w-full rounded-xl bg-[#d8b328] px-5 py-4 font-bold text-[#4c3a00] transition hover:bg-[#f2c426]">
-                    Print Contract
+                  <button
+                    onClick={() => setPayModalOpen(true)}
+                    className="mt-8 w-full rounded-xl bg-[#d8b328] px-5 py-4 font-bold text-[#4c3a00] shadow-md transition hover:bg-[#f2c426]"
+                  >
+                    💳 Record Payment / Deposit
                   </button>
+
+                  <Link
+                    href={`/events/ledger?id=${event.id}`}
+                    className="mt-3 block w-full rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-center text-sm font-bold text-white transition hover:bg-white/20"
+                  >
+                    View Financial Ledger & Invoices
+                  </Link>
                 </aside>
               </div>
+
+              <EventPaymentModal
+                isOpen={payModalOpen}
+                event={event as any}
+                onClose={() => setPayModalOpen(false)}
+                onPaymentSuccess={() => {
+                  setPayModalOpen(false);
+                  mutate();
+                }}
+              />
             </>
           )}
         </main>

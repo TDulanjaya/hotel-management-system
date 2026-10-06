@@ -21,12 +21,23 @@ public class FolioService {
         return repository.findById(id).orElse(null);
     }
 
+    public Folio getByReservationId(String reservationId) {
+        return repository.findByReservationId(reservationId).orElse(null);
+    }
+
     public Folio create(Folio folio) {
+        folio.setStatus(folio.getStatus() == null ? "OPEN" : folio.getStatus());
+        recalculate(folio);
         return repository.save(folio);
     }
 
     public Folio update(String id, Folio folio) {
         folio.setId(id);
+        Folio existing = getById(id);
+        if (existing != null && "CLOSED".equalsIgnoreCase(existing.getStatus())) {
+            throw new IllegalStateException("Cannot edit a closed folio.");
+        }
+        recalculate(folio);
         return repository.save(folio);
     }
 
@@ -36,5 +47,16 @@ public class FolioService {
             throw new IllegalStateException("Cannot delete a settled/closed folio. Records must be preserved for audit purposes.");
         }
         repository.deleteById(id);
+    }
+
+    private void recalculate(Folio folio) {
+        if (folio.getLines() == null) {
+            folio.setLines(new java.util.ArrayList<>());
+        }
+        folio.setTotalAmount(folio.getLines().stream()
+                .filter(line -> !"VOID".equalsIgnoreCase(line.getStatus()))
+                .mapToDouble(com.luxestay.server.model.FolioLine::getAmount)
+                .sum());
+        folio.setBalanceAmount(Math.max(0, folio.getTotalAmount() - folio.getPaidAmount()));
     }
 }

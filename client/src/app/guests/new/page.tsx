@@ -10,36 +10,31 @@ export default function NewGuestPage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
     phone: "",
-    nationality: "",
-    idType: "Passport",
+    email: "",
+    nationality: "Sri Lankan",
+    idType: "National ID",
     idNumber: "",
-    address: "",
-    notes: "",
   });
 
-  const handleChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  const update = (field: string, value: string) =>
+    setFormData((current) => ({ ...current, [field]: value }));
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
     if (!formData.name.trim()) {
-      setError("Full Name is required.");
+      setError("Guest name is required.");
       return;
     }
-
     try {
       setSaving(true);
       setError("");
       await createGuest(formData);
       router.push("/guests");
     } catch (err: any) {
-      setError(err.message || "Failed to create guest. Please check the details.");
+      setError(err.message || "Failed to create guest.");
     } finally {
       setSaving(false);
     }
@@ -49,166 +44,91 @@ export default function NewGuestPage() {
     <ProtectedRoute allowedRoles={["OWNER", "MANAGER", "RECEPTIONIST"]}>
       <div className="min-h-screen bg-[#fbf9f5] text-[#1b1c1a]">
         <AppSidebar />
-
-        <main className="px-8 py-10 lg:ml-[280px]">
-          <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-[0.3em] text-[#735c00]">
-                Guest Management
-              </p>
-
-              <h1 className="mt-3 text-4xl font-bold text-[#735c00]">
-                Add New Guest
-              </h1>
-
-              <p className="mt-2 text-[#4d4635]">
-                Register a new hotel guest with contact details, ID details,
-                preferences, and notes.
-              </p>
+        <main className="px-4 py-6 pt-16 sm:px-8 sm:py-10 lg:ml-[280px] lg:pt-10">
+          <div className="mx-auto max-w-2xl">
+            <div className="mb-6 flex items-end justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#735c00]">
+                  Guest Management
+                </p>
+                <h1 className="mt-2 text-3xl font-extrabold text-[#735c00]">
+                  Add Guest
+                </h1>
+                <p className="mt-1 text-sm text-[#4d4635]">
+                  Create a short guest profile before making a reservation or bill.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => router.push("/guests")}
+                className="rounded-xl border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] hover:bg-[#735c00] hover:text-white"
+              >
+                Cancel
+              </button>
             </div>
 
-            <button
-              type="button"
-              onClick={() => router.push("/guests")}
-              className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
-            >
-              Back to Guests
-            </button>
+            <form onSubmit={handleSubmit} className="rounded-2xl border border-[#d0c5af] bg-white p-5 shadow-sm sm:p-7">
+              {error && (
+                <div className="mb-5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
+                  {error}
+                </div>
+              )}
+
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Full name *" value={formData.name} onChange={(value) => update("name", value)} placeholder="Nadeesha Perera" required />
+                <Field label="Phone *" value={formData.phone} onChange={(value) => update("phone", value)} placeholder="+94 77 123 4567" required />
+                <Field label="Email *" type="email" value={formData.email} onChange={(value) => update("email", value)} placeholder="guest@example.com" required />
+                <Field label="Nationality" value={formData.nationality} onChange={(value) => update("nationality", value)} placeholder="Sri Lankan" />
+                <label className="text-sm font-bold text-[#4d4635]">
+                  ID type
+                  <select value={formData.idType} onChange={(event) => update("idType", event.target.value)} className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-3 py-2.5 outline-none focus:ring-2 focus:ring-[#735c00]/30">
+                    <option>National ID</option>
+                    <option>Passport</option>
+                    <option>Driver License</option>
+                  </select>
+                </label>
+                <Field label="ID number *" value={formData.idNumber} onChange={(value) => update("idNumber", value)} placeholder="199012345678" required />
+              </div>
+
+              <div className="mt-6 flex justify-end">
+                <button type="submit" disabled={saving} className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white hover:bg-[#d4af37] hover:text-[#241a00] disabled:opacity-50">
+                  {saving ? "Saving..." : "Save Guest"}
+                </button>
+              </div>
+            </form>
           </div>
-
-          {error && (
-            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700 font-semibold">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="grid gap-8 xl:grid-cols-[1fr_1fr]">
-            <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-              <h2 className="text-2xl font-bold">Personal Details</h2>
-
-              <div className="mt-6 space-y-5">
-                <div>
-                  <label className="text-sm font-bold text-[#4d4635]">Full Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => handleChange("name", e.target.value)}
-                    placeholder="Enter guest name"
-                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-bold text-[#4d4635]">Email</label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleChange("email", e.target.value)}
-                    placeholder="guest@example.com"
-                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-bold text-[#4d4635]">Phone Number</label>
-                  <input
-                    type="text"
-                    value={formData.phone}
-                    onChange={(e) => handleChange("phone", e.target.value)}
-                    placeholder="+94 77 123 4567"
-                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-bold text-[#4d4635]">Nationality</label>
-                  <input
-                    type="text"
-                    value={formData.nationality}
-                    onChange={(e) => handleChange("nationality", e.target.value)}
-                    placeholder="Enter nationality"
-                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-sm font-bold text-[#4d4635]">ID Type</label>
-                    <select
-                      value={formData.idType}
-                      onChange={(e) => handleChange("idType", e.target.value)}
-                      className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-                    >
-                      <option value="Passport">Passport</option>
-                      <option value="National ID">National ID</option>
-                      <option value="Driver License">Driver License</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="text-sm font-bold text-[#4d4635]">Passport / ID No</label>
-                    <input
-                      type="text"
-                      value={formData.idNumber}
-                      onChange={(e) => handleChange("idNumber", e.target.value)}
-                      placeholder="Enter ID number"
-                      className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm">
-              <h2 className="text-2xl font-bold">Address & Contact</h2>
-
-              <div className="mt-6 space-y-5">
-                <div>
-                  <label className="text-sm font-bold text-[#4d4635]">Residential Address</label>
-                  <textarea
-                    rows={4}
-                    value={formData.address}
-                    onChange={(e) => handleChange("address", e.target.value)}
-                    placeholder="Street address, city, country..."
-                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm xl:col-span-2">
-              <h2 className="text-2xl font-bold">Guest Notes</h2>
-
-              <textarea
-                placeholder="Add guest notes, special requests, VIP status, or dietary preferences..."
-                rows={4}
-                value={formData.notes}
-                onChange={(e) => handleChange("notes", e.target.value)}
-                className="mt-6 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-              />
-
-              <div className="mt-6 flex flex-wrap gap-4">
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className="rounded-xl bg-[#735c00] px-6 py-3 font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00] disabled:opacity-50"
-                >
-                  {saving ? "Saving Guest..." : "Save Guest"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => router.push("/guests")}
-                  className="rounded-xl border border-[#735c00] px-6 py-3 font-bold text-[#735c00] transition hover:bg-[#735c00] hover:text-white"
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          </form>
         </main>
       </div>
     </ProtectedRoute>
+  );
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder,
+  type = "text",
+  required = false,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  type?: string;
+  required?: boolean;
+}) {
+  return (
+    <label className="text-sm font-bold text-[#4d4635]">
+      {label}
+      <input
+        required={required}
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={placeholder}
+        className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-3 py-2.5 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+      />
+    </label>
   );
 }

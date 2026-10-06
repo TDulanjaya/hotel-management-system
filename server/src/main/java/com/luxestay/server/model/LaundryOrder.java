@@ -13,6 +13,10 @@ public class LaundryOrder {
     @Id private String id;
     private String guestName;
     private String roomNumber;
+    private String reservationId;
+    private String customerType;
+    private String billingType;
+    private String billingStatus;
     private List<OrderLineItem> items;
     private String notes;
     @org.springframework.data.mongodb.core.index.Indexed

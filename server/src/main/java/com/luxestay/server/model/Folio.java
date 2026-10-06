@@ -15,5 +15,7 @@ public class Folio {
     private String reservationId;
     private List<FolioLine> lines = new ArrayList<>();
     private double totalAmount;
+    private double paidAmount;
+    private double balanceAmount;
     private String status;
 }

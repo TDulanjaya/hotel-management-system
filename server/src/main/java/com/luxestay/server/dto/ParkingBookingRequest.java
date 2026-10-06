@@ -16,7 +16,12 @@ public class ParkingBookingRequest {
     private String expectedCheckOutTime;
     private String guestName;
     private String roomNumber;
+    private String reservationId;
+    private String eventId;
+    private String customerType;
+    private String billingType;
     private String pricingItemId;
+    @Deprecated
     private Double amount;
     private String paymentStatus;
     private String notes;

@@ -13,6 +13,12 @@ export async function getById(id: string) {
   return response.json();
 }
 
+export async function getByReservationId(reservationId: string) {
+  const response = await authenticatedFetch(`/api/folios/reservation/${reservationId}`);
+  if (!response.ok) throw new Error("Failed to fetch reservation folio");
+  return response.json();
+}
+
 export async function create(data: any) {
   const response = await authenticatedFetch("/api/folios", {
     method: "POST",

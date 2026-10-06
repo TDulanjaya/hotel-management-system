@@ -4,11 +4,14 @@ import com.luxestay.server.dto.EventOccupancyImpactDto;
 import com.luxestay.server.dto.EventRequest;
 import com.luxestay.server.exception.ResourceNotFoundException;
 import com.luxestay.server.model.EventBooking;
+import com.luxestay.server.model.EventBill;
+import com.luxestay.server.model.FolioLine;
 import com.luxestay.server.model.PricingItem;
 import com.luxestay.server.model.Reservation;
 import com.luxestay.server.model.SelectedPackage;
 import com.luxestay.server.model.Venue;
 import com.luxestay.server.repository.EventBookingRepository;
+import com.luxestay.server.repository.EventBillRepository;
 import com.luxestay.server.repository.PricingItemRepository;
 import com.luxestay.server.repository.ReservationRepository;
 import com.luxestay.server.repository.RoomRepository;
@@ -27,19 +30,22 @@ public class EventService {
     private final VenueRepository venueRepository;
     private final PricingItemRepository pricingItemRepository;
     private final AuditLogService auditLogService;
+    private final EventBillRepository eventBillRepository;
 
     public EventService(EventBookingRepository eventRepository,
                         RoomRepository roomRepository,
                         ReservationRepository reservationRepository,
                         VenueRepository venueRepository,
                         PricingItemRepository pricingItemRepository,
-                        AuditLogService auditLogService) {
+                        AuditLogService auditLogService,
+                        EventBillRepository eventBillRepository) {
         this.eventRepository = eventRepository;
         this.roomRepository = roomRepository;
         this.reservationRepository = reservationRepository;
         this.venueRepository = venueRepository;
         this.pricingItemRepository = pricingItemRepository;
         this.auditLogService = auditLogService;
+        this.eventBillRepository = eventBillRepository;
     }
 
     public EventOccupancyImpactDto getOccupancyImpact() {
@@ -124,9 +130,11 @@ public class EventService {
                         .description(catalogItem.getDescription())
                         .priceType(catalogItem.getPriceType())
                         .price(catalogItem.getPrice() != null ? catalogItem.getPrice() : 0.0)
+                        .quantity(requested.getQuantity() == null ? 1 : Math.max(1, requested.getQuantity()))
                         .build();
-                resolvedPackages.add(resolved);
-                packageTotal += (catalogItem.getPrice() != null ? catalogItem.getPrice() : 0.0);
+                        resolvedPackages.add(resolved);
+                        packageTotal += (catalogItem.getPrice() != null ? catalogItem.getPrice() : 0.0)
+                                * resolved.getQuantity();
             }
         }
 
@@ -146,6 +154,8 @@ public class EventService {
                 .kitchenNote(request.getKitchenNote())
                 .specialNote(request.getSpecialNote())
                 .status(request.getStatus() != null ? request.getStatus() : "Pending")
+                .roomNumber(request.getRoomNumber())
+                .reservationId(request.getReservationId())
                 .selectedVenue(venue)
                 .selectedPackages(resolvedPackages)
                 .venueTotal(venueTotal)
@@ -156,8 +166,31 @@ public class EventService {
                 .build();
 
         EventBooking saved = eventRepository.save(event);
+        EventBill bill = new EventBill();
+        bill.setEventId(saved.getId());
+        bill.setEventName(saved.getEventName());
+        addEventLine(bill, "Venue rental", "Venue", venueTotal, "EVENT_VENUE", saved.getId() + ":venue");
+        addEventLine(bill, "Event packages", "Catering", packageTotal, "EVENT_PACKAGE", saved.getId() + ":packages");
+        addEventLine(bill, "Service charge", "Service Charge", serviceCharge, "EVENT_SERVICE_CHARGE", saved.getId() + ":service");
+        bill.setTotalAmount(grandTotal);
+        bill.setBalanceAmount(grandTotal);
+        eventBillRepository.save(bill);
         auditLogService.log("CREATE", "EVENT", saved.getId(), "Created event booking: " + saved.getEventName());
         return saved;
+    }
+
+    private void addEventLine(EventBill bill, String description, String category, double amount,
+                              String sourceType, String sourceId) {
+        if (amount <= 0) return;
+        FolioLine line = new FolioLine();
+        line.setDescription(description);
+        line.setCategory(category);
+        line.setAmount(amount);
+        line.setDate(java.time.LocalDate.now().toString());
+        line.setSourceType(sourceType);
+        line.setSourceId(sourceId);
+        line.setStatus("POSTED");
+        bill.getLines().add(line);
     }
 
     public EventBooking updateEvent(String id, EventRequest request) {
@@ -208,6 +241,8 @@ public class EventService {
         existingEvent.setKitchenNote(request.getKitchenNote());
         existingEvent.setSpecialNote(request.getSpecialNote());
         existingEvent.setStatus(request.getStatus());
+        existingEvent.setRoomNumber(request.getRoomNumber());
+        existingEvent.setReservationId(request.getReservationId());
         existingEvent.setSelectedVenue(venue);
         existingEvent.setSelectedPackages(resolvedPackages);
         existingEvent.setVenueTotal(venueTotal);

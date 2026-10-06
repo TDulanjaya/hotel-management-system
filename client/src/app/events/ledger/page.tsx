@@ -1,19 +1,21 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import useSWR from "swr";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import EventPaymentModal from "@/components/events/EventPaymentModal";
 import { ArrowLeft, Calendar, DollarSign, Users, Building2, Receipt } from "lucide-react";
 
 export default function EventLedgerPage() {
   const searchParams = useSearchParams();
   const eventId = searchParams.get("id") || "";
   const router = useRouter();
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
 
-  const { data: rawEvents, isLoading } = useSWR<any[]>("/api/events");
+  const { data: rawEvents, isLoading, mutate: mutateEvents } = useSWR<any[]>("/api/events");
   const events = useMemo(() => (Array.isArray(rawEvents) ? rawEvents : []), [rawEvents]);
 
   const currentEvent = useMemo(() => {
@@ -23,7 +25,20 @@ export default function EventLedgerPage() {
     return events[0] || null;
   }, [events, eventId]);
 
+  const { data: eventBill, mutate: mutateBill } = useSWR<any>(
+    currentEvent?.id ? `/api/event-bills/event/${currentEvent.id}` : null
+  );
+
   const billingItems = useMemo(() => {
+    if (Array.isArray(eventBill?.lines) && eventBill.lines.length > 0) {
+      return eventBill.lines.filter((line: any) => line.status !== "VOID").map((line: any) => ({
+        description: line.description || "Event charge",
+        date: line.date || currentEvent?.eventDate || "Event Date",
+        category: line.category || "Event service",
+        amount: `Rs ${Number(line.amount || 0).toLocaleString()}`,
+        style: "bg-green-100 text-green-800",
+      }));
+    }
     if (!currentEvent) return [];
     const items = [];
 
@@ -132,6 +147,7 @@ export default function EventLedgerPage() {
                   <InfoRow label="Event Date" value={currentEvent?.eventDate || "—"} />
                   <InfoRow label="Expected Guests" value={currentEvent?.expectedGuests ? `${currentEvent.expectedGuests} Guests` : "—"} />
                   <InfoRow label="Assigned Venue" value={currentEvent?.venueName || "—"} />
+                  <InfoRow label="Linked Room" value={currentEvent?.roomNumber ? `Room ${currentEvent.roomNumber}` : "None (Outside Organizer)"} />
                 </div>
               </section>
 
@@ -139,8 +155,19 @@ export default function EventLedgerPage() {
                 <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <h2 className="text-lg sm:text-xl font-bold">Billing Breakdown</h2>
                   <span className="text-sm font-bold text-[#735c00]">
-                    Total: Rs {Number(currentEvent?.grandTotal || 0).toLocaleString()}
+                    Total: Rs {Number(eventBill?.totalAmount ?? currentEvent?.grandTotal ?? 0).toLocaleString()}
                   </span>
+                </div>
+                <div className="mb-4 grid gap-3 sm:grid-cols-3">
+                  <InfoRow label="Paid" value={`Rs ${Number(eventBill?.paidAmount || 0).toLocaleString()}`} />
+                  <InfoRow label="Balance" value={`Rs ${Number(eventBill?.balanceAmount ?? currentEvent?.grandTotal ?? 0).toLocaleString()}`} />
+                  <button
+                    type="button"
+                    onClick={() => setPaymentModalOpen(true)}
+                    className="rounded-xl bg-[#735c00] px-4 py-3 text-center text-sm font-bold text-white shadow-md transition hover:bg-[#d4af37] hover:text-[#241a00]"
+                  >
+                    Record Event Payment
+                  </button>
                 </div>
 
                 <div className="overflow-x-auto">
@@ -177,6 +204,20 @@ export default function EventLedgerPage() {
             </section>
           )}
         </main>
+
+        {paymentModalOpen && currentEvent && (
+          <EventPaymentModal
+            isOpen={paymentModalOpen}
+            onClose={() => setPaymentModalOpen(false)}
+            event={currentEvent}
+            eventBill={eventBill}
+            onPaymentSuccess={async () => {
+              setPaymentModalOpen(false);
+              await mutateBill();
+              await mutateEvents();
+            }}
+          />
+        )}
       </div>
     </ProtectedRoute>
   );

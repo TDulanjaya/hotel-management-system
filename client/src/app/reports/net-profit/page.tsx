@@ -8,119 +8,188 @@ export default function NetProfitReportPage() {
   const { data: summary, isLoading } = useSWR<any>("/api/reports/summary");
   const loading = !summary && isLoading;
 
-  const totalIncomeStr = summary?.todayRevenue || "Rs 0";
-  const netProfitStr = summary?.netProfit || "Rs 0";
+  const totalIncomeStr = summary?.totalInflow != null ? `Rs ${Number(summary.totalInflow).toLocaleString()}` : (summary?.todayRevenue || "Rs 0");
+  const totalExpenseStr = summary?.totalOutflow != null ? `Rs ${Number(summary.totalOutflow).toLocaleString()}` : "Rs 0";
+  const netProfitStr = summary?.netProfitAmount != null ? `Rs ${Number(summary.netProfitAmount).toLocaleString()}` : (summary?.netProfit || "Rs 0");
 
-  // Naive parsing for formatting math (assuming Rs 100,000 format)
   const parseAmt = (str: string) => parseInt(str.replace(/[^0-9]/g, '')) || 0;
   
-  const totalInc = parseAmt(totalIncomeStr);
-  const totalProf = parseAmt(netProfitStr);
-  const totalExp = totalInc - totalProf;
-  const margin = totalInc > 0 ? ((totalProf / totalInc) * 100).toFixed(1) + "%" : "0%";
+  const totalInc = summary?.totalInflow ?? parseAmt(totalIncomeStr);
+  const totalProf = summary?.netProfitAmount ?? parseAmt(netProfitStr);
+  const totalExp = summary?.totalOutflow ?? (totalInc - totalProf);
+  const margin = summary?.profitMargin || (totalInc > 0 ? ((totalProf / totalInc) * 100).toFixed(1) + "%" : "0%");
 
   const profitSummary = useMemo(() => [
     {
-      label: "Total Income",
+      label: "Total Income (Inflow)",
       value: totalIncomeStr,
-      note: "Revenue from all hotel modules",
+      note: "Revenue from all modules (payments ledger)",
     },
     {
-      label: "Total Expenses",
-      value: `Rs ${totalExp.toLocaleString()}`,
-      note: "Operational and department expenses",
+      label: "Total Expenses (Outflow)",
+      value: totalExpenseStr,
+      note: "Inventory restock purchases & supplier invoices",
     },
     {
-      label: "Net Profit",
+      label: "Net Operating Profit",
       value: netProfitStr,
-      note: summary?.netProfitNote || "Estimated (assumes 45% margin benchmark)",
+      note: summary?.netProfitNote || "Live Inflow minus Outflow",
     },
     {
       label: "Profit Margin",
       value: margin,
-      note: "Estimated margin benchmark",
+      note: summary?.netProfitIsEstimate ? "Benchmark estimate" : "Audited live profit margin",
     },
-  ], [totalIncomeStr, totalExp, netProfitStr, margin, summary?.netProfitNote]);
+  ], [totalIncomeStr, totalExpenseStr, netProfitStr, margin, summary]);
 
   const incomeRows = useMemo(() => {
-    const evAmt = parseAmt(summary?.eventIncome || "0");
-    const foodAmt = parseAmt(summary?.foodSales || "0");
-    const parkAmt = parseAmt(summary?.parkingIncome || "0");
-    const calcPercent = (amt: number) => totalInc > 0 ? `${Math.round((amt / totalInc) * 100)}%` : "0%";
+    const total = totalInc > 0 ? totalInc : 1;
+    const roomAmt = Number(summary?.roomFolioRevenue || 0);
+    const evAmt = Number(summary?.eventRevenue || parseAmt(summary?.eventIncome || "0"));
+    const foodAmt = Number(summary?.restaurantRevenue || parseAmt(summary?.foodSales || "0"));
+    const parkAmt = Number(summary?.parkingRevenue || parseAmt(summary?.parkingIncome || "0"));
+    const gamesAmt = Number(summary?.gamesRevenue || parseAmt(summary?.gamesIncome || "0"));
+
+    const calcPercent = (amt: number) => total > 0 ? `${Math.round((amt / total) * 100)}%` : "0%";
 
     return [
       {
-        source: "EVENTS",
-        amount: summary?.eventIncome || "Rs 0",
+        source: "Room Folios & Stays",
+        amount: `Rs ${roomAmt.toLocaleString()}`,
+        percent: calcPercent(roomAmt),
+      },
+      {
+        source: "Events & Banquets",
+        amount: `Rs ${evAmt.toLocaleString()}`,
         percent: calcPercent(evAmt),
       },
       {
         source: "Restaurant & Room Service",
-        amount: summary?.foodSales || "Rs 0",
+        amount: `Rs ${foodAmt.toLocaleString()}`,
         percent: calcPercent(foodAmt),
       },
       {
-        source: "Parking & Amenities",
-        amount: summary?.parkingIncome || "Rs 0",
+        source: "Parking Gate Tolls",
+        amount: `Rs ${parkAmt.toLocaleString()}`,
         percent: calcPercent(parkAmt),
+      },
+      {
+        source: "Games Lounge & Recreation",
+        amount: `Rs ${gamesAmt.toLocaleString()}`,
+        percent: calcPercent(gamesAmt),
       },
     ];
   }, [summary, totalInc]);
 
-  const expenseRows = useMemo(() => [
-    {
-      category: "Staff Salaries",
-      amount: `Rs ${Math.round(totalExp * 0.4).toLocaleString()}`,
-      percent: "40%",
-    },
-    {
-      category: "Kitchen Supplies",
-      amount: `Rs ${Math.round(totalExp * 0.22).toLocaleString()}`,
-      percent: "22%",
-    },
-    {
-      category: "Housekeeping",
-      amount: `Rs ${Math.round(totalExp * 0.14).toLocaleString()}`,
-      percent: "14%",
-    },
-    {
-      category: "Maintenance",
-      amount: `Rs ${Math.round(totalExp * 0.12).toLocaleString()}`,
-      percent: "12%",
-    },
-    {
-      category: "Utilities",
-      amount: `Rs ${Math.round(totalExp * 0.12).toLocaleString()}`,
-      percent: "12%",
-    },
-  ], [totalExp]);
+  const { data: rawPurchases } = useSWR<any[]>("/api/inventory/purchases");
+  const purchases = useMemo(() => (Array.isArray(rawPurchases) ? rawPurchases : []), [rawPurchases]);
 
-  const profitRows = useMemo(() => [
-    {
-      id: "NP-1002",
-      department: "Restaurant",
-      income: summary?.foodSales || "Rs 0",
-      expenses: `Rs ${Math.round(parseAmt(summary?.foodSales || "Rs 0") * 0.7).toLocaleString()}`,
-      profit: `Rs ${Math.round(parseAmt(summary?.foodSales || "Rs 0") * 0.3).toLocaleString()}`,
-      margin: parseAmt(summary?.foodSales || "0") > 0 ? "30.0%" : "0.0%",
-    },
-    {
-      id: "NP-1003",
-      department: "EVENTS",
-      income: summary?.eventIncome || "Rs 0",
-      expenses: `Rs ${Math.round(parseAmt(summary?.eventIncome || "Rs 0") * 0.6).toLocaleString()}`,
-      profit: `Rs ${Math.round(parseAmt(summary?.eventIncome || "Rs 0") * 0.4).toLocaleString()}`,
-      margin: parseAmt(summary?.eventIncome || "0") > 0 ? "40.0%" : "0.0%",
-    },
-    {
-      id: "NP-1004",
-      department: "PARKING",
-      income: summary?.parkingIncome || "Rs 0",
-      expenses: `Rs ${Math.round(parseAmt(summary?.parkingIncome || "Rs 0") * 0.2).toLocaleString()}`,
-      profit: `Rs ${Math.round(parseAmt(summary?.parkingIncome || "Rs 0") * 0.8).toLocaleString()}`,
-      margin: parseAmt(summary?.parkingIncome || "0") > 0 ? "80.0%" : "0.0%",
-    },
-  ], [summary]);
+  const expenseRows = useMemo(() => {
+    if (purchases.length > 0) {
+      const catTotals: Record<string, number> = {};
+      let totalPurchaseExp = 0;
+      purchases.forEach((p: any) => {
+        const cat = p.category || "General Supplies";
+        const exp = Number(p.totalExpense || 0);
+        catTotals[cat] = (catTotals[cat] || 0) + exp;
+        totalPurchaseExp += exp;
+      });
+
+      return Object.entries(catTotals).map(([category, amount]) => ({
+        category,
+        amount: `Rs ${amount.toLocaleString()}`,
+        percent: totalPurchaseExp > 0 ? `${Math.round((amount / totalPurchaseExp) * 100)}%` : "0%",
+      }));
+    }
+
+    if (summary?.departmentExpenses && Object.keys(summary.departmentExpenses).length > 0) {
+      const totalDeptExp = Object.values(summary.departmentExpenses).reduce((a: any, b: any) => a + Number(b), 0) as number;
+      return Object.entries(summary.departmentExpenses).map(([category, amt]) => ({
+        category,
+        amount: `Rs ${Number(amt).toLocaleString()}`,
+        percent: totalDeptExp > 0 ? `${Math.round((Number(amt) / totalDeptExp) * 100)}%` : "0%",
+      }));
+    }
+
+    return [
+      {
+        category: "No Inventory Outflow Recorded",
+        amount: "Rs 0",
+        percent: "0%",
+      },
+    ];
+  }, [purchases, summary]);
+
+  const profitRows = useMemo(() => {
+    const calcCatExp = (keywords: string[]) => {
+      return purchases
+        .filter((p: any) => keywords.some(k => (p.category || "").toLowerCase().includes(k.toLowerCase())))
+        .reduce((sum: number, p: any) => sum + Number(p.totalExpense || 0), 0);
+    };
+
+    const roomInc = Number(summary?.roomFolioRevenue || 0);
+    const roomExp = calcCatExp(["Housekeeping", "Laundry", "Amenities", "Linen"]);
+    const roomProf = roomInc - roomExp;
+
+    const restaurantInc = Number(summary?.restaurantRevenue || parseAmt(summary?.foodSales || "0"));
+    const restaurantExp = calcCatExp(["Kitchen", "Food", "Beverage", "Bar"]);
+    const restaurantProf = restaurantInc - restaurantExp;
+
+    const eventInc = Number(summary?.eventRevenue || parseAmt(summary?.eventIncome || "0"));
+    const eventExp = calcCatExp(["Event", "Banquet"]);
+    const eventProf = eventInc - eventExp;
+
+    const parkingInc = Number(summary?.parkingRevenue || parseAmt(summary?.parkingIncome || "0"));
+    const parkingExp = calcCatExp(["Parking", "Gate"]);
+    const parkingProf = parkingInc - parkingExp;
+
+    const gamesInc = Number(summary?.gamesRevenue || parseAmt(summary?.gamesIncome || "0"));
+    const gamesExp = calcCatExp(["Game", "Recreation", "Lounge"]);
+    const gamesProf = gamesInc - gamesExp;
+
+    return [
+      {
+        id: "NP-1001",
+        department: "Room Stays & Folios",
+        income: `Rs ${roomInc.toLocaleString()}`,
+        expenses: `Rs ${roomExp.toLocaleString()}`,
+        profit: `Rs ${roomProf.toLocaleString()}`,
+        margin: roomInc > 0 ? `${((roomProf / roomInc) * 100).toFixed(1)}%` : "0.0%",
+      },
+      {
+        id: "NP-1002",
+        department: "Restaurant & Dining",
+        income: `Rs ${restaurantInc.toLocaleString()}`,
+        expenses: `Rs ${restaurantExp.toLocaleString()}`,
+        profit: `Rs ${restaurantProf.toLocaleString()}`,
+        margin: restaurantInc > 0 ? `${((restaurantProf / restaurantInc) * 100).toFixed(1)}%` : "0.0%",
+      },
+      {
+        id: "NP-1003",
+        department: "Events & Banquets",
+        income: `Rs ${eventInc.toLocaleString()}`,
+        expenses: `Rs ${eventExp.toLocaleString()}`,
+        profit: `Rs ${eventProf.toLocaleString()}`,
+        margin: eventInc > 0 ? `${((eventProf / eventInc) * 100).toFixed(1)}%` : "0.0%",
+      },
+      {
+        id: "NP-1004",
+        department: "Parking Gate",
+        income: `Rs ${parkingInc.toLocaleString()}`,
+        expenses: `Rs ${parkingExp.toLocaleString()}`,
+        profit: `Rs ${parkingProf.toLocaleString()}`,
+        margin: parkingInc > 0 ? `${((parkingProf / parkingInc) * 100).toFixed(1)}%` : "0.0%",
+      },
+      {
+        id: "NP-1005",
+        department: "Games Lounge",
+        income: `Rs ${gamesInc.toLocaleString()}`,
+        expenses: `Rs ${gamesExp.toLocaleString()}`,
+        profit: `Rs ${gamesProf.toLocaleString()}`,
+        margin: gamesInc > 0 ? `${((gamesProf / gamesInc) * 100).toFixed(1)}%` : "0.0%",
+      },
+    ];
+  }, [summary, purchases]);
 
   const monthlyProfit = useMemo(() => {
     const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul"];
@@ -146,10 +215,14 @@ export default function NetProfitReportPage() {
           <div className="mb-6 rounded-2xl border border-[#d4af37]/40 bg-[#fbf9f5] p-4 text-sm text-[#735c00] flex items-center justify-between">
             <div>
               <span className="font-bold">Reporting Note: </span>
-              {summary?.netProfitNote || "Net Profit and operational expenses are estimated using a 45% margin benchmark until direct expense tracking is configured."}
+              {summary?.netProfitNote || "Live Real Net Operating Profit (Payments Inflow minus Stock Outflow)."}
             </div>
-            <span className="text-xs uppercase font-bold bg-[#735c00]/10 px-3 py-1 rounded-full text-[#735c00]">
-              Benchmark Estimate
+            <span className={`text-xs uppercase font-bold px-3 py-1 rounded-full ${
+              summary?.netProfitIsEstimate
+                ? "bg-[#735c00]/10 text-[#735c00]"
+                : "bg-emerald-100 text-emerald-800"
+            }`}>
+              {summary?.netProfitIsEstimate ? "Benchmark Estimate" : "Audited Live Profit"}
             </span>
           </div>
 

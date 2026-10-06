@@ -144,8 +144,8 @@ export default function GuestsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.name || !formData.email) {
-      setError("Name and email are required.");
+    if (!formData.name || !formData.email || !formData.phone || !formData.idType || !formData.idNumber) {
+      setError("Full name, email, phone number, ID type, and ID number are required for guest registration.");
       return;
     }
 
@@ -399,9 +399,10 @@ export default function GuestsPage() {
               />
 
               <InputField
-                label="Phone"
+                label="Phone Number *"
                 value={formData.phone}
                 onChange={(value) => setFormData({ ...formData, phone: value })}
+                required
               />
 
               <InputField
@@ -413,9 +414,10 @@ export default function GuestsPage() {
               />
 
               <div>
-                <label className="block text-sm font-bold">ID Type</label>
+                <label className="block text-sm font-bold">ID Type *</label>
                 <select
-                  className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+                  required
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 font-semibold"
                   value={formData.idType}
                   onChange={(e) =>
                     setFormData({ ...formData, idType: e.target.value })
@@ -428,11 +430,12 @@ export default function GuestsPage() {
               </div>
 
               <InputField
-                label="ID Number"
+                label="ID / Passport Number *"
                 value={formData.idNumber}
                 onChange={(value) =>
                   setFormData({ ...formData, idNumber: value })
                 }
+                required
               />
 
               <InputField

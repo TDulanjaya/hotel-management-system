@@ -39,6 +39,11 @@ public class ParkingBookingController {
         return ResponseEntity.ok(parkingBookingService.updateBooking(id, request));
     }
 
+    @PostMapping("/{id}/checkout-folio")
+    public ResponseEntity<ParkingBooking> checkoutFolio(@PathVariable String id) {
+        return ResponseEntity.ok(parkingBookingService.checkoutFolio(id));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteBooking(@PathVariable String id) {
         parkingBookingService.deleteBooking(id);

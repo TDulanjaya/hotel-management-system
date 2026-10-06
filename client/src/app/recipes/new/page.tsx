@@ -1,27 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { createRecipe } from "@/lib/api/recipeApi";
+import { getInventoryItems } from "@/lib/api/inventoryApi";
 import { ChefHat, ArrowLeft, Clock, Utensils, Save, Sparkles, Flame } from "lucide-react";
 
 export default function NewRecipePage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [inventoryItems, setInventoryItems] = useState<any[]>([]);
+  const [ingredients, setIngredients] = useState([
+    { inventoryItemId: "", quantityPerServing: 1, unit: "units" },
+  ]);
 
   const [formData, setFormData] = useState({
     name: "",
     category: "Main",
     prepTime: 30,
     servings: 4,
-    ingredients: "",
     instructions: "",
     notes: "",
   });
+
+  useEffect(() => {
+    getInventoryItems()
+      .then((items) => setInventoryItems(Array.isArray(items) ? items : items?.content || []))
+      .catch(() => setError("Unable to load inventory items. Add inventory before creating a recipe."));
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,28 +44,17 @@ export default function NewRecipePage() {
       setSaving(true);
       setError("");
 
-      const parsedIngredients = (formData.ingredients || "")
-        .split("\n")
-        .map((line: string) => line.trim())
-        .filter((line: string) => line.length > 0)
-        .map((line: string) => {
-          const dashIdx = line.indexOf("-");
-          if (dashIdx > 0) {
-            const itemName = line.slice(0, dashIdx).trim();
-            const rest = line.slice(dashIdx + 1).trim();
-            const numMatch = rest.match(/^([0-9.]+)\s*(.*)$/);
-            return {
-              itemName,
-              quantityPerServing: numMatch ? parseFloat(numMatch[1]) || 1 : 1,
-              unit: numMatch && numMatch[2] ? numMatch[2].trim() : rest || "units",
-            };
-          }
-          return {
-            itemName: line,
-            quantityPerServing: 1,
-            unit: "portion",
-          };
-        });
+      const parsedIngredients = ingredients.map((ingredient) => {
+        const item = inventoryItems.find((entry) => entry.id === ingredient.inventoryItemId);
+        return {
+          ...ingredient,
+          itemName: item?.name || "",
+        };
+      });
+      if (parsedIngredients.some((ingredient) => !ingredient.inventoryItemId || ingredient.quantityPerServing <= 0)) {
+        setError("Select an inventory item and enter a positive quantity for every ingredient.");
+        return;
+      }
 
       await createRecipe({
         name: formData.name,
@@ -244,23 +243,20 @@ export default function NewRecipePage() {
                 </div>
 
                 <div className="flex-1 flex flex-col">
-                  <textarea
-                    required
-                    rows={11}
-                    placeholder={`Chicken Breast - 500g
-Olive Oil - 2 tbsp
-Heavy Cream - 250ml
-Sun-Dried Tomatoes - 1/2 cup
-Spinach - 2 cups
-Garlic - 4 cloves minced
-Parmesan Cheese - 1/2 cup grated
-Salt & Black Pepper - to taste`}
-                    value={formData.ingredients}
-                    onChange={(e) =>
-                      setFormData({ ...formData, ingredients: e.target.value })
-                    }
-                    className="flex-1 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-3 text-base font-mono text-[#1b1c1a] outline-none focus:ring-2 focus:ring-[#735c00]/30 transition min-h-[220px]"
-                  />
+                  <div className="space-y-3">
+                    {ingredients.map((ingredient, index) => (
+                      <div key={index} className="grid gap-2 sm:grid-cols-[1fr_110px_110px_auto]">
+                        <select required value={ingredient.inventoryItemId} onChange={(e) => setIngredients((current) => current.map((item, i) => i === index ? { ...item, inventoryItemId: e.target.value } : item))} className="rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-3">
+                          <option value="">Select inventory item</option>
+                          {inventoryItems.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}
+                        </select>
+                        <input required min="0.01" type="number" value={ingredient.quantityPerServing} onChange={(e) => setIngredients((current) => current.map((item, i) => i === index ? { ...item, quantityPerServing: Number(e.target.value) } : item))} className="rounded-xl border border-[#d0c5af] p-3" placeholder="Qty" />
+                        <input required value={ingredient.unit} onChange={(e) => setIngredients((current) => current.map((item, i) => i === index ? { ...item, unit: e.target.value } : item))} className="rounded-xl border border-[#d0c5af] p-3" placeholder="Unit" />
+                        <button type="button" disabled={ingredients.length === 1} onClick={() => setIngredients((current) => current.filter((_, i) => i !== index))} className="rounded-xl border border-red-200 px-3 text-red-700 disabled:opacity-40">Remove</button>
+                      </div>
+                    ))}
+                    <button type="button" onClick={() => setIngredients((current) => [...current, { inventoryItemId: "", quantityPerServing: 1, unit: "units" }])} className="rounded-xl border border-[#d0c5af] px-4 py-2 text-sm font-bold">Add ingredient</button>
+                  </div>
                   <p className="mt-2 text-[11px] text-[#7f7663]">
                     Tip: Specify exact quantities (e.g. 500g, 2 tbsp) for accurate kitchen prep.
                   </p>

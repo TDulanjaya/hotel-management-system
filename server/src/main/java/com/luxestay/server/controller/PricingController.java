@@ -32,6 +32,11 @@ public class PricingController {
         return ResponseEntity.ok(pricingService.getPricingItemsByCategory(category));
     }
 
+    @GetMapping("/categories")
+    public ResponseEntity<List<String>> getAllCategories() {
+        return ResponseEntity.ok(pricingService.getAllCategories());
+    }
+
     @PostMapping
     public ResponseEntity<PricingItem> createPricingItem(@RequestBody PricingItemRequest request) {
         return new ResponseEntity<>(pricingService.createPricingItem(request), HttpStatus.CREATED);

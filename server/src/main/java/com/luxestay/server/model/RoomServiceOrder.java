@@ -13,6 +13,10 @@ public class RoomServiceOrder {
     @Id private String id;
     private String roomNumber;
     private String guestName;
+    private String reservationId;
+    private String kitchenOrderId;
+    private String billingType = "ROOM_FOLIO";
+    private String billingStatus;
     private List<OrderLineItem> items;
     private String notes;
     private String status;

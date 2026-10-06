@@ -53,7 +53,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/auth/forgot-password").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/auth/reset-password").permitAll()
 
-                        .requestMatchers(HttpMethod.GET, "/api/venues/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/venues/**").hasAnyRole("OWNER", "MANAGER", "EVENTS")
 
                         // Authenticated staff pricing access
                         .requestMatchers(HttpMethod.GET, "/api/pricing/**").hasAnyRole("OWNER", "MANAGER", "EVENTS", "WAITER", "ROOM_SERVICE", "LAUNDRY", "PARKING", "GAME_STAFF", "RECEPTIONIST")

@@ -69,16 +69,14 @@ public class KitchenOrderService {
     private void deductIngredientsForOrder(KitchenOrder order) {
         if (order.getItems() == null) return;
         for (OrderLineItem line : order.getItems()) {
-            Recipe recipe = null;
-            if (line.getRecipeId() != null && !line.getRecipeId().isBlank()) {
-                recipe = recipeRepository.findById(line.getRecipeId()).orElse(null);
+            if (line.getRecipeId() == null || line.getRecipeId().isBlank()) {
+                throw new IllegalStateException("Kitchen item " + line.getName() + " has no recipe reference.");
             }
-            if (recipe == null && line.getName() != null) {
-                recipe = recipeRepository.findAll().stream()
-                        .filter(r -> r.getName() != null && r.getName().equalsIgnoreCase(line.getName()))
-                        .findFirst().orElse(null);
+            Recipe recipe = recipeRepository.findById(line.getRecipeId())
+                    .orElseThrow(() -> new IllegalStateException("Recipe not found for " + line.getName()));
+            if (recipe.getIngredients() == null || recipe.getIngredients().isEmpty()) {
+                throw new IllegalStateException("Recipe " + recipe.getName() + " has no ingredients.");
             }
-            if (recipe == null || recipe.getIngredients() == null) continue;
 
             for (RecipeIngredient ingredient : recipe.getIngredients()) {
                 if (ingredient.getInventoryItemId() == null || ingredient.getInventoryItemId().isBlank()) continue;

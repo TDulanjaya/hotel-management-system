@@ -27,8 +27,14 @@ public class ParkingBooking {
     private String expectedCheckOutTime;
     private String guestName;
     private String roomNumber;
+    private String reservationId;
+    private String eventId;
+    private String customerType;
+    private String billingType;
     private String pricingItemId;
     private Double amount;
+    private Long billableDurationMinutes;
+    private String calculationNote;
     private String paymentStatus;
     private String notes;
     private String status;

@@ -13,7 +13,8 @@ import {
   updateRestaurantOrder,
   deleteRestaurantOrder,
 } from "@/lib/api/restaurantApi";
-import { ClipboardList, Pencil, Plus, Trash2, Utensils } from "lucide-react";
+import POSPaymentModal from "@/components/payments/POSPaymentModal";
+import { ClipboardList, Pencil, Plus, Trash2, Utensils, CreditCard, ShieldCheck } from "lucide-react";
 
 export default function RestaurantOrdersPage() {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -23,15 +24,57 @@ export default function RestaurantOrdersPage() {
 
   const [currentRole, setCurrentRole] = useState("");
   const { data: rawItems, mutate, isLoading: isSwrLoading, error: swrError } = useSWR<any[]>("/api/restaurant/orders");
+  const { data: rawTables } = useSWR<any[]>("/api/restaurant/tables");
+  const { data: rawReservations } = useSWR<any>("/api/reservations?size=1000");
   const items = useMemo(() => (Array.isArray(rawItems) ? rawItems : []), [rawItems]);
+  const tables = useMemo(() => (Array.isArray(rawTables) ? rawTables : []), [rawTables]);
+  const activeRooms = useMemo(() => {
+    const reservations = Array.isArray(rawReservations) ? rawReservations : rawReservations?.content || [];
+    return reservations
+      .filter((reservation: any) => reservation.status === "CHECKED_IN")
+      .map((reservation: any) => ({ roomNumber: reservation.roomNumber, guestName: reservation.guestName }));
+  }, [rawReservations]);
   const loading = !rawItems && isSwrLoading;
   const [error, setError] = useState("");
 
   const [panelOpen, setPanelOpen] = useState(false);
   const [editItem, setEditItem] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [settleOrderItem, setSettleOrderItem] = useState<any>(null);
+  const [settleChoiceOrder, setSettleChoiceOrder] = useState<any>(null);
+  const [selectedRoomNumber, setSelectedRoomNumber] = useState<string>("");
+
+  const handleInitiateSettle = (order: any) => {
+    setSettleChoiceOrder(order);
+    setSelectedRoomNumber(order.roomNumber || (activeRooms[0]?.roomNumber ?? ""));
+  };
+
+  const handleConfirmRoomOrder = async (order: any, chosenRoom?: string) => {
+    try {
+      const roomNum = chosenRoom || order.roomNumber || selectedRoomNumber;
+      if (!roomNum) {
+        alert("Please select an active resident room.");
+        return;
+      }
+      const matched = activeRooms.find((r: any) => r.roomNumber === roomNum);
+      await updateRestaurantOrder(order.id, {
+        ...order,
+        customerType: "HOTEL_GUEST",
+        billingType: "ROOM_FOLIO",
+        roomNumber: roomNum,
+        guestName: matched?.guestName || order.guestName,
+        status: "COMPLETED",
+      });
+      setSettleChoiceOrder(null);
+      await mutate();
+      alert(`Order completed and posted to Room ${roomNum} Folio. Table freed.`);
+    } catch (err: any) {
+      alert(err.message || "Failed to complete order.");
+    }
+  };
 
   const [formData, setFormData] = useState({
+    orderSource: "TABLE",
     tableNumber: "",
     guestName: "",
     roomNumber: "",
@@ -39,7 +82,8 @@ export default function RestaurantOrdersPage() {
     notes: "",
     status: "PENDING",
     totalAmount: 0,
-    paymentStatus: "PENDING",
+    customerType: "WALK_IN",
+    billingType: "DIRECT_PAYMENT",
   });
 
   const canManage =
@@ -68,6 +112,7 @@ export default function RestaurantOrdersPage() {
 
   const resetForm = () => {
     setFormData({
+      orderSource: "TABLE",
       tableNumber: "",
       guestName: "",
       roomNumber: "",
@@ -75,7 +120,8 @@ export default function RestaurantOrdersPage() {
       notes: "",
       status: "PENDING",
       totalAmount: 0,
-      paymentStatus: "PENDING",
+      customerType: "WALK_IN",
+      billingType: "DIRECT_PAYMENT",
     });
   };
 
@@ -91,6 +137,7 @@ export default function RestaurantOrdersPage() {
     setError("");
 
     setFormData({
+      orderSource: item.roomNumber ? "ROOM" : "TABLE",
       tableNumber: item.tableNumber || "",
       guestName: item.guestName || "",
       roomNumber: item.roomNumber || "",
@@ -98,7 +145,8 @@ export default function RestaurantOrdersPage() {
       notes: item.notes || "",
       status: item.status || "PENDING",
       totalAmount: Number(item.totalAmount || 0),
-      paymentStatus: item.paymentStatus || "PENDING",
+      customerType: item.customerType || (item.roomNumber ? "HOTEL_GUEST" : "WALK_IN"),
+      billingType: item.billingType || (item.roomNumber ? "ROOM_FOLIO" : "DIRECT_PAYMENT"),
     });
 
     setPanelOpen(true);
@@ -136,8 +184,12 @@ export default function RestaurantOrdersPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.tableNumber && !formData.roomNumber) {
-      setError("Table number or room number is required.");
+    if (formData.orderSource === "TABLE" && !formData.tableNumber) {
+      setError("Select a registered restaurant table.");
+      return;
+    }
+    if (formData.orderSource === "ROOM" && !formData.roomNumber) {
+      setError("Select an active guest room.");
       return;
     }
 
@@ -154,11 +206,11 @@ export default function RestaurantOrdersPage() {
         tableNumber: formData.tableNumber,
         guestName: formData.guestName,
         roomNumber: formData.roomNumber,
+        customerType: formData.customerType,
+        billingType: formData.billingType,
         items: formData.items,
         notes: formData.notes,
         status: formData.status,
-        totalAmount: Number(formData.totalAmount || 0),
-        paymentStatus: formData.paymentStatus,
       };
 
       if (editItem) {
@@ -339,6 +391,17 @@ export default function RestaurantOrdersPage() {
 
                         <td className="p-4">
                           <div className="flex justify-end gap-2">
+                            {item.paymentStatus !== "PAID" && item.status !== "COMPLETED" && (
+                              <button
+                                type="button"
+                                onClick={() => handleInitiateSettle(item)}
+                                className="flex items-center gap-1 rounded-lg bg-emerald-700 px-3 py-2 text-sm font-bold text-white transition hover:bg-emerald-800 shadow-sm"
+                              >
+                                <CreditCard size={15} />
+                                Settle Bill
+                              </button>
+                            )}
+
                             {canManage && (
                               <button
                                 onClick={() => handleOpenEdit(item)}
@@ -388,10 +451,119 @@ export default function RestaurantOrdersPage() {
               formData={formData}
               setFormData={setFormData}
               onSubmit={handleSubmit}
-              categories={["Menu", "Bites", "Drinks", "Bar"]}
+              categories={["RESTAURANT_FOOD", "DESSERT", "BEVERAGE"]}
               loading={submitting}
+              tableOptions={tables}
+              roomOptions={activeRooms}
+              showStatus={false}
             />
           </SlidePanel>
+
+          {/* Universal POS Payment Modal for Table Order Settlement */}
+          {settleOrderItem && (
+            <POSPaymentModal
+              isOpen={Boolean(settleOrderItem)}
+              onClose={() => setSettleOrderItem(null)}
+              title="Restaurant Dining Bill Settlement"
+              sourceType="RESTAURANT_ORDER"
+              sourceId={settleOrderItem.id}
+              customerName={settleOrderItem.guestName || (settleOrderItem.tableNumber ? `Table ${settleOrderItem.tableNumber}` : "Dine-In Guest")}
+              customerType={settleOrderItem.customerType || "WALK_IN"}
+              roomNumber={settleOrderItem.roomNumber}
+              serviceDescription={`Dine-In Dining: ${settleOrderItem.tableNumber ? `Table ${settleOrderItem.tableNumber}` : "Restaurant Order"} (${(settleOrderItem.items || []).length} items)`}
+              totalAmount={Number(settleOrderItem.totalAmount || 0)}
+              onPaymentSuccess={async () => {
+                setSettleOrderItem(null);
+                await mutate();
+              }}
+            />
+          )}
+
+          {/* Table Settle & Billing Modal */}
+          {settleChoiceOrder && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+              <div className="w-full max-w-md rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-2xl space-y-4">
+                <div className="flex items-center gap-2 text-[#735c00]">
+                  <ShieldCheck size={24} />
+                  <h3 className="text-lg font-extrabold text-[#1b1c1a]">Settle & Free Table</h3>
+                </div>
+
+                <div className="rounded-xl border border-[#e2dacf] bg-[#faf8f4] p-3 text-xs space-y-1">
+                  <div className="flex justify-between font-bold text-sm">
+                    <span>
+                      {settleChoiceOrder.tableNumber ? `Table ${settleChoiceOrder.tableNumber}` : `Room ${settleChoiceOrder.roomNumber}`}
+                    </span>
+                    <span className="text-[#735c00]">
+                      Rs {Number(settleChoiceOrder.totalAmount || 0).toLocaleString()}
+                    </span>
+                  </div>
+                  <p className="text-gray-500">
+                    Guest: <strong>{settleChoiceOrder.guestName || "Restaurant Diner"}</strong>
+                  </p>
+                </div>
+
+                {/* Option 1: Charge to Room Folio */}
+                <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3.5 space-y-2">
+                  <span className="text-xs font-bold text-amber-900 block">
+                    Option A: Charge to Hotel Resident Room
+                  </span>
+                  <div>
+                    <label className="text-[11px] font-bold text-[#4d4635] block mb-1">
+                      Active In-House Room
+                    </label>
+                    <select
+                      value={selectedRoomNumber}
+                      onChange={(e) => setSelectedRoomNumber(e.target.value)}
+                      className="w-full rounded-lg border border-[#d0c5af] bg-white p-2 text-xs font-bold text-[#1b1c1a] focus:ring-2 focus:ring-[#735c00]"
+                    >
+                      <option value="">-- Select Guest Room --</option>
+                      {activeRooms.map((r: any) => (
+                        <option key={r.roomNumber} value={r.roomNumber}>
+                          Room {r.roomNumber} — {r.guestName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleConfirmRoomOrder(settleChoiceOrder, selectedRoomNumber)}
+                    className="w-full rounded-lg bg-amber-800 py-2.5 text-xs font-bold text-white hover:bg-amber-900 transition shadow-sm"
+                  >
+                    Post to Room Folio & Settle Table
+                  </button>
+                </div>
+
+                {/* Option 2: Pay Direct at POS */}
+                <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 space-y-2">
+                  <span className="text-xs font-bold text-emerald-900 block">
+                    Option B: Pay Direct Now (Walk-in / Cash / Card)
+                  </span>
+                  <p className="text-[11px] text-gray-600">
+                    Settle immediately at the cashier counter via Cash, Card Terminal, or LankaQR.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const temp = settleChoiceOrder;
+                      setSettleChoiceOrder(null);
+                      setSettleOrderItem(temp);
+                    }}
+                    className="w-full rounded-lg bg-emerald-700 py-2.5 text-xs font-bold text-white hover:bg-emerald-800 transition shadow-sm"
+                  >
+                    Collect Payment at POS Counter
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setSettleChoiceOrder(null)}
+                  className="w-full text-center text-xs text-gray-500 hover:underline pt-1"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </ProtectedRoute>

@@ -10,9 +10,24 @@ type OrderFormProps = {
   categories: string[];
   loading?: boolean;
   isKitchen?: boolean;
+  tableOptions?: { tableNumber: string; status?: string }[];
+  roomOptions?: { roomNumber: string; guestName?: string }[];
+  showStatus?: boolean;
+  showPaymentStatus?: boolean;
 };
 
-export default function OrderForm({ formData, setFormData, onSubmit, categories, loading, isKitchen }: OrderFormProps) {
+export default function OrderForm({
+  formData,
+  setFormData,
+  onSubmit,
+  categories,
+  loading,
+  isKitchen,
+  tableOptions,
+  roomOptions,
+  showStatus = true,
+  showPaymentStatus = false,
+}: OrderFormProps) {
   const [pricingItems, setPricingItems] = useState<any[]>([]);
   const [fetching, setFetching] = useState(true);
 
@@ -24,7 +39,25 @@ export default function OrderForm({ formData, setFormData, onSubmit, categories,
           const items = await getPricingItemsByCategory(cat);
           allItems = [...allItems, ...items];
         }
-        setPricingItems(allItems);
+        const seen = new Set<string>();
+        const unique = allItems.filter((item) => {
+          if (!item || !item.id || seen.has(item.id)) return false;
+          seen.add(item.id);
+          if (item.status === "Inactive") return false;
+
+          const isKitchen =
+            item.kitchenRequired === true ||
+            ["RESTAURANT_FOOD", "ROOM_SERVICE_FOOD", "DESSERT"].includes(
+              String(item.category).toUpperCase()
+            );
+
+          if (isKitchen) {
+            return Boolean(item.recipeId);
+          }
+
+          return true;
+        });
+        setPricingItems(unique);
       } catch (err) {
         console.error("Failed to load pricing items", err);
       } finally {
@@ -49,6 +82,7 @@ export default function OrderForm({ formData, setFormData, onSubmit, categories,
     } else {
       newItems.push({
         pricingItemId: pricingItem.id,
+        recipeId: pricingItem.recipeId,
         name: pricingItem.name,
         quantity: 1,
         price: pricingItem.price
@@ -77,16 +111,59 @@ export default function OrderForm({ formData, setFormData, onSubmit, categories,
     <form onSubmit={onSubmit} className="space-y-6">
       {/* Basic fields */}
       <div className="grid grid-cols-2 gap-4">
-        {formData.tableNumber !== undefined && (
+        {formData.orderSource !== undefined && (
           <div>
-            <label className="block text-sm font-bold text-[#4d4635]">Table No</label>
-            <input className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" value={formData.tableNumber} onChange={e => setFormData({...formData, tableNumber: e.target.value})} />
+            <label className="block text-sm font-bold text-[#4d4635]">Order source</label>
+            <select
+              className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3"
+              value={formData.orderSource}
+              onChange={e => setFormData({
+                ...formData,
+                orderSource: e.target.value,
+                tableNumber: e.target.value === "TABLE" ? formData.tableNumber : "",
+                roomNumber: e.target.value === "ROOM" ? formData.roomNumber : "",
+              })}
+            >
+              <option value="TABLE">Restaurant table</option>
+              <option value="ROOM">Guest room</option>
+            </select>
           </div>
         )}
-        {formData.roomNumber !== undefined && (
+        {formData.tableNumber !== undefined && formData.orderSource !== "ROOM" && (
+          <div>
+            <label className="block text-sm font-bold text-[#4d4635]">Table No</label>
+            {tableOptions ? (
+              <select className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" value={formData.tableNumber} onChange={e => setFormData({...formData, tableNumber: e.target.value})}>
+                <option value="">Select a registered table</option>
+                {tableOptions.filter(table => table.status === "AVAILABLE" || table.status === "RESERVED").map(table => (
+                  <option key={table.tableNumber} value={table.tableNumber}>
+                    {table.tableNumber} ({table.status?.toLowerCase()})
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" value={formData.tableNumber} onChange={e => setFormData({...formData, tableNumber: e.target.value})} />
+            )}
+          </div>
+        )}
+        {formData.roomNumber !== undefined && formData.orderSource !== "TABLE" && (
           <div>
             <label className="block text-sm font-bold text-[#4d4635]">Room No</label>
-            <input className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" value={formData.roomNumber} onChange={e => setFormData({...formData, roomNumber: e.target.value})} />
+            {roomOptions ? (
+              <select className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" value={formData.roomNumber} onChange={e => {
+                const room = roomOptions.find(option => option.roomNumber === e.target.value);
+                setFormData({...formData, roomNumber: e.target.value, guestName: room?.guestName || formData.guestName});
+              }}>
+                <option value="">Select an active guest room</option>
+                {roomOptions.map(room => (
+                  <option key={room.roomNumber} value={room.roomNumber}>
+                    Room {room.roomNumber}{room.guestName ? ` — ${room.guestName}` : ""}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" value={formData.roomNumber} onChange={e => setFormData({...formData, roomNumber: e.target.value})} />
+            )}
           </div>
         )}
       </div>
@@ -168,7 +245,26 @@ export default function OrderForm({ formData, setFormData, onSubmit, categories,
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      {formData.customerType !== undefined && (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-bold text-[#4d4635]">Customer type</label>
+            <select className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" value={formData.customerType} onChange={e => setFormData({...formData, customerType: e.target.value, billingType: e.target.value === "HOTEL_GUEST" ? "ROOM_FOLIO" : "DIRECT_PAYMENT"})}>
+              <option value="WALK_IN">Walk-in guest</option>
+              <option value="HOTEL_GUEST">Hotel guest</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-[#4d4635]">Billing destination</label>
+            <select className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" value={formData.billingType} onChange={e => setFormData({...formData, billingType: e.target.value})}>
+              <option value="DIRECT_PAYMENT">Direct payment</option>
+              <option value="ROOM_FOLIO" disabled={formData.customerType !== "HOTEL_GUEST"}>Room folio</option>
+            </select>
+          </div>
+        </div>
+      )}
+
+      {showStatus && <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-bold text-[#4d4635]">Status</label>
           <select className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}>
@@ -179,7 +275,7 @@ export default function OrderForm({ formData, setFormData, onSubmit, categories,
             <option>COMPLETED</option>
           </select>
         </div>
-        {formData.paymentStatus !== undefined && (
+        {showPaymentStatus && formData.paymentStatus !== undefined && (
           <div>
             <label className="block text-sm font-bold text-[#4d4635]">Payment</label>
             <select className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" value={formData.paymentStatus} onChange={e => setFormData({...formData, paymentStatus: e.target.value})}>
@@ -199,7 +295,7 @@ export default function OrderForm({ formData, setFormData, onSubmit, categories,
             </select>
           </div>
         )}
-      </div>
+      </div>}
 
       <div>
         <label className="block text-sm font-bold text-[#4d4635]">Notes</label>

@@ -28,6 +28,8 @@ public class EventBooking {
     private String kitchenNote;
     private String specialNote;
     private String status;
+    private String roomNumber;
+    private String reservationId;
     private Venue selectedVenue;
     private List<SelectedPackage> selectedPackages;
     private Double venueTotal;

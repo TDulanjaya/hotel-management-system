@@ -23,7 +23,17 @@ export default function RoomServicePage() {
 
   const [currentRole, setCurrentRole] = useState("");
   const { data: rawItems, mutate, isLoading: isSwrLoading, error: swrError } = useSWR<any[]>("/api/room-service");
+  const { data: rawReservations } = useSWR<any>("/api/reservations?size=1000");
   const items = useMemo(() => (Array.isArray(rawItems) ? rawItems : []), [rawItems]);
+  const activeRooms = useMemo(() => {
+    const reservations = Array.isArray(rawReservations) ? rawReservations : rawReservations?.content || [];
+    return reservations
+      .filter((reservation: any) => reservation.status === "CHECKED_IN")
+      .map((reservation: any) => ({
+        roomNumber: reservation.roomNumber,
+        guestName: reservation.guestName,
+      }));
+  }, [rawReservations]);
   const loading = !rawItems && isSwrLoading;
   const [error, setError] = useState("");
 
@@ -399,8 +409,10 @@ export default function RoomServicePage() {
               formData={formData}
               setFormData={setFormData}
               onSubmit={handleSubmit}
-              categories={["Menu", "Bites", "Drinks", "Room Service"]}
+              categories={["ROOM_SERVICE_FOOD", "RESTAURANT_FOOD", "DESSERT", "BEVERAGE"]}
               loading={submitting}
+              roomOptions={activeRooms}
+              showStatus={false}
             />
           </SlidePanel>
         </main>

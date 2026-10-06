@@ -18,12 +18,27 @@ import {
   Trash2,
   User,
   XCircle,
+  Edit3,
 } from "lucide-react";
 import {
   deleteGameSession,
   getGameSessions,
   updateGameSession,
+  createGameSession,
 } from "@/lib/api/gameApi";
+import { getRooms } from "@/lib/api/roomApi";
+import { getEvents } from "@/lib/api/eventApi";
+import { getPricingItemsByCategory } from "@/lib/api/pricingApi";
+import SlidePanel from "@/components/ui/SlidePanel";
+import POSPaymentModal from "@/components/payments/POSPaymentModal";
+import { ShieldCheck } from "lucide-react";
+
+function getDurationHours(duration: string) {
+  if (duration === "30 Minutes") return 0.5;
+  if (duration === "Full Day") return 8;
+  const num = Number(duration?.split(" ")[0]);
+  return Number.isFinite(num) && num > 0 ? num : 1;
+}
 
 function ribbonClass(status: string) {
   if (status === "ACTIVE") return "border-l-4 border-l-[#735c00]";
@@ -52,6 +67,44 @@ export default function GamesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // SlidePanel State
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [editItem, setEditItem] = useState<any>(null);
+  const [formSubmitting, setFormSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [settleSessionItem, setSettleSessionItem] = useState<any>(null);
+  const [roomEndSessionItem, setRoomEndSessionItem] = useState<any>(null);
+
+  // Relational Masters
+  const [occupiedRooms, setOccupiedRooms] = useState<any[]>([]);
+  const [eventsList, setEventsList] = useState<any[]>([]);
+  const [gamePricingItems, setGamePricingItems] = useState<any[]>([]);
+
+  const defaultFormData = {
+    guestName: "",
+    customerType: "WALK_IN",
+    billingType: "DIRECT_PAYMENT",
+    pricingItemId: "",
+    roomNumber: "",
+    eventId: "",
+    gameName: "Grand Billiards Table I",
+    gameType: "Billiards",
+    location: "Recreation Floor",
+    sessionType: "Hourly Rental",
+    startTime: "",
+    duration: "1 Hour",
+    hourlyRate: 2500,
+    totalAmount: 2500,
+    paymentMethod: "Direct Gate Payment",
+    notes: "",
+    equipmentChecked: true,
+    accessoriesIssued: true,
+    guestResponsibilityConfirmed: true,
+    status: "ACTIVE",
+  };
+
+  const [formData, setFormData] = useState(defaultFormData);
+
   const canManage =
     currentRole === "OWNER" ||
     currentRole === "MANAGER" ||
@@ -72,6 +125,198 @@ export default function GamesPage() {
       setError(err.message || "Failed to load game sessions.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Load relational masters (Rooms, Events, and Game Pricing Items)
+  useEffect(() => {
+    async function loadRelations() {
+      try {
+        const [roomsData, eventsData, pricingData] = await Promise.all([
+          getRooms().catch(() => []),
+          getEvents().catch(() => []),
+          getPricingItemsByCategory("GAME").catch(() => []),
+        ]);
+        setOccupiedRooms(Array.isArray(roomsData) ? roomsData : []);
+        setEventsList(Array.isArray(eventsData) ? eventsData : []);
+        const gItems = Array.isArray(pricingData) ? pricingData : [];
+        setGamePricingItems(gItems);
+
+        if (gItems.length > 0 && !formData.pricingItemId) {
+          const first = gItems[0];
+          setFormData((prev) => ({
+            ...prev,
+            pricingItemId: first.id,
+            gameName: first.name,
+            hourlyRate: first.price || 2500,
+            totalAmount: Math.round((first.price || 2500) * getDurationHours(prev.duration)),
+          }));
+        }
+      } catch (err) {
+        console.error("Failed to load relational masters:", err);
+      }
+    }
+    loadRelations();
+  }, []);
+
+  const handleOpenAdd = () => {
+    setEditItem(null);
+    setFormError("");
+    const initialItem = gamePricingItems[0];
+    const initialRate = initialItem?.price || 2500;
+    setFormData({
+      ...defaultFormData,
+      pricingItemId: initialItem?.id || "",
+      gameName: initialItem?.name || "Grand Billiards Table I",
+      hourlyRate: initialRate,
+      totalAmount: initialRate,
+      startTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    });
+    setPanelOpen(true);
+  };
+
+  const handleOpenEdit = (session: any) => {
+    setEditItem(session);
+    setFormError("");
+    const matched = gamePricingItems.find((g) => g.id === session.pricingItemId || g.name === session.gameName);
+    const rate = session.hourlyRate || matched?.price || 2500;
+    setFormData({
+      pricingItemId: session.pricingItemId || matched?.id || (gamePricingItems[0]?.id || ""),
+      guestName: session.guestName || "",
+      customerType: session.customerType || (session.roomNumber ? "HOTEL_GUEST" : "WALK_IN"),
+      billingType: session.billingType || session.paymentMethod || "DIRECT_PAYMENT",
+      roomNumber: session.roomNumber || "",
+      eventId: session.eventId || "",
+      gameName: session.gameName || matched?.name || "Grand Billiards Table I",
+      gameType: session.gameType || "Billiards",
+      location: session.location || "Recreation Floor",
+      sessionType: session.sessionType || "Hourly Rental",
+      startTime: session.startTime ? String(session.startTime).slice(11, 16) : "",
+      duration: session.duration || "1 Hour",
+      hourlyRate: rate,
+      totalAmount: session.totalAmount || Math.round(rate * getDurationHours(session.duration || "1 Hour")),
+      paymentMethod: session.paymentMethod || "Direct Gate Payment",
+      notes: session.notes || "",
+      equipmentChecked: session.equipmentChecked ?? true,
+      accessoriesIssued: session.accessoriesIssued ?? true,
+      guestResponsibilityConfirmed: session.guestResponsibilityConfirmed ?? true,
+      status: session.status || "ACTIVE",
+    });
+    setPanelOpen(true);
+  };
+
+  const handleFormChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value, type } = e.target;
+
+    if (type === "checkbox") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: (e.target as HTMLInputElement).checked,
+      }));
+      return;
+    }
+
+    if (name === "pricingItemId") {
+      const selected = gamePricingItems.find((g) => g.id === value);
+      const hours = getDurationHours(formData.duration);
+      const rate = selected?.price || 2500;
+      setFormData((prev) => ({
+        ...prev,
+        pricingItemId: selected?.id || value,
+        gameName: selected?.name || prev.gameName,
+        hourlyRate: rate,
+        totalAmount: Math.round(rate * hours),
+      }));
+      return;
+    }
+
+    if (name === "duration") {
+      const hours = getDurationHours(value);
+      setFormData((prev) => ({
+        ...prev,
+        duration: value,
+        totalAmount: Math.round(prev.hourlyRate * hours),
+      }));
+      return;
+    }
+
+    if (name === "hourlyRate") {
+      const rate = Number(value) || 0;
+      const hours = getDurationHours(formData.duration);
+      setFormData((prev) => ({
+        ...prev,
+        hourlyRate: rate,
+        totalAmount: Math.round(rate * hours),
+      }));
+      return;
+    }
+
+    if (name === "customerType") {
+      setFormData((prev) => ({
+        ...prev,
+        customerType: value,
+        billingType: "DIRECT_PAYMENT",
+        roomNumber: "",
+        eventId: "",
+      }));
+      return;
+    }
+
+    if (name === "roomNumber") {
+      const room = occupiedRooms.find((r: any) => r.roomNumber === value);
+      setFormData((prev) => ({
+        ...prev,
+        roomNumber: value,
+        guestName: room?.guestName || prev.guestName,
+      }));
+      return;
+    }
+
+    if (name === "eventId") {
+      const ev = eventsList.find((item: any) => item.id === value);
+      setFormData((prev) => ({
+        ...prev,
+        eventId: value,
+        guestName: ev?.organizerName || ev?.eventName || prev.guestName,
+      }));
+      return;
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.guestName.trim()) {
+      setFormError("Guest name or resident selection is required.");
+      return;
+    }
+
+    try {
+      setFormSubmitting(true);
+      setFormError("");
+
+      const payload = {
+        ...formData,
+        sessionDate: new Date().toISOString().split("T")[0],
+      };
+
+      if (editItem) {
+        await updateGameSession(editItem.id, payload);
+      } else {
+        await createGameSession(payload);
+      }
+
+      setPanelOpen(false);
+      setEditItem(null);
+      await loadSessions();
+    } catch (err: any) {
+      setFormError(err.message || "Failed to save game session.");
+    } finally {
+      setFormSubmitting(false);
     }
   };
 
@@ -116,20 +361,21 @@ export default function GamesPage() {
   }, [searchText, sessions]);
 
   const handleEndSession = async (session: any) => {
-    const confirmEnd = confirm(
-      "Confirm end of rental? This will finalize the charge calculation."
-    );
+    if (session.billingType === "ROOM_FOLIO") {
+      setRoomEndSessionItem(session);
+    } else {
+      setSettleSessionItem(session);
+    }
+  };
 
-    if (!confirmEnd) return;
-
+  const handleConfirmRoomEndSession = async (session: any) => {
     try {
       await updateGameSession(session.id, {
         ...session,
         status: "COMPLETED",
       });
-
+      setRoomEndSessionItem(null);
       await loadSessions();
-      alert("Game session completed successfully.");
     } catch (err: any) {
       alert(err.message || "Failed to end rental.");
     }
@@ -234,13 +480,13 @@ export default function GamesPage() {
                 </button>
 
                 {canManage && (
-                  <Link
-                    href="/games/new-session"
+                  <button
+                    onClick={handleOpenAdd}
                     className="w-full sm:w-auto flex items-center justify-center gap-2 rounded-xl bg-[#735c00] px-5 py-3 text-sm sm:text-base font-bold text-white transition hover:bg-[#d4af37] hover:text-[#241a00]"
                   >
                     <Plus size={18} />
                     New Game Session
-                  </Link>
+                  </button>
                 )}
               </div>
             </div>
@@ -308,6 +554,7 @@ export default function GamesPage() {
                     session={session}
                     canManage={canManage}
                     canDelete={canDelete}
+                    onEdit={handleOpenEdit}
                     onEnd={handleEndSession}
                     onOverdue={handleMarkOverdue}
                     onDelete={handleDelete}
@@ -332,6 +579,385 @@ export default function GamesPage() {
             </section>
           </section>
         </main>
+
+        {/* Slide-over Panel for Game Session */}
+        <SlidePanel
+          open={panelOpen}
+          onClose={() => setPanelOpen(false)}
+          title={editItem ? "Edit Game Session" : "New Game Session"}
+          subtitle={
+            editItem
+              ? `Update session for ${editItem.guestName || "Guest"}`
+              : "Register and start a recreation amenity rental"
+          }
+          icon={<Gamepad2 className="h-5 w-5 text-[#735c00]" />}
+        >
+          {formError && (
+            <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 font-bold text-red-700">
+              {formError}
+            </div>
+          )}
+
+          <form onSubmit={handleFormSubmit} className="space-y-6">
+            {/* Facility / Game Selection */}
+            <div className="rounded-xl border border-[#e2dacf] bg-[#faf8f4] p-4 space-y-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#735c00]">
+                Amenity & Activity
+              </h3>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                  Select Facility / Game (from Service Pricing) *
+                </label>
+                <select
+                  name="pricingItemId"
+                  value={formData.pricingItemId}
+                  onChange={handleFormChange}
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 font-semibold text-[#735c00] focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                >
+                  {gamePricingItems.map((opt) => (
+                    <option key={opt.id} value={opt.id}>
+                      {opt.name} — Rs {Number(opt.price || 0).toLocaleString()}/hr
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleFormChange}
+                    className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                    Hourly Rate (Rs)
+                  </label>
+                  <input
+                    type="number"
+                    name="hourlyRate"
+                    value={formData.hourlyRate}
+                    onChange={handleFormChange}
+                    className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 font-bold focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Guest Category & Relational Selector */}
+            <div className="rounded-xl border border-[#e2dacf] bg-[#faf8f4] p-4 space-y-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-[#735c00]">
+                Customer & Billing
+              </h3>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                    Customer Category
+                  </label>
+                  <select
+                    name="customerType"
+                    value={formData.customerType}
+                    onChange={handleFormChange}
+                    className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 font-semibold focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                  >
+                    <option value="WALK_IN">Outside Visitor / Walk-in</option>
+                    <option value="HOTEL_GUEST">Hotel Resident</option>
+                    <option value="EVENT_GUEST">Event Attendee</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                    Payment / Settlement
+                  </label>
+                  <select
+                    name="billingType"
+                    value={formData.billingType}
+                    onChange={handleFormChange}
+                    className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 font-semibold focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                  >
+                    <option value="DIRECT_PAYMENT">Gate / Cash / Card Payment</option>
+                    {formData.customerType === "HOTEL_GUEST" && (
+                      <option value="ROOM_FOLIO">Charge to Room Folio</option>
+                    )}
+                    {formData.customerType === "EVENT_GUEST" && (
+                      <option value="EVENT_MASTER_BILL">Charge to Event Master Bill</option>
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              {formData.customerType === "HOTEL_GUEST" && (
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                    Select Occupied Room *
+                  </label>
+                  <select
+                    name="roomNumber"
+                    value={formData.roomNumber}
+                    onChange={handleFormChange}
+                    className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 font-semibold text-[#735c00] focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                  >
+                    <option value="">-- Choose Resident Room --</option>
+                    {occupiedRooms.map((r: any) => (
+                      <option key={r.id || r.roomNumber} value={r.roomNumber}>
+                        Room {r.roomNumber} — {r.type || "Room"} ({r.guestName || "Guest"})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              {formData.customerType === "EVENT_GUEST" && (
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                    Select Active Event *
+                  </label>
+                  <select
+                    name="eventId"
+                    value={formData.eventId}
+                    onChange={handleFormChange}
+                    className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 font-semibold text-[#735c00] focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                  >
+                    <option value="">-- Choose Active Event --</option>
+                    {eventsList.map((ev: any) => (
+                      <option key={ev.id} value={ev.id}>
+                        {ev.eventName || ev.title || "Event"} ({ev.organizerName || "Organizer"})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                  Guest Name *
+                </label>
+                <input
+                  required
+                  type="text"
+                  name="guestName"
+                  placeholder="Player / Guest full name"
+                  value={formData.guestName}
+                  onChange={handleFormChange}
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                />
+              </div>
+            </div>
+
+            {/* Timing & Calculation */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                  Duration
+                </label>
+                <select
+                  name="duration"
+                  value={formData.duration}
+                  onChange={handleFormChange}
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 font-semibold focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                >
+                  <option value="30 Minutes">30 Minutes</option>
+                  <option value="1 Hour">1 Hour</option>
+                  <option value="2 Hours">2 Hours</option>
+                  <option value="3 Hours">3 Hours</option>
+                  <option value="Full Day">Full Day (8 Hrs)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                  Calculated Total
+                </label>
+                <div className="mt-1 flex h-[48px] items-center rounded-xl border border-[#d0c5af] bg-[#fbf9f5] px-4 font-mono text-base font-extrabold text-[#735c00]">
+                  Rs {Number(formData.totalAmount || 0).toLocaleString()}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                  Status
+                </label>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleFormChange}
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 font-semibold focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                >
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="AVAILABLE">AVAILABLE</option>
+                  <option value="OVERDUE">OVERDUE</option>
+                  <option value="COMPLETED">COMPLETED</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                  Start Time
+                </label>
+                <input
+                  type="text"
+                  name="startTime"
+                  placeholder="e.g. 14:30"
+                  value={formData.startTime}
+                  onChange={handleFormChange}
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+                />
+              </div>
+            </div>
+
+            {/* Equipment Safety & Checklist */}
+            <div className="space-y-3 rounded-xl border border-[#d0c5af] bg-[#f5f3ef] p-4">
+              <p className="text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                Audit & Equipment Handover
+              </p>
+              <label className="flex items-center gap-3 text-sm font-semibold cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="equipmentChecked"
+                  checked={formData.equipmentChecked}
+                  onChange={handleFormChange}
+                  className="h-4 w-4 rounded accent-[#735c00]"
+                />
+                Main equipment verified and intact
+              </label>
+
+              <label className="flex items-center gap-3 text-sm font-semibold cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="accessoriesIssued"
+                  checked={formData.accessoriesIssued}
+                  onChange={handleFormChange}
+                  className="h-4 w-4 rounded accent-[#735c00]"
+                />
+                Accessories & controllers issued
+              </label>
+
+              <label className="flex items-center gap-3 text-sm font-semibold cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="guestResponsibilityConfirmed"
+                  checked={formData.guestResponsibilityConfirmed}
+                  onChange={handleFormChange}
+                  className="h-4 w-4 rounded accent-[#735c00]"
+                />
+                Guest terms & responsibility confirmed
+              </label>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[#4d4635]">
+                Notes
+              </label>
+              <textarea
+                name="notes"
+                placeholder="Optional activity or audit notes..."
+                value={formData.notes}
+                onChange={handleFormChange}
+                rows={2}
+                className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#735c00]"
+              />
+            </div>
+
+            <div className="flex gap-4 pt-4 border-t border-[#d0c5af]">
+              <button
+                type="button"
+                onClick={() => setPanelOpen(false)}
+                className="flex-1 rounded-xl border border-[#d0c5af] px-8 py-3.5 font-bold text-[#4d4635] transition hover:bg-[#ece9e2]"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="submit"
+                disabled={formSubmitting}
+                className="flex-1 rounded-xl bg-[#735c00] px-8 py-3.5 font-bold text-white transition hover:bg-[#d4af37] disabled:opacity-50"
+              >
+                {formSubmitting
+                  ? "Saving..."
+                  : editItem
+                  ? "Update Session"
+                  : "Start Session"}
+              </button>
+            </div>
+          </form>
+        </SlidePanel>
+
+        {/* Universal POS Payment Modal for Recreation Games Settlement */}
+        {settleSessionItem && (
+          <POSPaymentModal
+            isOpen={Boolean(settleSessionItem)}
+            onClose={() => setSettleSessionItem(null)}
+            title="Games Lounge Session Settlement"
+            sourceType="GAME_SESSION"
+            sourceId={settleSessionItem.id}
+            customerName={settleSessionItem.guestName || "Walk-in Gamer"}
+            customerType={settleSessionItem.customerType || "WALK_IN"}
+            roomNumber={settleSessionItem.roomNumber}
+            serviceDescription={`Recreation Session: ${settleSessionItem.gameName} (${settleSessionItem.duration || "Hourly"})`}
+            totalAmount={Number(settleSessionItem.totalAmount || 0)}
+            onPaymentSuccess={async () => {
+              setSettleSessionItem(null);
+              await loadSessions();
+            }}
+          />
+        )}
+
+        {/* Room Folio Resident Game Session Close Dialog */}
+        {roomEndSessionItem && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-2xl space-y-4">
+              <div className="flex items-center gap-2 text-[#735c00]">
+                <ShieldCheck size={24} />
+                <h3 className="text-lg font-extrabold text-[#1b1c1a]">Resident Session Settlement</h3>
+              </div>
+              <p className="text-sm text-[#4d4635]">
+                Game session for <strong className="text-[#1b1c1a]">{roomEndSessionItem.gameName}</strong> was enjoyed by in-house guest{" "}
+                <strong>{roomEndSessionItem.guestName || "Resident"}</strong> (Room <strong>{roomEndSessionItem.roomNumber}</strong>).
+              </p>
+              <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs font-semibold text-amber-900">
+                Session fee of <strong>Rs {roomEndSessionItem.totalAmount}</strong> is posted to Room Folio and will be paid at Front Desk Room Checkout.
+              </div>
+              <div className="flex flex-col gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => handleConfirmRoomEndSession(roomEndSessionItem)}
+                  className="w-full rounded-xl bg-emerald-700 py-3 text-sm font-bold text-white hover:bg-emerald-800 shadow-md"
+                >
+                  Confirm & Close (Keep on Room Folio)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const temp = roomEndSessionItem;
+                    setRoomEndSessionItem(null);
+                    setSettleSessionItem(temp);
+                  }}
+                  className="w-full rounded-xl border border-[#735c00] py-2.5 text-xs font-bold text-[#735c00] hover:bg-[#735c00]/5"
+                >
+                  Guest Wants to Pay Cash/Card Now Instead
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRoomEndSessionItem(null)}
+                  className="w-full text-center text-xs text-gray-500 hover:underline py-1"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </ProtectedRoute>
   );
@@ -341,6 +967,7 @@ function GameSessionCard({
   session,
   canManage,
   canDelete,
+  onEdit,
   onEnd,
   onOverdue,
   onDelete,
@@ -348,10 +975,11 @@ function GameSessionCard({
   session: any;
   canManage: boolean;
   canDelete: boolean;
+  onEdit: (session: any) => void;
   onEnd: (session: any) => void;
   onOverdue: (session: any) => void;
   onDelete: (id: string) => void;
-  }) {
+}) {
   const isActive = session.status === "ACTIVE";
   const isOverdue = session.status === "OVERDUE";
   const isAvailable = session.status === "AVAILABLE";
@@ -468,6 +1096,16 @@ function GameSessionCard({
 
       <div className="border-t border-[#d0c5af] bg-[#f5f3ef] p-3 sm:p-4">
         <div className="flex flex-wrap gap-2 sm:gap-3">
+          {canManage && (
+            <button
+              onClick={() => onEdit(session)}
+              className="flex items-center justify-center gap-1.5 rounded-xl border border-[#735c00] px-3.5 py-2.5 sm:py-3 text-xs sm:text-sm font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
+            >
+              <Edit3 size={15} />
+              Edit
+            </button>
+          )}
+
           {canManage && (isActive || isOverdue) && (
             <button
               onClick={() => onEnd(session)}

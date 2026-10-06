@@ -7,18 +7,18 @@ import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { createReservation } from "@/lib/api/reservationsApi";
 import { getRooms } from "@/lib/api/roomApi";
+import { getGuests } from "@/lib/api/guestsApi";
 
 export default function NewReservationPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [rooms, setRooms] = useState<any[]>([]);
+  const [guests, setGuests] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     guestName: "",
-    email: "",
-    phone: "",
-    guestType: "Regular",
+    guestId: "",
     roomNumber: "",
     checkIn: "",
     checkOut: "",
@@ -32,12 +32,14 @@ export default function NewReservationPage() {
   useEffect(() => {
     async function loadRooms() {
       try {
-        const roomData = await getRooms({ size: 100 });
+        const [roomData, guestData] = await Promise.all([
+          getRooms({ size: 100 }),
+          getGuests({ size: 100 }),
+        ]);
         const list = Array.isArray(roomData) ? roomData : roomData?.content || [];
+        const guestList = Array.isArray(guestData) ? guestData : guestData?.content || [];
         setRooms(list);
-        if (list.length > 0) {
-          setFormData((prev) => ({ ...prev, roomNumber: list[0].roomNumber }));
-        }
+        setGuests(guestList);
       } catch (err) {
         console.error("Failed to load rooms", err);
       }
@@ -56,6 +58,7 @@ export default function NewReservationPage() {
   };
 
   const selectedRoom = rooms.find((r) => r.roomNumber === formData.roomNumber);
+  const selectedGuest = guests.find((guest) => guest.id === formData.guestId);
   const baseRate = selectedRoom?.price || 450;
 
   // Calculate nights
@@ -77,6 +80,10 @@ export default function NewReservationPage() {
       setError("Please select a room.");
       return;
     }
+    if (!formData.guestId || !selectedGuest) {
+      setError("Please select an existing guest. Add the guest first if they are not registered.");
+      return;
+    }
     if (!formData.checkIn || !formData.checkOut) {
       setError("Please select check-in and check-out dates.");
       return;
@@ -87,7 +94,8 @@ export default function NewReservationPage() {
 
     try {
       await createReservation({
-        guestName: formData.guestName,
+        guestName: selectedGuest.name,
+        guestId: formData.guestId,
         roomNumber: formData.roomNumber,
         checkIn: formData.checkIn,
         checkOut: formData.checkOut,
@@ -96,14 +104,7 @@ export default function NewReservationPage() {
         status: formData.status,
         paymentStatus: formData.paymentStatus,
         totalAmount: estimatedTotal,
-        notes: [
-          formData.email ? `Email: ${formData.email}` : "",
-          formData.phone ? `Phone: ${formData.phone}` : "",
-          formData.guestType ? `Type: ${formData.guestType}` : "",
-          formData.notes,
-        ]
-          .filter(Boolean)
-          .join(" | "),
+        notes: formData.notes,
       });
       router.push("/reservations");
     } catch (err: any) {
@@ -147,62 +148,37 @@ export default function NewReservationPage() {
               <div className="mt-6 grid gap-5 md:grid-cols-2">
                 <div>
                   <label className="text-sm font-bold text-[#4d4635]">
-                    Guest Name
-                  </label>
-                  <input
-                    required
-                    type="text"
-                    name="guestName"
-                    value={formData.guestName}
-                    onChange={handleChange}
-                    placeholder="Mr. Alexander Thorne"
-                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-bold text-[#4d4635]">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="guest@email.com"
-                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-bold text-[#4d4635]">
-                    Phone
-                  </label>
-                  <input
-                    type="text"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    placeholder="+94 77 123 4567"
-                    className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-bold text-[#4d4635]">
-                    Guest Type
+                    Registered Guest
                   </label>
                   <select
-                    name="guestType"
-                    value={formData.guestType}
-                    onChange={handleChange}
+                    required
+                    name="guestId"
+                    value={formData.guestId}
+                    onChange={(event) => {
+                      const guest = guests.find((item) => item.id === event.target.value);
+                      setFormData((prev) => ({
+                        ...prev,
+                        guestId: event.target.value,
+                        guestName: guest?.name || "",
+                      }));
+                    }}
                     className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
                   >
-                    <option value="Regular">Regular</option>
-                    <option value="VIP">VIP</option>
-                    <option value="Corporate">Corporate</option>
-                    <option value="Walk-in">Walk-in</option>
+                    <option value="">-- Select guest --</option>
+                    {guests.map((guest) => (
+                      <option key={guest.id} value={guest.id}>
+                        {guest.name} ({guest.phone || guest.email})
+                      </option>
+                    ))}
                   </select>
+                  <Link href="/guests/new" className="mt-2 inline-block text-xs font-bold text-[#735c00] hover:underline">
+                    + Add new guest
+                  </Link>
+                  {selectedGuest && (
+                    <p className="mt-2 text-xs text-[#6d6251]">
+                      {selectedGuest.email} · {selectedGuest.phone}
+                    </p>
+                  )}
                 </div>
 
                 <div>

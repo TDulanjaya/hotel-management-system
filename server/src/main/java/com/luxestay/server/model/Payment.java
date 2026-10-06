@@ -17,6 +17,11 @@ public class Payment {
     private String referenceId;
     private double amount;
     private String method;
+    private String billingType;
+    private String transactionReference;
+    private String voidReason;
+    private LocalDateTime voidedAt;
+    private String voidedBy;
     @org.springframework.data.mongodb.core.index.Indexed
     private String status;
     private String notes;

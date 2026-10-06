@@ -3,19 +3,23 @@ const API_BASE_URL = `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:808
 
 export type ParkingPayload = {
   vehicleNumber: string;
-  vehicleModel: string;
+  vehicleModel?: string;
   vehicleType: string;
   driverName: string;
   contactNumber?: string;
-  parkingZone: string;
+  parkingZone?: string;
   slotNumber: string;
-  serviceType: string;
+  serviceType?: string;
   checkInTime?: string;
   expectedCheckOutTime?: string;
   guestName?: string;
   roomNumber?: string;
-  amount: number;
-  paymentStatus: string;
+  reservationId?: string;
+  eventId?: string;
+  customerType?: string;
+  billingType?: string;
+  amount?: number;
+  paymentStatus?: string;
   notes?: string;
   status: string;
 };

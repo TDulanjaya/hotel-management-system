@@ -10,6 +10,11 @@ public class GameSession {
     private String id;
     private String guestName;
     private String roomNumber;
+    private String customerType;
+    private String billingType;
+    private String pricingItemId;
+    private String reservationId;
+    private String eventId;
     private String gameName;       // e.g. "Grand Billiards I"
     private String gameType;       // e.g. "Billiards"
     private String location;       // e.g. "Recreation Floor"
@@ -32,6 +37,16 @@ public class GameSession {
     public void setGuestName(String guestName) { this.guestName = guestName; }
     public String getRoomNumber() { return roomNumber; }
     public void setRoomNumber(String roomNumber) { this.roomNumber = roomNumber; }
+    public String getCustomerType() { return customerType; }
+    public void setCustomerType(String customerType) { this.customerType = customerType; }
+    public String getBillingType() { return billingType; }
+    public void setBillingType(String billingType) { this.billingType = billingType; }
+    public String getPricingItemId() { return pricingItemId; }
+    public void setPricingItemId(String pricingItemId) { this.pricingItemId = pricingItemId; }
+    public String getReservationId() { return reservationId; }
+    public void setReservationId(String reservationId) { this.reservationId = reservationId; }
+    public String getEventId() { return eventId; }
+    public void setEventId(String eventId) { this.eventId = eventId; }
     public String getGameName() { return gameName; }
     public void setGameName(String gameName) { this.gameName = gameName; }
     public String getGameType() { return gameType; }

@@ -8,6 +8,7 @@ import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { useState, useEffect } from "react";
 import { getReservationById } from "@/lib/api/reservationsApi";
 import { processCheckout } from "@/lib/api/checkoutApi";
+import { getByReservationId } from "@/lib/api/folioApi";
 
 export default function CheckoutDetailsPage() {
   const searchParams = useSearchParams();
@@ -15,11 +16,13 @@ export default function CheckoutDetailsPage() {
   const router = useRouter();
 
   const [reservation, setReservation] = useState<any>(null);
+  const [folio, setFolio] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (id) {
       getReservationById(id).then(setReservation).catch(console.error);
+      getByReservationId(id).then(setFolio).catch(() => setFolio(null));
     }
   }, [id]);
 
@@ -100,15 +103,27 @@ export default function CheckoutDetailsPage() {
               <h2 className="text-2xl font-bold">Payment Summary</h2>
 
               <div className="mt-6 space-y-4">
-                <InfoRow label="Total Charges" value={`Rs ${reservation.totalAmount?.toFixed(2)}`} />
-                <InfoRow label="Payment Status" value={reservation.paymentStatus} />
+                <InfoRow label="Total Charges" value={`Rs ${Number(folio?.totalAmount ?? reservation.totalAmount ?? 0).toFixed(2)}`} />
+                <InfoRow label="Paid Amount" value={`Rs ${Number(folio?.paidAmount ?? 0).toFixed(2)}`} />
+                <InfoRow label="Outstanding Balance" value={`Rs ${Number(folio?.balanceAmount ?? reservation.totalAmount ?? 0).toFixed(2)}`} />
+                <InfoRow label="Payment Status" value={folio?.balanceAmount <= 0.01 ? "PAID" : reservation.paymentStatus || "OUTSTANDING"} />
               </div>
 
               <div className="mt-6 rounded-xl bg-[#735c00] p-5 text-white">
                 <div className="flex items-center justify-between">
                   <p className="text-lg font-bold">Final Total</p>
-                  <p className="text-2xl font-extrabold">Rs {reservation.totalAmount?.toFixed(2)}</p>
+                  <p className="text-2xl font-extrabold">Rs {Number(folio?.balanceAmount ?? reservation.totalAmount ?? 0).toFixed(2)}</p>
                 </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-[#d0c5af] bg-white p-6 shadow-sm xl:col-span-2">
+              <h2 className="text-2xl font-bold">Folio Charges</h2>
+              <div className="mt-4 space-y-2">
+                {(folio?.lines || []).filter((line: any) => line.status !== "VOID").map((line: any, index: number) => (
+                  <InfoRow key={`${line.sourceId || "line"}-${index}`} label={line.description || line.category || "Charge"} value={`Rs ${Number(line.amount || 0).toFixed(2)}`} />
+                ))}
+                {!folio?.lines?.length && <p className="text-sm text-[#4d4635]">No folio service lines recorded.</p>}
               </div>
             </div>
 

@@ -6,6 +6,7 @@ import com.luxestay.server.model.Folio;
 import com.luxestay.server.repository.ReservationRepository;
 import com.luxestay.server.repository.RoomRepository;
 import com.luxestay.server.repository.FolioRepository;
+import com.luxestay.server.repository.PaymentRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,9 @@ public class CheckoutController {
     @Autowired
     private FolioRepository folioRepository;
 
+    @Autowired
+    private PaymentRepository paymentRepository;
+
     @GetMapping
     public ResponseEntity<List<Reservation>> getDueCheckouts() {
         // Fetch reservations with status CHECKED_IN
@@ -38,6 +42,20 @@ public class CheckoutController {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Reservation not found"));
         
+        Folio folio = folioRepository.findByReservationId(reservationId).orElse(null);
+        if (folio != null) {
+            double paid = paymentRepository.findByReferenceTypeAndReferenceId("FOLIO", folio.getId()).stream()
+                    .filter(payment -> "PAID".equalsIgnoreCase(payment.getStatus()))
+                    .mapToDouble(payment -> payment.getAmount())
+                    .sum();
+            folio.setPaidAmount(paid);
+            folio.setBalanceAmount(Math.max(0, folio.getTotalAmount() - paid));
+            if (folio.getBalanceAmount() > 0.01) {
+                throw new IllegalStateException(
+                        "Checkout blocked. Outstanding folio balance: Rs " + folio.getBalanceAmount());
+            }
+        }
+
         // 1. Mark reservation as CHECKED_OUT
         reservation.setStatus("CHECKED_OUT");
         reservationRepository.save(reservation);
@@ -53,7 +71,6 @@ public class CheckoutController {
         }
         
         // 3. Mark Folio as CLOSED
-        Folio folio = folioRepository.findByReservationId(reservationId).orElse(null);
         if (folio != null) {
             folio.setStatus("CLOSED");
             folioRepository.save(folio);

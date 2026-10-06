@@ -2,23 +2,38 @@
 import { useEffect, useMemo, useState, FormEvent, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import useSWR from "swr";
 import AppSidebar from "@/components/layout/Sidebar";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { getUser, AuthUser } from "@/utils/auth";
 import SlidePanel from "@/components/ui/SlidePanel";
 import { Tag } from "lucide-react";
-import useSWR from "swr";
-import { getPricingItems, deletePricingItem as apiDeletePricingItem, createPricingItem } from "@/lib/api/pricingApi";
+import {
+  getPricingItems,
+  deletePricingItem as apiDeletePricingItem,
+  createPricingItem,
+  updatePricingItem,
+  getRecipes,
+} from "@/lib/api/pricingApi";
 
 type ChargeItem = {
   id: string;
   name: string;
   category:
+  | "RESTAURANT_FOOD"
+  | "ROOM_SERVICE_FOOD"
+  | "BEVERAGE"
+  | "DESSERT"
+  | "PARKING"
+  | "GAME"
+  | "LAUNDRY"
+  | "EVENT_PACKAGE"
+  | "EVENT_SERVICE"
+  | "AMENITY"
   | "Menu"
   | "Bites"
   | "Drinks"
   | "Bar"
-  | "PARKING"
   | "Amenity"
   | "Room Service"
   | "Laundry"
@@ -31,15 +46,16 @@ type ChargeItem = {
 };
 
 const categories: ChargeItem["category"][] = [
-  "Menu",
-  "Bites",
-  "Drinks",
-  "Bar",
+  "RESTAURANT_FOOD",
+  "ROOM_SERVICE_FOOD",
+  "BEVERAGE",
+  "DESSERT",
   "PARKING",
-  "Amenity",
-  "Room Service",
-  "Laundry",
-  "Event Service",
+  "GAME",
+  "LAUNDRY",
+  "EVENT_PACKAGE",
+  "EVENT_SERVICE",
+  "AMENITY",
   "Other",
 ];
 
@@ -52,13 +68,16 @@ const priceTypes: ChargeItem["priceType"][] = [
 ];
 
 function getCategoryClass(category: string) {
-  if (category === "Menu") return "bg-green-100 text-green-700";
-  if (category === "Bites") return "bg-yellow-100 text-yellow-700";
-  if (category === "Drinks") return "bg-blue-100 text-blue-700";
-  if (category === "Bar") return "bg-purple-100 text-purple-700";
-  if (category === "PARKING") return "bg-slate-100 text-slate-700";
-  if (category === "Amenity") return "bg-pink-100 text-pink-700";
-  if (category === "Event Service") return "bg-orange-100 text-orange-700";
+  const cat = String(category || "").toUpperCase();
+  if (cat.includes("RESTAURANT") || cat.includes("MENU")) return "bg-green-100 text-green-700";
+  if (cat.includes("ROOM_SERVICE")) return "bg-emerald-100 text-emerald-700";
+  if (cat.includes("BEVERAGE") || cat.includes("DRINK") || cat.includes("BAR")) return "bg-blue-100 text-blue-700";
+  if (cat.includes("DESSERT") || cat.includes("BITE")) return "bg-yellow-100 text-yellow-700";
+  if (cat.includes("PARKING")) return "bg-slate-100 text-slate-700";
+  if (cat.includes("GAME")) return "bg-indigo-100 text-indigo-700";
+  if (cat.includes("LAUNDRY")) return "bg-cyan-100 text-cyan-700";
+  if (cat.includes("EVENT")) return "bg-orange-100 text-orange-700";
+  if (cat.includes("AMENITY") || cat.includes("SPA")) return "bg-pink-100 text-pink-700";
 
   return "bg-gray-100 text-gray-700";
 }
@@ -81,6 +100,7 @@ function PricingPageContent() {
 
   const searchParams = useSearchParams();
   const [panelOpen, setPanelOpen] = useState(false);
+  const [editItem, setEditItem] = useState<any>(null);
 
   // Form states
   const [formLoading, setFormLoading] = useState(false);
@@ -91,11 +111,25 @@ function PricingPageContent() {
   const [priceType, setPriceType] = useState<ChargeItem["priceType"]>("fixed");
   const [price, setPrice] = useState(0);
   const [status, setStatus] = useState<ChargeItem["status"]>("Active");
+  const [recipeId, setRecipeId] = useState("");
+  const [recipes, setRecipes] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadRecipesList() {
+      try {
+        const data = await getRecipes();
+        setRecipes(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to load recipes:", err);
+      }
+    }
+    loadRecipesList();
+  }, []);
 
   useEffect(() => {
     setUser(getUser());
     if (searchParams.get("openPanel") === "true") {
-      setPanelOpen(true);
+      handleOpenAdd();
     }
   }, [searchParams]);
 
@@ -135,33 +169,73 @@ function PricingPageContent() {
     mutate();
   };
 
-  const handleCreatePricingItem = async (event: FormEvent<HTMLFormElement>) => {
+  const handleOpenAdd = () => {
+    setEditItem(null);
+    setFormError("");
+    setName("");
+    setCategory("Menu");
+    setRecipeId("");
+    setDescription("");
+    setPriceType("fixed");
+    setPrice(0);
+    setStatus("Active");
+    setPanelOpen(true);
+  };
+
+  const handleOpenEdit = (item: any) => {
+    setEditItem(item);
+    setFormError("");
+    setName(item.name || "");
+    setCategory(item.category || "Menu");
+    setRecipeId(item.recipeId || "");
+    setDescription(item.description || "");
+    setPriceType(item.priceType || "fixed");
+    setPrice(item.price || 0);
+    setStatus(item.status || "Active");
+    setPanelOpen(true);
+  };
+
+  const handleSavePricingItem = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setFormLoading(true);
     setFormError("");
 
     try {
-      await createPricingItem({
+      const payload = {
         name,
         category,
+        recipeId:
+          ["Menu", "Bites", "Room Service", "RESTAURANT_FOOD", "ROOM_SERVICE_FOOD", "DESSERT"].includes(category) &&
+          recipeId
+            ? recipeId
+            : null,
         description,
         priceType,
-        price,
+        price: Number(price),
         status,
-      });
+      };
+
+      if (editItem) {
+        await updatePricingItem(editItem.id, payload);
+      } else {
+        await createPricingItem(payload);
+      }
+
       setPanelOpen(false);
+      setEditItem(null);
       mutate();
       
       // reset form
       setName("");
       setCategory("Menu");
+      setRecipeId("");
       setDescription("");
       setPriceType("fixed");
       setPrice(0);
       setStatus("Active");
     } catch (err: any) {
       console.error(err);
-      setFormError(err.message || "Failed to create pricing item");
+      setFormError(err.message || "Failed to save pricing item");
     } finally {
       setFormLoading(false);
     }
@@ -201,7 +275,7 @@ function PricingPageContent() {
             </button>
 
             <button
-              onClick={() => setPanelOpen(true)}
+              onClick={handleOpenAdd}
               className="w-full sm:w-auto rounded-xl bg-[#d8b328] px-5 sm:px-7 py-3 sm:py-4 text-sm sm:text-lg font-bold text-[#4c3a00] transition hover:-translate-y-1 hover:bg-[#f2c426] hover:shadow-xl text-center"
             >
               + Add Price Item
@@ -322,12 +396,13 @@ function PricingPageContent() {
                       <td className="px-6 py-5">
                         <div className="flex justify-end gap-3">
                           {(user?.role === "OWNER" || user?.role === "MANAGER") && (
-                            <Link
-                              href={`/pricing/edit?id=${item.id}`}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEdit(item)}
                               className="rounded-lg border border-[#735c00] px-4 py-2 text-sm font-bold text-[#735c00] transition hover:bg-[#735c00]/5"
                             >
                               Edit
-                            </Link>
+                            </button>
                           )}
 
                           {(user?.role === "OWNER" || user?.role === "MANAGER") && (
@@ -352,9 +427,13 @@ function PricingPageContent() {
       <SlidePanel 
         open={panelOpen} 
         onClose={() => setPanelOpen(false)} 
-        title="Add Price Item" 
-        subtitle="Add prices for menus, parking, amenities, room service, bar packages, and event services."
-        icon={<Tag className="h-5 w-5" />}
+        title={editItem ? "Edit Price Item" : "Add Price Item"} 
+        subtitle={
+          editItem
+            ? `Updating price and configuration for ${editItem.name}`
+            : "Add prices for menus, parking, amenities, room service, bar packages, and event services."
+        }
+        icon={<Tag className="h-5 w-5 text-[#735c00]" />}
       >
         {formError && (
           <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-700">
@@ -362,11 +441,11 @@ function PricingPageContent() {
           </div>
         )}
 
-        <form onSubmit={handleCreatePricingItem} className="space-y-6">
+        <form onSubmit={handleSavePricingItem} className="space-y-6">
           <div className="grid gap-5 md:grid-cols-2">
             <div className="md:col-span-2">
               <label className="text-sm font-bold text-[#4d4635]">
-                Item Name
+                Item Name *
               </label>
               <input
                 type="text"
@@ -380,7 +459,7 @@ function PricingPageContent() {
 
             <div>
               <label className="text-sm font-bold text-[#4d4635]">
-                Category
+                Category *
               </label>
               <select
                 value={category}
@@ -394,6 +473,30 @@ function PricingPageContent() {
                 ))}
               </select>
             </div>
+
+            {/* Relational Recipe selector for food items */}
+            {(category === "Menu" || category === "Bites" || category === "Room Service" || category === "RESTAURANT_FOOD" || category === "ROOM_SERVICE_FOOD" || category === "DESSERT") && (
+              <div className="md:col-span-2 rounded-xl border border-[#e2dacf] bg-[#faf8f4] p-3">
+                <label className="text-xs font-bold uppercase tracking-wider text-[#735c00]">
+                  Connected Kitchen Recipe (Optional)
+                </label>
+                <select
+                  value={recipeId}
+                  onChange={(e) => setRecipeId(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-[#d0c5af] bg-white px-3 py-2.5 text-sm font-semibold outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                >
+                  <option value="">-- No Recipe Linked --</option>
+                  {recipes.map((r: any) => (
+                    <option key={r.id} value={r.id}>
+                      {r.recipeName || r.name} ({r.category || "Kitchen"} - Serves {r.servingPortions || r.servings || 1})
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-[11px] text-[#735c00]">
+                  Links directly to Recipe catalog. Ordering this dish deducts inventory ingredients automatically.
+                </p>
+              </div>
+            )}
 
             <div>
               <label className="text-sm font-bold text-[#4d4635]">
@@ -416,15 +519,15 @@ function PricingPageContent() {
 
             <div>
               <label className="text-sm font-bold text-[#4d4635]">
-                Price
+                Price (Rs) *
               </label>
               <input
                 type="number"
+                min="0"
                 required
-                min={0}
                 value={price}
                 onChange={(event) => setPrice(Number(event.target.value))}
-                className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30"
+                className="mt-2 w-full rounded-xl border border-[#d0c5af] bg-[#f5f3ef] px-4 py-3 outline-none focus:ring-2 focus:ring-[#735c00]/30 font-bold"
               />
             </div>
 
@@ -449,7 +552,6 @@ function PricingPageContent() {
                 Description
               </label>
               <textarea
-                required
                 rows={3}
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
@@ -459,20 +561,20 @@ function PricingPageContent() {
             </div>
           </div>
 
-          <div className="flex gap-4 pt-4">
+          <div className="flex gap-4 pt-4 border-t border-[#d0c5af]">
             <button
               type="button"
               onClick={() => setPanelOpen(false)}
-              className="flex-1 rounded-xl border border-[#d0c5af] px-8 py-4 font-bold text-[#4d4635] transition hover:bg-[#ece9e2]"
+              className="flex-1 rounded-xl border border-[#d0c5af] px-8 py-3.5 font-bold text-[#4d4635] transition hover:bg-[#ece9e2]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={formLoading}
-              className="flex-1 rounded-xl bg-[#d8b328] px-8 py-4 font-bold text-[#4c3a00] transition hover:bg-[#f2c426]"
+              className="flex-1 rounded-xl bg-[#d8b328] px-8 py-3.5 font-bold text-[#4c3a00] transition hover:bg-[#f2c426] disabled:opacity-50"
             >
-              {formLoading ? "Creating..." : "Save Price Item"}
+              {formLoading ? "Saving..." : editItem ? "Update Item" : "Save Price Item"}
             </button>
           </div>
         </form>

@@ -4,7 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { logout, getUser, AuthUser, UserRole, getDashboardByRole } from "@/utils/auth";
-import { Menu, X } from "lucide-react";
+import {
+  Menu, X, LayoutDashboard, Users, CalendarDays, BedDouble, Receipt,
+  LogOut, CreditCard, Utensils, ChefHat, BookOpen, House, Shirt,
+  PartyPopper, Building2, Gamepad2, Boxes, Car, Tag, BarChart3,
+  ClipboardList, UserCog,
+} from "lucide-react";
 
 type MenuItem = {
   name: string;
@@ -14,37 +19,45 @@ type MenuItem = {
   category?: string;
 };
 
+const iconMap = {
+  dashboard: LayoutDashboard, guests: Users, reservations: CalendarDays, rooms: BedDouble,
+  folio: Receipt, checkout: LogOut, payments: CreditCard, restaurant: Utensils,
+  kitchen: ChefHat, recipes: BookOpen, roomService: House, laundry: Shirt,
+  events: PartyPopper, venues: Building2, games: Gamepad2, inventory: Boxes,
+  parking: Car, pricing: Tag, reports: BarChart3, audit: ClipboardList, users: UserCog,
+};
+
 const menuItems: MenuItem[] = [
   // 1. OVERVIEW
-  { name: "Dashboard",         href: "/dashboard",          icon: "▦", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "OVERVIEW" },
+  { name: "Dashboard",         href: "/dashboard",          icon: "dashboard", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "OVERVIEW" },
 
   // 2. FRONT DESK & GUESTS
-  { name: "Guests",            href: "/guests",             icon: "♟", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "FRONT DESK" },
-  { name: "Reservations",      href: "/reservations",       icon: "▤", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "FRONT DESK" },
-  { name: "Rooms",             href: "/rooms",              icon: "▰", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "FRONT DESK" },
-  { name: "Folio",             href: "/folio",              icon: "▤", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "FRONT DESK" },
-  { name: "Checkout",          href: "/checkout",           icon: "✓", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "FRONT DESK" },
-  { name: "Payments",          href: "/payments",           icon: "₨", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "FRONT DESK" },
+  { name: "Guests",            href: "/guests",             icon: "guests", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "FRONT DESK" },
+  { name: "Reservations",      href: "/reservations",       icon: "reservations", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "FRONT DESK" },
+  { name: "Rooms",             href: "/rooms",              icon: "rooms", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "FRONT DESK" },
+  { name: "Folio",             href: "/folio",              icon: "folio", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "FRONT DESK" },
+  { name: "Checkout",          href: "/checkout",           icon: "checkout", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "FRONT DESK" },
+  { name: "Payments",          href: "/payments",           icon: "payments", allowedRoles: ["OWNER", "MANAGER", "RECEPTIONIST"], category: "FRONT DESK" },
 
   // 3. DINING & SERVICES
-  { name: "Restaurant",        href: "/restaurant",         icon: "R", allowedRoles: ["OWNER", "MANAGER", "WAITER"], category: "FOOD & SERVICES" },
-  { name: "Kitchen",           href: "/kitchen",            icon: "K", allowedRoles: ["OWNER", "MANAGER", "COOK"], category: "FOOD & SERVICES" },
-  { name: "Recipes",           href: "/recipes",            icon: "▤", allowedRoles: ["OWNER", "MANAGER", "COOK"], category: "FOOD & SERVICES" },
-  { name: "Room Service",      href: "/room-service",       icon: "⌂", allowedRoles: ["OWNER", "MANAGER", "ROOM_SERVICE"], category: "FOOD & SERVICES" },
-  { name: "Laundry",           href: "/laundry",            icon: "◎", allowedRoles: ["OWNER", "MANAGER", "LAUNDRY"], category: "FOOD & SERVICES" },
+  { name: "Restaurant",        href: "/restaurant",         icon: "restaurant", allowedRoles: ["OWNER", "MANAGER", "WAITER"], category: "FOOD & SERVICES" },
+  { name: "Kitchen",           href: "/kitchen",            icon: "kitchen", allowedRoles: ["OWNER", "MANAGER", "COOK"], category: "FOOD & SERVICES" },
+  { name: "Recipes",           href: "/recipes",            icon: "recipes", allowedRoles: ["OWNER", "MANAGER", "COOK"], category: "FOOD & SERVICES" },
+  { name: "Room Service",      href: "/room-service",       icon: "roomService", allowedRoles: ["OWNER", "MANAGER", "ROOM_SERVICE"], category: "FOOD & SERVICES" },
+  { name: "Laundry",           href: "/laundry",            icon: "laundry", allowedRoles: ["OWNER", "MANAGER", "LAUNDRY"], category: "FOOD & SERVICES" },
 
   // 4. EVENTS & RECREATION
-  { name: "Events",            href: "/events",             icon: "▣", allowedRoles: ["OWNER", "MANAGER", "EVENTS"], category: "EVENTS & RECREATION" },
-  { name: "Venues",            href: "/venues",             icon: "▥", allowedRoles: ["OWNER", "MANAGER", "EVENTS"], category: "EVENTS & RECREATION" },
-  { name: "Games",             href: "/games",              icon: "◇", allowedRoles: ["OWNER", "MANAGER", "GAME_STAFF"], category: "EVENTS & RECREATION" },
+  { name: "Events",             href: "/events",             icon: "events", allowedRoles: ["OWNER", "MANAGER", "EVENTS"], category: "EVENTS & RECREATION" },
+  { name: "Venues",            href: "/venues",             icon: "venues", allowedRoles: ["OWNER", "MANAGER", "EVENTS"], category: "EVENTS & RECREATION" },
+  { name: "Games",             href: "/games",              icon: "games", allowedRoles: ["OWNER", "MANAGER", "GAME_STAFF"], category: "EVENTS & RECREATION" },
 
   // 5. MANAGEMENT & ADMIN
-  { name: "Inventory",         href: "/inventory",          icon: "▧", allowedRoles: ["OWNER", "MANAGER", "INVENTORY"], category: "MANAGEMENT" },
-  { name: "Parking",           href: "/parking",            icon: "P", allowedRoles: ["OWNER", "MANAGER", "PARKING"], category: "MANAGEMENT" },
-  { name: "Service Pricing",   href: "/pricing",            icon: "₨", allowedRoles: ["OWNER", "MANAGER"], category: "MANAGEMENT" },
-  { name: "Reports",           href: "/reports",            icon: "▨", allowedRoles: ["OWNER", "MANAGER"], category: "MANAGEMENT" },
-  { name: "Audit Logs",        href: "/audit-logs",         icon: "A", allowedRoles: ["OWNER", "MANAGER"], category: "MANAGEMENT" },
-  { name: "Users",             href: "/users",              icon: "♙", allowedRoles: ["OWNER", "MANAGER"], category: "MANAGEMENT" },
+  { name: "Inventory",         href: "/inventory",          icon: "inventory", allowedRoles: ["OWNER", "MANAGER", "INVENTORY"], category: "MANAGEMENT" },
+  { name: "Parking",           href: "/parking",            icon: "parking", allowedRoles: ["OWNER", "MANAGER", "PARKING"], category: "MANAGEMENT" },
+  { name: "Service Pricing",   href: "/pricing",            icon: "pricing", allowedRoles: ["OWNER", "MANAGER"], category: "MANAGEMENT" },
+  { name: "Reports",           href: "/reports",             icon: "reports", allowedRoles: ["OWNER", "MANAGER"], category: "MANAGEMENT" },
+  { name: "Audit Logs",        href: "/audit-logs",         icon: "audit", allowedRoles: ["OWNER", "MANAGER"], category: "MANAGEMENT" },
+  { name: "Users",             href: "/users",              icon: "users", allowedRoles: ["OWNER", "MANAGER"], category: "MANAGEMENT" },
 ];
 
 export default function AppSidebar() {
@@ -146,8 +159,11 @@ export default function AppSidebar() {
                       : "text-[#a6adba] hover:bg-[#263248] hover:text-[#f2c426]"
                   }`}
                 >
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center text-xl font-bold">
-                    {item.icon}
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center">
+                    {(() => {
+                      const Icon = iconMap[item.icon as keyof typeof iconMap];
+                      return Icon ? <Icon size={19} strokeWidth={2} /> : null;
+                    })()}
                   </span>
 
                   <span className="leading-tight font-medium">{item.name}</span>

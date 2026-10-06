@@ -18,8 +18,7 @@ export default function NewInventoryItemPage() {
     unit: "pcs",
     reorderLevel: 10,
     supplierName: "",
-    purchasePrice: 0,
-    status: "In Stock"
+    purchasePrice: 0
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -92,22 +91,13 @@ export default function NewInventoryItemPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-bold text-[#4d4635]">Purchase Price (Initial)</label>
-                  <input required type="number" name="purchasePrice" value={formData.purchasePrice} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+                  <label className="block text-sm font-bold text-[#4d4635]">Purchase Price (optional)</label>
+                  <input min="0" type="number" name="purchasePrice" value={formData.purchasePrice} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-[#4d4635]">Supplier Name</label>
-                  <input required type="text" name="supplierName" value={formData.supplierName} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
+                  <label className="block text-sm font-bold text-[#4d4635]">Supplier Name (optional)</label>
+                  <input type="text" name="supplierName" value={formData.supplierName} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3" />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-bold text-[#4d4635]">Status</label>
-                <select name="status" value={formData.status} onChange={handleChange} className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3">
-                  <option value="In Stock">In Stock</option>
-                  <option value="Low Stock">Low Stock</option>
-                  <option value="Critical">Critical</option>
-                </select>
               </div>
 
               <div className="flex gap-4 pt-4">

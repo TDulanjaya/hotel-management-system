@@ -27,7 +27,7 @@ import {
   Shield,
   Trash2,
 } from "lucide-react";
-import { getUsers, deleteUser as apiDeleteUser, createUser } from "@/lib/api/userApi";
+import { getUsers, deleteUser as apiDeleteUser, createUser, updateUser } from "@/lib/api/userApi";
 import { getUser } from "@/utils/auth";
 
 type UserItem = {
@@ -72,6 +72,7 @@ export default function UsersPage() {
   const { data: rawUsers, mutate } = useSWR<UserItem[]>("/api/users");
   const users = useMemo(() => (Array.isArray(rawUsers) ? rawUsers : []), [rawUsers]);
   const [panelOpen, setPanelOpen] = useState(false);
+  const [editItem, setEditItem] = useState<UserItem | null>(null);
 
   // Form states
   const [loading, setLoading] = useState(false);
@@ -84,6 +85,7 @@ export default function UsersPage() {
     email: "",
     password: "",
     role: "",
+    active: true,
   });
 
   useEffect(() => {
@@ -106,10 +108,41 @@ export default function UsersPage() {
     }
   }, [creatorRole]);
 
+  const handleOpenAdd = () => {
+    setEditItem(null);
+    setError("");
+    setFormData({
+      name: "",
+      email: "",
+      password: "",
+      role: availableRoles[0] || "RECEPTIONIST",
+      active: true,
+    });
+    setPanelOpen(true);
+  };
+
+  const handleOpenEdit = (user: UserItem) => {
+    setEditItem(user);
+    setError("");
+    setFormData({
+      name: user.name || "",
+      email: user.email || "",
+      password: "",
+      role: user.role || availableRoles[0] || "RECEPTIONIST",
+      active: user.active ?? true,
+    });
+    setPanelOpen(true);
+  };
+
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value, type } = e.target;
+    if (type === "checkbox") {
+      setFormData({ ...formData, [name]: (e.target as HTMLInputElement).checked });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -117,29 +150,48 @@ export default function UsersPage() {
     setLoading(true);
     setError("");
 
-    if (!formData.name || !formData.email || !formData.password || !formData.role) {
-      setError("All fields are required");
+    if (!formData.name || !formData.email || !formData.role) {
+      setError("Name, email and role are required");
+      setLoading(false);
+      return;
+    }
+
+    if (!editItem && !formData.password) {
+      setError("Password is required for new accounts");
       setLoading(false);
       return;
     }
 
     try {
-      await createUser({
+      const payload: any = {
         name: formData.name,
         email: formData.email,
-        password: formData.password,
         role: formData.role,
-      });
+        active: formData.active,
+      };
+
+      if (formData.password) {
+        payload.password = formData.password;
+      }
+
+      if (editItem) {
+        await updateUser(editItem.id, payload);
+      } else {
+        await createUser(payload);
+      }
+
       setPanelOpen(false);
+      setEditItem(null);
       mutate();
       setFormData({
         name: "",
         email: "",
         password: "",
         role: availableRoles[0] || "",
+        active: true,
       });
     } catch (err: any) {
-      setError(err.message || "Failed to create user");
+      setError(err.message || "Failed to save user");
     } finally {
       setLoading(false);
     }
@@ -170,7 +222,7 @@ export default function UsersPage() {
                 </button>
 
                 <button
-                  onClick={() => setPanelOpen(true)}
+                  onClick={handleOpenAdd}
                   className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-[#735c00] px-8 py-3 text-sm font-bold text-white shadow-lg transition hover:scale-[1.02] active:scale-95"
                 >
                   <UserPlus size={18} />
@@ -180,7 +232,11 @@ export default function UsersPage() {
             </div>
 
             <StatsGrid users={users} />
-            <UsersTable users={users} onUserDeleted={() => mutate()} />
+            <UsersTable 
+              users={users} 
+              onUserDeleted={() => mutate()} 
+              onEditUser={handleOpenEdit}
+            />
             <PermissionsMatrix />
           </section>
         </main>
@@ -188,9 +244,13 @@ export default function UsersPage() {
         <SlidePanel 
           open={panelOpen} 
           onClose={() => setPanelOpen(false)} 
-          title="Add New User" 
-          subtitle="Create a new staff account. Password will be hashed by the server."
-          icon={<UserPlus className="h-5 w-5" />}
+          title={editItem ? "Edit User Account" : "Add New User"} 
+          subtitle={
+            editItem 
+              ? `Updating credentials & access for ${editItem.name}`
+              : "Create a new staff account. Password will be hashed by the server."
+          }
+          icon={<UserPlus className="h-5 w-5 text-[#735c00]" />}
         >
           {error && (
             <Alert variant="error" className="mb-4">
@@ -200,14 +260,14 @@ export default function UsersPage() {
 
           {creatorRole === "MANAGER" && (
             <Alert variant="warning" className="mb-6">
-              As a Manager, you cannot create Owner or Manager accounts.
+              As a Manager, you cannot create or edit Owner or Manager accounts.
             </Alert>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
             <div>
               <label className="block text-sm font-bold text-[#4d4635]">
-                Full Name
+                Full Name *
               </label>
               <input
                 required
@@ -222,7 +282,7 @@ export default function UsersPage() {
 
             <div>
               <label className="block text-sm font-bold text-[#4d4635]">
-                Email Address
+                Email Address *
               </label>
               <input
                 required
@@ -237,32 +297,30 @@ export default function UsersPage() {
 
             <div>
               <label className="block text-sm font-bold text-[#4d4635]">
-                Password
+                Password {editItem ? "(Leave blank to keep current)" : "*"}
               </label>
               <input
-                required
                 type="password"
                 name="password"
-                placeholder="Set a strong password"
+                placeholder={editItem ? "•••••••• (unchanged)" : "Set a strong password"}
                 value={formData.password}
                 onChange={handleChange}
                 className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 text-base"
               />
               <p className="mt-1 text-xs text-[#6d6251]">
-                Password is sent once to the server and hashed with BCrypt.
-                It will never be displayed.
+                Password is sent once to the server and hashed with BCrypt. It will never be displayed.
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-bold text-[#4d4635]">
-                Role
+                Role *
               </label>
               <select
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
-                className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 text-base"
+                className="mt-1 w-full rounded-xl border border-[#d0c5af] p-3 text-base font-semibold"
               >
                 {availableRoles.map((role) => (
                   <option key={role} value={role}>
@@ -272,7 +330,25 @@ export default function UsersPage() {
               </select>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4">
+            {editItem && (
+              <div className="rounded-xl border border-[#d0c5af] bg-[#faf8f4] p-4">
+                <label className="flex items-center gap-3 text-sm font-bold text-[#4d4635] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name="active"
+                    checked={formData.active}
+                    onChange={handleChange}
+                    className="h-4 w-4 rounded accent-[#735c00]"
+                  />
+                  Active Account Status
+                </label>
+                <p className="mt-1 text-xs text-[#6d6251] ml-7">
+                  Inactive users cannot log into the hotel management portal.
+                </p>
+              </div>
+            )}
+
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-4 border-t border-[#d0c5af]">
               <button
                 type="button"
                 onClick={() => setPanelOpen(false)}
@@ -283,9 +359,9 @@ export default function UsersPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full sm:flex-1 rounded-xl bg-[#735c00] px-6 py-3.5 font-bold text-white transition hover:bg-[#d4af37]"
+                className="w-full sm:flex-1 rounded-xl bg-[#735c00] px-6 py-3.5 font-bold text-white transition hover:bg-[#d4af37] disabled:opacity-50"
               >
-                {loading ? "Creating..." : "Create User"}
+                {loading ? "Saving..." : editItem ? "Update User" : "Create User"}
               </button>
             </div>
           </form>
@@ -397,9 +473,11 @@ function StatsGrid({ users }: { users: UserItem[] }) {
 function UsersTable({
   users,
   onUserDeleted,
+  onEditUser,
 }: {
   users: UserItem[];
   onUserDeleted?: () => void;
+  onEditUser?: (user: UserItem) => void;
 }) {
   const currentUser = getUser();
 
@@ -508,9 +586,13 @@ function UsersTable({
                       {!(currentUser?.role === "MANAGER" && (user.role === "OWNER" || user.role === "MANAGER")) && (
                         <>
                           {canEdit && (
-                            <Link href={`/users/edit?id=${user.id}`} className="rounded-lg p-1.5 sm:p-2 text-[#4d4635] hover:bg-[#efeeea]">
+                            <button
+                              type="button"
+                              onClick={() => onEditUser?.(user)}
+                              className="rounded-lg p-1.5 sm:p-2 text-[#4d4635] hover:bg-[#efeeea]"
+                            >
                               <Pencil size={16} />
-                            </Link>
+                            </button>
                           )}
 
                           {canDelete && user.role !== "OWNER" && (

@@ -38,4 +38,9 @@ public class PaymentController {
     public void delete(@PathVariable String id) {
         service.delete(id);
     }
+
+    @PostMapping("/{id}/void")
+    public Payment voidPayment(@PathVariable String id, @RequestParam(required = false) String reason) {
+        return service.voidPayment(id, reason);
+    }
 }

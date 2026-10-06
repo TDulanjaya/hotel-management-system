@@ -12,6 +12,7 @@ import {
   updateLaundryOrder,
   deleteLaundryOrder,
 } from "@/lib/api/laundryApi";
+import { getRooms } from "@/lib/api/roomApi";
 import {
   Shirt,
   Sparkles,
@@ -68,10 +69,24 @@ export default function LaundryPage() {
   const [submitting, setSubmitting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const { data: rawRooms } = useSWR<any[]>("/api/rooms", getRooms);
+
+  const roomOptions = useMemo(() => {
+    if (!Array.isArray(rawRooms)) return [];
+    return rawRooms
+      .filter((r) => r.status === "OCCUPIED" || r.status === "Occupied" || r.guestName)
+      .map((r) => ({
+        roomNumber: String(r.roomNumber),
+        guestName: r.guestName || "In-House Resident",
+      }));
+  }, [rawRooms]);
 
   const [formData, setFormData] = useState({
     roomNumber: "",
     guestName: "",
+    customerType: "HOTEL_GUEST",
+    billingType: "ROOM_FOLIO",
+    orderSource: "ROOM",
     items: [] as any[],
     notes: "",
     status: "PENDING",
@@ -107,8 +122,11 @@ export default function LaundryPage() {
   const handleOpenNew = () => {
     setEditItem(null);
     setFormData({
-      roomNumber: "",
-      guestName: "",
+      roomNumber: roomOptions[0]?.roomNumber || "",
+      guestName: roomOptions[0]?.guestName || "",
+      customerType: "HOTEL_GUEST",
+      billingType: "ROOM_FOLIO",
+      orderSource: "ROOM",
       items: [],
       notes: "",
       status: "PENDING",
@@ -501,7 +519,8 @@ export default function LaundryPage() {
               formData={formData}
               setFormData={setFormData}
               onSubmit={handleSubmit}
-              categories={["Laundry"]}
+              categories={["LAUNDRY", "Laundry"]}
+              roomOptions={roomOptions}
               loading={submitting}
             />
           </SlidePanel>

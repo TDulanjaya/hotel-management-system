@@ -66,7 +66,7 @@ export default function ReportsPage() {
       href: "/reports/net-profit",
       category: "Finance",
       value: summary?.netProfit || "Rs 0",
-      note: "Revenue minus expenses and operating cost.",
+      note: summary?.netProfitNote || "Live Inflow minus Inventory Stock Outflow.",
       icon: "↗",
     },
     {

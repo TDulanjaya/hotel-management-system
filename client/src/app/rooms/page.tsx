@@ -7,6 +7,7 @@ import { Bed, Pencil, Plus, Trash2, Search, X, Users, DoorOpen, Sparkles } from 
 import {
   deleteRoom as apiDeleteRoom,
   createRoom,
+  updateRoom,
 } from "@/lib/api/roomApi";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -25,6 +26,7 @@ export default function RoomsPage() {
 
   const [currentRole, setCurrentRole] = useState("");
   const [panelOpen, setPanelOpen] = useState(false);
+  const [editItem, setEditItem] = useState<any>(null);
 
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -140,6 +142,29 @@ export default function RoomsPage() {
     });
   };
 
+  const handleOpenAdd = () => {
+    setEditItem(null);
+    setError("");
+    resetForm();
+    setPanelOpen(true);
+  };
+
+  const handleOpenEdit = (room: any) => {
+    setEditItem(room);
+    setError("");
+    setFormData({
+      roomNumber: room.roomNumber || "",
+      roomType: room.roomType || "Standard",
+      floor: room.floor || "Floor 1",
+      capacity: Number(room.capacity || 2),
+      pricePerNight: Number(room.pricePerNight || 0),
+      status: room.status || "AVAILABLE",
+      description: room.description || "",
+      image: room.image || "",
+    });
+    setPanelOpen(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -162,18 +187,24 @@ export default function RoomsPage() {
     setError("");
 
     try {
-      await createRoom({
+      const payload = {
         ...formData,
         capacity: Number(formData.capacity),
         pricePerNight: Number(formData.pricePerNight),
-      });
+      };
+
+      if (editItem) {
+        await updateRoom(editItem.id, payload);
+      } else {
+        await createRoom(payload);
+      }
 
       setPanelOpen(false);
+      setEditItem(null);
       resetForm();
       mutate();
-      alert("Room created successfully.");
     } catch (err: any) {
-      setError(err.message || "Failed to add room.");
+      setError(err.message || "Failed to save room.");
     } finally {
       setLoading(false);
     }
@@ -259,11 +290,7 @@ export default function RoomsPage() {
 
               {canEdit && (
                 <button
-                  onClick={() => {
-                    resetForm();
-                    setError("");
-                    setPanelOpen(true);
-                  }}
+                  onClick={handleOpenAdd}
                   className="flex items-center justify-center gap-2 rounded-xl bg-[#d8b328] px-6 py-3 text-sm sm:text-base font-bold text-[#4c3a00] shadow transition hover:bg-[#f2c426] active:scale-[0.98]"
                 >
                   <Plus size={18} />
@@ -420,13 +447,14 @@ export default function RoomsPage() {
 
                       <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#f0eae0]">
                         {canEdit && (
-                          <Link
-                            href={`/rooms/edit?id=${room.id}`}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEdit(room)}
                             className="flex items-center justify-center gap-1.5 rounded-xl border border-[#806300] bg-white py-2.5 text-xs font-bold text-[#806300] transition hover:bg-[#806300] hover:text-white"
                           >
                             <Pencil size={13} />
                             <span>Edit</span>
-                          </Link>
+                          </button>
                         )}
 
                         {canDelete && (
@@ -477,13 +505,17 @@ export default function RoomsPage() {
           </section>
         </main>
 
-        {/* Add New Room SlidePanel */}
+        {/* Room SlidePanel */}
         <SlidePanel
           open={panelOpen}
           onClose={() => setPanelOpen(false)}
-          title="Add New Room"
-          subtitle="Configure a new room to add to the hotel inventory"
-          icon={<Bed className="h-5 w-5" />}
+          title={editItem ? "Edit Room" : "Add New Room"}
+          subtitle={
+            editItem
+              ? `Updating room details for Room ${editItem.roomNumber}`
+              : "Configure a new room to add to the hotel inventory"
+          }
+          icon={<Bed className="h-5 w-5 text-[#735c00]" />}
         >
           {error && (
             <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-xs sm:text-sm font-bold text-red-700">
@@ -595,7 +627,7 @@ export default function RoomsPage() {
                 disabled={loading}
                 className="w-full sm:flex-1 rounded-xl bg-[#735c00] py-3.5 text-base font-bold text-white transition hover:bg-[#8f7300] active:scale-[0.98] disabled:opacity-60 text-center"
               >
-                {loading ? "Saving..." : "Save Room"}
+                {loading ? "Saving..." : editItem ? "Update Room" : "Save Room"}
               </button>
 
               <button

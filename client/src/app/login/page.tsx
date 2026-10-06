@@ -1,7 +1,6 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getDashboardByRole, saveAuth } from "@/utils/auth";
 import { login } from "@/lib/api/authApi";
@@ -13,7 +12,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
@@ -238,27 +236,6 @@ export default function LoginPage() {
           <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/25 to-transparent transition duration-700 hover:translate-x-full" />
           <span className="relative">Login</span>
         </button>
-
-        {/* Remember / Forgot */}
-        <div className="mt-5 flex items-center justify-between text-sm animate-[fadeUp_0.8s_ease-out_0.85s_both]">
-          <label className="flex cursor-pointer items-center gap-3 text-[#2f2f2f]">
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={(e) => setRememberMe(e.target.checked)}
-              className="h-5 w-5 rounded border-[#c9b99e] text-[#8d6b00] focus:ring-[#d4af37]"
-            />
-            Remember me
-          </label>
-
-          <button
-  type="button"
-  onClick={() => router.push("/forgot-password")}
-  className="font-medium text-[#806300] transition hover:text-[#4d3900] hover:underline"
->
-  Forgot Password?
-</button>
-        </div>
 
         {/* Bottom hotel line art */}
         <div className="pointer-events-none mt-8 opacity-25 animate-[fadeUp_0.9s_ease-out_0.95s_both]">

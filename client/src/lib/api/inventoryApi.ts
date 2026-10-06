@@ -131,3 +131,12 @@ export async function purchaseStock(payload: any) {
     status: newStatus,
   });
 }
+
+export async function recordPurchaseStock(id: string, payload: any) {
+  const response = await fetch(`${API_BASE_URL}/${id}/purchase-stock`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(response);
+}
